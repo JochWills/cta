@@ -1,0 +1,107 @@
+import { state, $, isEmail } from "./state.js";
+import {
+  renderModules,
+  renderFilters,
+  renderDrawer,
+  openCart,
+  closeCart,
+  setFilter,
+  toast,
+} from "./render.js";
+import { loadProducts, addToCart, removeFromCart } from "./cart.js";
+import { placeOrder } from "./checkout.js";
+
+/* ------------------------------------------------------------------
+   Delegated click handling — the grid and drawer are re-rendered often,
+   so listeners live on the document rather than on individual elements.
+------------------------------------------------------------------ */
+document.addEventListener("click", (e) => {
+  const add = e.target.closest("[data-add]");
+  if (add) return addToCart(add.dataset.add);
+
+  const remove = e.target.closest("[data-rm]");
+  if (remove) return removeFromCart(remove.dataset.rm);
+
+  const jump = e.target.closest("[data-jump]");
+  if (jump) {
+    e.preventDefault();
+    return setFilter(jump.dataset.jump);
+  }
+
+  const filter = e.target.closest("[data-filter]");
+  if (filter) return setFilter(filter.dataset.filter);
+
+  if (e.target.closest("#cartBtn")) return openCart();
+  if (e.target.closest("#closeCart") || e.target.closest("#scrim")) return closeCart();
+
+  if (e.target.closest("#keepShopping")) {
+    state.checkoutStep = "cart";
+    renderDrawer();
+    return closeCart();
+  }
+  if (e.target.closest("#toDetails")) {
+    state.checkoutStep = "details";
+    renderDrawer();
+    setTimeout(() => $("#buyerEmail")?.focus(), 60);
+    return;
+  }
+  if (e.target.closest("#backToCart")) {
+    state.checkoutStep = "cart";
+    return renderDrawer();
+  }
+  if (e.target.closest("#placeOrder")) return placeOrder();
+
+  if (e.target.closest("#menuBtn")) {
+    const nav = $("#nav");
+    const open = nav.classList.toggle("is-open");
+    $("#menuBtn").setAttribute("aria-expanded", String(open));
+    return;
+  }
+  if (e.target.closest("#nav a")) return $("#nav").classList.remove("is-open");
+
+  // Contact form. TODO: point this at a real inbox (Formspree, or an Edge Function + Resend).
+  if (e.target.closest("#contactSend")) {
+    const email = $("#cEmail").value.trim();
+    if (!isEmail(email)) {
+      toast("Add a valid email so Courts can reply");
+      $("#cEmail").focus();
+      return;
+    }
+    toast("Message sent — Courts will reply shortly");
+    $("#cName").value = "";
+    $("#cEmail").value = "";
+    $("#cMsg").value = "";
+  }
+});
+
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape") closeCart();
+});
+
+/* ------------------------------------------------------------------
+   Nav underline follows the section in view
+------------------------------------------------------------------ */
+const observer = new IntersectionObserver(
+  (entries) => {
+    entries.forEach((entry) => {
+      if (!entry.isIntersecting) return;
+      document.querySelectorAll(".nav a").forEach((a) => {
+        a.classList.toggle("is-active", a.getAttribute("href") === `#${entry.target.id}`);
+      });
+    });
+  },
+  { rootMargin: "-45% 0px -50% 0px" }
+);
+["shop", "about", "how", "faqs", "contact"].forEach((id) => {
+  const el = document.getElementById(id);
+  if (el) observer.observe(el);
+});
+
+/* ------------------------------------------------------------------
+   Init
+------------------------------------------------------------------ */
+$("#yr").textContent = new Date().getFullYear();
+renderModules();
+renderFilters();
+renderDrawer();
+loadProducts();

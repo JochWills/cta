@@ -1,0 +1,46 @@
+# Render Blueprint — https://render.com/docs/blueprint-spec
+#
+# With this file in the repo root you can deploy via
+# Render Dashboard → New → Blueprint, instead of filling in the
+# build settings by hand. See docs/deploy-render.md.
+
+services:
+  - type: web
+    name: cta-notes
+    runtime: static
+    plan: free
+    buildCommand: npm ci && npm run build
+    staticPublishPath: ./dist
+    autoDeploy: true
+
+    envVars:
+      # sync: false means "prompt me for this in the dashboard" — the value is
+      # never committed. Set both from Supabase → Settings → API.
+      - key: VITE_SUPABASE_URL
+        sync: false
+      - key: VITE_SUPABASE_ANON_KEY
+        sync: false
+      # Pin Node so a future Render default doesn't change the build under you.
+      - key: NODE_VERSION
+        value: 20.11.1
+
+    headers:
+      # Vite fingerprints filenames in /assets, so they can be cached forever.
+      - path: /assets/*
+        name: Cache-Control
+        value: public, max-age=31536000, immutable
+      # index.html must NOT be cached long, or visitors keep loading the old
+      # bundle after a deploy.
+      - path: /index.html
+        name: Cache-Control
+        value: no-cache
+      - path: /*
+        name: X-Content-Type-Options
+        value: nosniff
+      - path: /*
+        name: Referrer-Policy
+        value: strict-origin-when-cross-origin
+
+# No catch-all rewrite rule here on purpose. This is a single page with anchor
+# navigation, not a client-side router, so /* -> /index.html would only hide
+# genuine 404s. Add one if you ever introduce real routes.
