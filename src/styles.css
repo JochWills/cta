@@ -57,12 +57,12 @@ h1,h2,h3{font-family:'Playfair Display',Georgia,serif;font-weight:400;letter-spa
 }
 .header-inner{display:flex;align-items:center;gap:32px;height:80px;}
 
-.logo{display:flex;align-items:baseline;gap:10px;flex-shrink:0;}
+.logo{display:flex;align-items:flex-end;gap:10px;flex-shrink:0;}
 .logo .mark{
   font-family:'Playfair Display',serif;font-size:34px;line-height:1;
   letter-spacing:.06em;color:var(--accent-deep);
 }
-.logo .stack{display:flex;flex-direction:column;line-height:1.15;padding-bottom:2px;}
+.logo .stack{display:flex;flex-direction:column;line-height:1.15;}
 .logo .word{font-size:12px;letter-spacing:.34em;color:var(--ink);font-weight:400;}
 .logo .by{font-size:8.5px;letter-spacing:.26em;color:var(--ink-faint);align-self:flex-end;}
 
