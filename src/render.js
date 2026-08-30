@@ -26,7 +26,7 @@ export function renderModules() {
         <span class="module-num">${count}<i>${count === 1 ? "item" : "items"}</i></span>
       </span>
       <h3>${esc(m.name)}</h3>
-      <span class="module-link">View sections
+      <span class="module-link">View notes
         <svg viewBox="0 0 16 10"><path d="M1 5h13M10 1l4 4-4 4"/></svg>
       </span>
     </button>`;
