@@ -70,11 +70,10 @@ export function renderProducts() {
       const m = MOD[p.module_slug] || MODULES[0];
       const inCart = state.cart.some((c) => c.id === p.id);
       return `
-    <article class="card">
+    <article class="card" ${p.preview_pages > 0 ? `data-preview="${esc(p.id)}"` : ""}>
       <span class="tag" style="background:${m.tint};color:${m.ink}">${esc(m.tag)}</span>
       <h3>${esc(p.title)}</h3>
       <p>${esc(p.description || "")}</p>
-      ${p.preview_pages > 0 ? `<button class="preview-link" data-preview="${esc(p.id)}">Preview this note</button>` : ""}
       <div class="card-foot">
         <span class="price">${rands(p.price_cents)}</span>
         <button class="add-btn" style="background:${m.tint};color:${m.ink}"
