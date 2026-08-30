@@ -244,13 +244,37 @@ details.faq p{margin:12px 0 0;color:var(--ink-soft);font-size:14px;max-width:66c
   padding:32px;box-shadow:var(--shadow);
 }
 .field{display:block;margin-top:16px;}
-.field span{display:block;font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-soft);margin-bottom:7px;}
+.field span{display:flex;align-items:center;gap:6px;font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-soft);margin-bottom:7px;}
 .field input,.field textarea{
   width:100%;padding:13px 14px;border:1px solid var(--rule);border-radius:8px;
   font:inherit;font-size:14px;background:var(--cream);color:var(--ink);
 }
 .field input:focus,.field textarea:focus{outline:none;border-color:var(--accent);background:#fff;}
 .field textarea{min-height:110px;resize:vertical;}
+
+/* Small "?" hint next to a field label — hover or focus (so it's reachable
+   by keyboard/tap, not just a mouse) reveals a short tooltip bubble. */
+.info-tip{
+  position:relative;display:inline-flex;align-items:center;justify-content:center;
+  width:15px;height:15px;border-radius:50%;border:1px solid var(--ink-faint);
+  background:none;color:var(--ink-faint);padding:0;cursor:help;flex-shrink:0;
+}
+.info-tip svg{width:9px;height:9px;stroke:currentColor;fill:none;stroke-width:2;}
+.info-tip:hover,.info-tip:focus-visible{border-color:var(--accent-deep);color:var(--accent-deep);outline:none;}
+.info-tip-bubble{
+  position:absolute;left:0;top:calc(100% + 9px);transform:translateY(-4px);
+  width:200px;max-width:60vw;background:var(--ink);color:#fff;
+  font-size:11.5px;font-weight:400;letter-spacing:normal;text-transform:none;line-height:1.45;
+  padding:9px 11px;border-radius:8px;box-shadow:var(--shadow-lift);
+  opacity:0;visibility:hidden;pointer-events:none;transition:opacity .15s,transform .15s;z-index:5;
+}
+.info-tip-bubble::after{
+  content:"";position:absolute;bottom:100%;left:7px;
+  border:5px solid transparent;border-bottom-color:var(--ink);
+}
+.info-tip:hover .info-tip-bubble,.info-tip:focus-visible .info-tip-bubble{
+  opacity:1;visibility:visible;transform:translateY(0);
+}
 .terms-field{display:flex;align-items:flex-start;gap:10px;margin-top:18px;text-align:left;}
 .terms-field input{width:auto;flex-shrink:0;margin-top:3px;accent-color:var(--accent);}
 .terms-field span{font-size:12.5px;color:var(--ink-soft);line-height:1.5;}
