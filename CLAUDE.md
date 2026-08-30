@@ -45,18 +45,27 @@ products and inserts orders.
 
 ```
 index.html                  All markup, including the hero SVG illustration
+admin.html                  Second page: password-gated order view + note CRUD
 src/
   main.js                   Entry point: delegated event handlers, init
   state.js                  Shared state object + rands/esc/$/isEmail helpers
   catalogue.js              MODULES (colours, icons, labels) + SEED fallback catalogue
   supabase.js               Env config, sbGet/sbInsert/sbFunction
   cart.js                   loadProducts, addToCart, removeFromCart
-  checkout.js               placeOrder — writes the order, captures the email
+  checkout.js               placeOrder — writes the order, then hands off to Paystack
   render.js                 All DOM rendering + toast/drawer/filter helpers
   styles.css                Everything, token-first, one file
+  admin/                    Admin page's own state/api/render/main split + admin.css
 supabase/
   schema.sql                Tables, RLS policies, storage bucket, 28 seed rows
-  functions/                Edge Function stubs for PayFast (not yet deployed)
+  functions/
+    _shared/admin.ts        Token auth + CORS shared by the four admin-* functions
+    admin-login/             ┐
+    admin-orders/             } deployed — see docs/admin.md
+    admin-products/           │
+    admin-upload/            ┘
+    paystack-initiate/        ┐ deployed — see docs/paystack.md
+    paystack-webhook/         ┘
 render.yaml                 Render Blueprint — build settings, cache headers
 public/                     favicon, and where hero.jpg goes
 ```
@@ -84,10 +93,10 @@ public/                     favicon, and where hero.jpg goes
 `module_slug`, `price_cents`, `file_path` (path in the private `notes` storage
 bucket), `is_active`, `sort_order`.
 
-`orders` — `reference` (CTA-XXXXXX, also used as PayFast `m_payment_id`),
-`email`, `full_name`, `items` (jsonb snapshot of the cart at purchase time),
-`total_cents`, `status` (`pending` | `paid` | `failed` | `refunded`),
-`payment_ref`, `paid_at`.
+`orders` — `reference` (CTA-XXXXXX, also used as the Paystack transaction
+reference), `email`, `full_name`, `items` (jsonb snapshot of the cart at
+purchase time), `total_cents`, `status` (`pending` | `paid` | `failed` |
+`refunded`), `payment_ref` (Paystack's transaction id), `paid_at`.
 
 `modules` — the four module rows. Currently the frontend uses the hardcoded
 `MODULES` array for presentation and only reads `products` from the database.
@@ -98,8 +107,10 @@ bucket), `is_active`, `sort_order`.
 - Anyone may `insert` an order, but only with `status = 'pending'`.
 - **Nobody with the anon key can read, update or delete orders.** That is
   deliberate. Order updates happen server-side with the service_role key inside
-  an Edge Function. If a browser-side query to `orders` returns nothing, RLS is
-  working as designed — do not "fix" it by loosening the policy.
+  an Edge Function (`paystack-webhook` for marking paid, `admin-orders` for the
+  admin page's read-only view). If a browser-side query to `orders` returns
+  nothing, RLS is working as designed — do not "fix" it by loosening the
+  policy.
 
 ## Running without a database
 
@@ -121,24 +132,26 @@ needs a redeploy to take effect.
 
 - `VITE_`-prefixed variables are **bundled into the public JavaScript**. Only the
   Supabase URL and anon key belong there.
-- The `service_role` key, the PayFast merchant key and the PayFast passphrase
-  must only ever exist as Supabase Edge Function secrets. If you find yourself
-  writing one into `src/`, stop.
+- The `service_role` key, the Paystack secret key, `ADMIN_PASSWORD` and
+  `ADMIN_SESSION_SECRET` must only ever exist as Supabase Edge Function
+  secrets. If you find yourself writing one into `src/`, stop.
 
 ## Current state
 
 Done: full front end, module filtering, cart drawer, two-step checkout, order +
 email capture into Supabase, responsive down to 390px, keyboard focus states,
-reduced-motion support.
+reduced-motion support, Paystack checkout (`docs/paystack.md`), and a
+password-gated admin page at `/admin.html` for viewing orders and managing
+notes including PDF upload (`docs/admin.md`).
 
 Not done:
-1. **PayFast** — stubs in `supabase/functions/payfast-initiate` and
-   `payfast-notify`. See `docs/payfast.md` for the full flow.
-2. **Delivery emails** — after an order is marked paid, generate signed URLs for
-   each `file_path` and email them (Resend or Postmark).
-3. **The PDFs themselves** — bucket exists, `file_path` is null on every row.
-4. **Contact form** — currently shows a toast and clears; it sends nothing.
-5. **Hero photo** — placeholder SVG illustration, see `public/README-hero.md`.
+1. **Delivery emails** — after an order is marked paid, generate signed URLs for
+   each `file_path` and email them (Resend or Postmark). `paystack-webhook` has
+   a `TODO` marking exactly where this goes.
+2. **The PDFs themselves** — bucket exists; upload them via the admin page's
+   note editor (or by hand in Supabase Storage) to fill in `file_path`.
+3. **Contact form** — currently shows a toast and clears; it sends nothing.
+4. **Hero photo** — placeholder SVG illustration, see `public/README-hero.md`.
 
 ## Working style
 

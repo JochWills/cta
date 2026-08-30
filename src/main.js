@@ -98,6 +98,19 @@ const observer = new IntersectionObserver(
 });
 
 /* ------------------------------------------------------------------
+   Returning from Paystack's payment page. paid=1 only means the buyer came
+   back through the flow — not that the payment actually succeeded (Paystack
+   sends everyone here, declined or cancelled included). The real answer
+   comes from paystack-webhook, which the browser can't see, so the message
+   stays deliberately non-committal rather than promising a purchase that
+   might not have gone through.
+------------------------------------------------------------------ */
+if (new URLSearchParams(location.search).get("paid") === "1") {
+  toast("Thanks — we'll email your download links once the payment is confirmed.");
+  history.replaceState({}, "", location.pathname + location.hash);
+}
+
+/* ------------------------------------------------------------------
    Init
 ------------------------------------------------------------------ */
 $("#yr").textContent = new Date().getFullYear();

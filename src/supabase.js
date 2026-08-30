@@ -46,7 +46,7 @@ export async function sbInsert(table, row) {
   return true;
 }
 
-/** Call a Supabase Edge Function (used for PayFast — see supabase/functions/). */
+/** Call a Supabase Edge Function (used for Paystack and the admin page — see supabase/functions/). */
 export async function sbFunction(name, payload) {
   const res = await fetch(`${SUPABASE_URL}/functions/v1/${name}`, {
     method: "POST",

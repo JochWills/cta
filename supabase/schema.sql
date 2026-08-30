@@ -56,7 +56,7 @@ create table if not exists public.orders (
   total_cents    int not null,
   status         text not null default 'pending'  -- pending | paid | failed | refunded
                  check (status in ('pending','paid','failed','refunded')),
-  payment_ref    text,                            -- PayFast pf_payment_id later
+  payment_ref    text,                            -- Paystack transaction id later
   paid_at        timestamptz,
   created_at     timestamptz not null default now()
 );
@@ -70,7 +70,7 @@ create index if not exists orders_status_idx on public.orders (status, created_a
 --    Anyone may read active products.
 --    Anyone may create an order (that's the checkout).
 --    Nobody with the anon key may read, edit or delete orders —
---    you read them in the Supabase dashboard, and your PayFast
+--    you read them in the Supabase dashboard, and your Paystack
 --    webhook will update them using the service_role key.
 -- ------------------------------------------------------------
 alter table public.modules  enable row level security;

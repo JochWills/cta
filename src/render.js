@@ -158,7 +158,7 @@ export function renderDrawer() {
     <div class="totals"><span class="lbl">Total due</span><span class="val">${rands(cartTotal())}</span></div>
     <button class="btn" id="placeOrder">Place order</button>
     <button class="btn ghost" id="backToCart" style="margin-top:10px;">Back to cart</button>
-    <p class="note">Card, instant EFT and SnapScan via PayFast — connecting next.</p>`;
+    <p class="note">Card, instant EFT and more via Paystack — connecting next.</p>`;
 }
 
 export function openCart() {

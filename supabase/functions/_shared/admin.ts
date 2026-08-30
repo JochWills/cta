@@ -2,11 +2,10 @@
  * Shared helpers for the admin-* Edge Functions: token issuing/verification
  * and CORS.
  *
- * Unlike payfast-notify (server-to-server) or payfast-initiate (called from
- * the browser but same-origin-ish and never needed it), every admin-*
- * function is called directly from admin.html running on the Render site's
- * origin, so each one needs OPTIONS + CORS handling — that lives here once
- * instead of four times.
+ * Unlike paystack-webhook (server-to-server, called by Paystack — no
+ * browser involved, so no CORS needed), every admin-* function is called
+ * directly from admin.html running on the Render site's origin, so each one
+ * needs OPTIONS + CORS handling — that lives here once instead of four times.
  *
  * Auth is a single shared password (ADMIN_PASSWORD, checked in
  * admin-login), not per-user accounts — this is a one-person shop. A

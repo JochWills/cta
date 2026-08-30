@@ -37,7 +37,7 @@ supabase secrets set ADMIN_PASSWORD=<pick-something-strong>
 supabase secrets set ADMIN_SESSION_SECRET=$(openssl rand -hex 32)
 ```
 
-`SITE_URL` should already be set from the PayFast setup (`docs/payfast.md`)
+`SITE_URL` should already be set from the Paystack setup (`docs/paystack.md`)
 — the admin functions reuse it to restrict CORS to your real site. If it
 isn't set yet:
 
@@ -68,7 +68,7 @@ lists every product, including inactive ones; **Add note** or a row's
 **Edit** opens the same form. Attaching a PDF there uploads it to the
 `notes` bucket under `<module_slug>/<code>.pdf` and sets `file_path`
 automatically — that's the one field customers never see but the eventual
-delivery email will need (`docs/payfast.md`, "not done" item 2 in
+delivery email will need (`docs/paystack.md`, "not done" item 1 in
 `CLAUDE.md`).
 
 Deleting a note asks for confirmation first and can't be undone — it removes
@@ -81,6 +81,6 @@ the database row, not the underlying PDF in storage.
   changes.
 - **No rate limiting on `admin-login`.** A determined attacker could brute
   force the password over the network. Pick a long, random one.
-- **Order status is still only changed by the PayFast webhook** (or by hand
+- **Order status is still only changed by the Paystack webhook** (or by hand
   in the Supabase table editor) — the admin page is read-only for orders on
   purpose, per the working decision when this was built.

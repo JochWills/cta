@@ -113,20 +113,21 @@ Note that content changes — new sections, price changes, hiding a section — 
 database edits in Supabase and appear immediately. They don't need a deploy.
 Only code and styling changes do.
 
-## When PayFast goes in
+## Paystack and the admin page
 
-Two things change:
+Two things to remember, since both live partly on Supabase:
 
-1. Set the `SITE_URL` Edge Function secret to your live URL, so PayFast's
-   return, cancel and notify URLs point at the right place:
+1. Set the `SITE_URL` Edge Function secret to your live URL, so Paystack's
+   callback and the admin page's CORS check both point at the right place:
 
    ```bash
    supabase secrets set SITE_URL=https://ctanotes.co.za
    ```
 
-2. The Edge Functions deploy to **Supabase**, not to Render. Render only ever
-   serves static files here, so there's no server for PayFast to call back to.
-   That split is deliberate: it keeps the hosting free and keeps the passphrase
-   off the front end entirely.
+2. The Edge Functions (`paystack-initiate`, `paystack-webhook`, and the four
+   `admin-*` ones) deploy to **Supabase**, not to Render. Render only ever
+   serves static files here, so there's no server on this side for Paystack to
+   call back to. That split is deliberate: it keeps the hosting free and keeps
+   the secret key off the front end entirely.
 
-See `docs/payfast.md` for the rest.
+See `docs/paystack.md` and `docs/admin.md` for the rest.

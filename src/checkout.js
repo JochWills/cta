@@ -1,19 +1,21 @@
 import { state, $, isEmail } from "./state.js";
-import { hasDB, sbInsert } from "./supabase.js";
+import { hasDB, sbInsert, sbFunction } from "./supabase.js";
 import { cartTotal, syncCart } from "./render.js";
 
-/** Human-readable order reference, e.g. CTA-M4K2P9. Also used as PayFast m_payment_id. */
+/** Human-readable order reference, e.g. CTA-M4K2P9. Also used as the Paystack transaction reference. */
 function makeReference() {
   return "CTA-" + Date.now().toString(36).toUpperCase().slice(-6);
 }
 
 /**
- * Save the order and capture the buyer's email.
+ * Save the order, then hand off to Paystack.
  *
- * The order is written with status "pending". Nothing is delivered yet —
- * PayFast slots in at the marked point below, and the ITN webhook
- * (supabase/functions/payfast-notify) is what flips the order to "paid"
- * and emails the download links.
+ * The order is written with status "pending" first, then paystack-initiate
+ * looks it up and starts a Paystack transaction, and the browser is sent to
+ * Paystack's hosted payment page. Nothing here marks the order paid — that
+ * only happens when Paystack calls the paystack-webhook Edge Function,
+ * which is the only thing allowed to flip the status (see its comment for
+ * why: the browser is never trusted with that).
  */
 export async function placeOrder() {
   const nameInput = $("#buyerName");
@@ -53,27 +55,22 @@ export async function placeOrder() {
   try {
     if (hasDB) {
       await sbInsert("orders", order);
-      state.lastOrderRef = `Order ${reference}`;
-    } else {
-      state.lastOrderRef = `Order ${reference} (demo — Supabase not connected)`;
+
+      button.textContent = "Redirecting to payment…";
+      const { authorization_url } = await sbFunction("paystack-initiate", { reference });
+      window.location.href = authorization_url; // leaving the page — Paystack takes it from here
+      return;
     }
 
-    // ── PAYFAST GOES HERE ────────────────────────────────────────────
-    // Call the payfast-initiate Edge Function with { reference }, then
-    // post the signed fields it returns to https://www.payfast.co.za/eng/process.
-    // The signature needs the passphrase, so it must be built server-side.
-    //
-    //   const { action, fields } = await sbFunction("payfast-initiate", { reference });
-    //   postToPayfast(action, fields);   // builds and submits a hidden form
-    //   return;
-    // ─────────────────────────────────────────────────────────────────
-
+    // No Supabase configured — nothing to charge, just fake the confirmation
+    // so the shop stays clickable for design work (see CLAUDE.md).
+    state.lastOrderRef = `Order ${reference} (demo — Supabase not connected)`;
     state.cart = [];
     state.checkoutStep = "done";
     syncCart();
   } catch (err) {
     console.error(err);
-    errorBox.innerHTML = `<div class="err">Couldn't save the order just now. Check your connection and try again.</div>`;
+    errorBox.innerHTML = `<div class="err">Couldn't start payment just now. Check your connection and try again.</div>`;
     button.textContent = "Place order";
     button.disabled = false;
   }

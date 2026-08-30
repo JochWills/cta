@@ -3,8 +3,9 @@
 An online shop selling PGDA/CTA study notes as individual PDF sections — R25
 each, across the four CTA modules.
 
-Vanilla JS + Vite on the front, Supabase for the database, storage and (soon)
-the PayFast webhook. No framework, no build complexity.
+Vanilla JS + Vite on the front, Supabase for the database, storage, the
+Paystack webhook and a password-gated admin page. No framework, no build
+complexity.
 
 ---
 
@@ -68,19 +69,22 @@ Module names, colours and icons live in the `MODULES` array in
 
 ```
 index.html                 All markup, including the hero illustration
+admin.html                 Password-gated admin page: orders + note CRUD
 src/
   main.js                  Entry point, event wiring
   state.js                 Shared state + helpers
   catalogue.js             Modules and the fallback catalogue
   supabase.js              REST helpers
   cart.js                  Loading products, cart operations
-  checkout.js              Order creation and email capture
+  checkout.js              Order creation, then hand-off to Paystack
   render.js                All DOM rendering
   styles.css               Design tokens and every style
+  admin/                   Admin page's state/api/render/main + admin.css
 supabase/
   schema.sql               Tables, RLS, storage bucket, seed data
-  functions/               PayFast Edge Function stubs
-docs/payfast.md            Full PayFast integration guide
+  functions/                Paystack + admin Edge Functions (deployed)
+docs/paystack.md           Full Paystack integration guide
+docs/admin.md              Admin page setup and usage
 docs/deploy-render.md      Deploying to Render, step by step
 render.yaml                Render Blueprint (build settings, headers, env vars)
 public/                    favicon, hero image
@@ -112,12 +116,11 @@ on the demo catalogue.
 
 ## What's still to do
 
-1. **PayFast** — order capture works; payment does not. `docs/payfast.md` has the
-   full flow, and the two Edge Functions are stubbed out.
-2. **Delivery emails** — signed download links after an order is marked paid.
-3. **The PDFs** — bucket and columns exist, files not uploaded.
-4. **Contact form** — currently shows a confirmation but sends nothing.
-5. **Hero photo** — placeholder illustration, see `public/README-hero.md`.
+1. **Delivery emails** — signed download links after an order is marked paid.
+   `supabase/functions/paystack-webhook` has a `TODO` marking exactly where.
+2. **The PDFs** — bucket exists; upload them via `/admin.html`'s note editor.
+3. **Contact form** — currently shows a confirmation but sends nothing.
+4. **Hero photo** — placeholder illustration, see `public/README-hero.md`.
 
 ## Using Claude Code
 
@@ -127,6 +130,6 @@ re-scan, and it will pick that file up automatically.
 
 Good first prompts:
 
-- "Read docs/payfast.md and implement the payfast-initiate function properly."
+- "Read docs/paystack.md and wire up the delivery email in paystack-webhook."
 - "Wire the contact form to a Supabase Edge Function using Resend."
 - "Add a search box above the filter chips that filters sections by title."
