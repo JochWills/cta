@@ -278,18 +278,26 @@
       <p class="eyebrow">Contact</p>
       <h2>Get in touch</h2>
       <p style="color:var(--ink-soft);font-size:15px;max-width:40ch;margin-top:16px;">
-        Questions about a section, a problem with a download, or a topic you'd like me to write up next — send it through.
+        Questions about a section, a problem with a download, or a topic you'd like me to write up next — email it through.
       </p>
       <p style="color:var(--ink-soft);font-size:14px;margin-top:22px;">
-        <strong style="color:var(--ink);">Email</strong><br>courtneywickens451@gmail.com
+        <strong style="color:var(--ink);">Email</strong><br>
+        <a href="mailto:courtneywickens451@gmail.com" style="color:inherit;">courtneywickens451@gmail.com</a>
       </p>
     </div>
     <div class="contact-card">
-      <label class="field"><span>Your name</span><input type="text" id="cName" placeholder="Jane Doe" autocomplete="name"></label>
-      <label class="field"><span>Email</span><input type="email" id="cEmail" placeholder="you@example.com" autocomplete="email"></label>
-      <label class="field"><span>Message</span><textarea id="cMsg" placeholder="Which section are you asking about?"></textarea></label>
-      <button class="btn" style="margin-top:20px;width:100%;" id="contactSend">Send message</button>
-      <p class="note">Goes straight to Courts. No newsletter, no spam.</p>
+      <p class="eyebrow">Already paid?</p>
+      <h3 style="font-size:19px;margin:6px 0 0;">Get your notes</h3>
+      <p class="note" style="text-align:left;margin:8px 0 0;">
+        Enter your order reference and the email you paid with to pull up your download links again.</p>
+      <form data-download-form>
+        <label class="field"><span>Order reference</span>
+          <input type="text" data-field="reference" placeholder="CTA-XXXXXX" autocomplete="off"></label>
+        <label class="field"><span>Email you paid with</span>
+          <input type="email" data-field="email" placeholder="you@example.com" autocomplete="email"></label>
+        <button class="btn" data-field="submit" type="submit" style="width:100%;margin-top:16px;">Find my notes</button>
+        <div data-field="result"></div>
+      </form>
     </div>
   </div>
 </section>
@@ -364,8 +372,10 @@
 <!-- ══════════════ DOWNLOAD MODAL ══════════════
      Self-serve delivery: there's no delivery email yet (no domain to send
      from — see CLAUDE.md), so this is how a buyer actually gets their PDFs.
-     It opens automatically right after a successful payment, and is also
-     reachable any time from the footer link, in case someone loses the
+     It opens automatically right after a successful payment. The same
+     lookup form (src/downloads.js works off any [data-download-form], not
+     just this one) is also inline in the Contact section, and this modal
+     is reachable any time from the footer link, in case someone loses the
      file or comes back on another device. -->
 <div class="modal" id="downloadModal" hidden role="dialog" aria-modal="true" aria-label="Get your notes">
   <div class="modal-scrim" id="downloadScrim"></div>
@@ -377,14 +387,14 @@
       <h3>Get your notes</h3>
       <p class="note" style="margin:8px 0 0;">Enter your order reference and the email you paid with —
         this regenerates your download links any time you need them.</p>
-      <form id="downloadForm">
+      <form data-download-form>
         <label class="field"><span>Order reference</span>
-          <input type="text" id="dlReference" placeholder="CTA-XXXXXX" autocomplete="off"></label>
+          <input type="text" data-field="reference" placeholder="CTA-XXXXXX" autocomplete="off"></label>
         <label class="field"><span>Email you paid with</span>
-          <input type="email" id="dlEmail" placeholder="you@example.com" autocomplete="email"></label>
-        <button class="btn" id="dlSubmit" type="submit" style="width:100%;margin-top:16px;">Find my notes</button>
+          <input type="email" data-field="email" placeholder="you@example.com" autocomplete="email"></label>
+        <button class="btn" data-field="submit" type="submit" style="width:100%;margin-top:16px;">Find my notes</button>
+        <div data-field="result"></div>
       </form>
-      <div id="dlResult"></div>
     </div>
   </div>
 </div>

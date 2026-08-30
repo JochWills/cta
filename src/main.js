@@ -1,4 +1,4 @@
-import { state, $, isEmail } from "./state.js";
+import { state, $ } from "./state.js";
 import {
   renderModules,
   renderFilters,
@@ -7,7 +7,6 @@ import {
   openCart,
   closeCart,
   setFilter,
-  toast,
   openPreview,
   closePreview,
 } from "./render.js";
@@ -76,26 +75,15 @@ document.addEventListener("click", (e) => {
     return;
   }
   if (e.target.closest("#nav a")) return $("#nav").classList.remove("is-open");
-
-  // Contact form. TODO: point this at a real inbox (Formspree, or an Edge Function + Resend).
-  if (e.target.closest("#contactSend")) {
-    const email = $("#cEmail").value.trim();
-    if (!isEmail(email)) {
-      toast("Add a valid email so Courts can reply");
-      $("#cEmail").focus();
-      return;
-    }
-    toast("Message sent — Courts will reply shortly");
-    $("#cName").value = "";
-    $("#cEmail").value = "";
-    $("#cMsg").value = "";
-  }
 });
 
+// Any [data-download-form] — the modal's and the Contact section's are the
+// same markup shape, both handled by src/downloads.js.
 document.addEventListener("submit", (e) => {
-  if (e.target.id !== "downloadForm") return;
+  const form = e.target.closest("[data-download-form]");
+  if (!form) return;
   e.preventDefault();
-  submitDownloadRequest();
+  submitDownloadRequest(form);
 });
 
 document.addEventListener("keydown", (e) => {
