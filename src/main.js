@@ -7,6 +7,8 @@ import {
   closeCart,
   setFilter,
   toast,
+  openPreview,
+  closePreview,
 } from "./render.js";
 import { loadProducts, addToCart, removeFromCart } from "./cart.js";
 import { placeOrder } from "./checkout.js";
@@ -17,10 +19,18 @@ import { placeOrder } from "./checkout.js";
 ------------------------------------------------------------------ */
 document.addEventListener("click", (e) => {
   const add = e.target.closest("[data-add]");
-  if (add) return addToCart(add.dataset.add);
+  if (add) {
+    addToCart(add.dataset.add);
+    if (add.closest("#previewModal")) closePreview();
+    return;
+  }
 
   const remove = e.target.closest("[data-rm]");
   if (remove) return removeFromCart(remove.dataset.rm);
+
+  const preview = e.target.closest("[data-preview]");
+  if (preview) return openPreview(preview.dataset.preview);
+  if (e.target.closest("#closePreview") || e.target.closest("#previewScrim")) return closePreview();
 
   const jump = e.target.closest("[data-jump]");
   if (jump) {
@@ -75,7 +85,9 @@ document.addEventListener("click", (e) => {
 });
 
 document.addEventListener("keydown", (e) => {
-  if (e.key === "Escape") closeCart();
+  if (e.key !== "Escape") return;
+  if (!$("#previewModal").hidden) return closePreview();
+  closeCart();
 });
 
 /* ------------------------------------------------------------------

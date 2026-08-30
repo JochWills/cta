@@ -46,6 +46,15 @@ export async function sbInsert(table, row) {
   return true;
 }
 
+/**
+ * Plain URL for an object in a *public* bucket — only ever used for
+ * note-previews (a page-1 image, meant to be shown to anyone). Never use
+ * this for the private notes bucket; that one has no public read access on
+ * purpose (see supabase/schema.sql).
+ */
+export const publicStorageUrl = (bucket, path) =>
+  `${SUPABASE_URL}/storage/v1/object/public/${bucket}/${path}`;
+
 /** Call a Supabase Edge Function (used for Paystack and the admin page — see supabase/functions/). */
 export async function sbFunction(name, payload) {
   const res = await fetch(`${SUPABASE_URL}/functions/v1/${name}`, {

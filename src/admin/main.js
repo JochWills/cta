@@ -20,8 +20,9 @@ import {
   createProduct,
   updateProduct,
   deleteProduct,
-  uploadPdf,
+  uploadFile,
 } from "./api.js";
+import { renderFirstPageToPng } from "./pdfPreview.js";
 
 async function boot() {
   loadSession();
@@ -89,16 +90,16 @@ function doLogout() {
 }
 
 /**
- * e.g. ("taxation", "tax3-a1b2") -> "taxation/tax3-a1b2.pdf"
+ * e.g. ("taxation", "tax3-a1b2", "pdf") -> "taxation/tax3-a1b2.pdf"
  *
  * `code` here is the server-generated identifier from admin-products (see
  * its comment) — the admin page never asks for or shows one anymore, but
  * the returned product row still carries it, and it's what keeps this path
- * stable across title edits.
+ * (and the preview image's) stable across title edits.
  */
-function slugPath(module_slug, code) {
+function slugPath(module_slug, code, ext) {
   const clean = code.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
-  return `${module_slug}/${clean}.pdf`;
+  return `${module_slug}/${clean}.${ext}`;
 }
 
 async function saveProductForm(e) {
@@ -130,8 +131,18 @@ async function saveProductForm(e) {
 
     const file = $("#pf_file").files[0];
     if (file) {
-      const { path } = await uploadPdf(file, slugPath(saved.module_slug, saved.code));
-      await updateProduct(saved.id, { file_path: path });
+      btn.textContent = "Uploading PDF…";
+      const { path } = await uploadFile(file, slugPath(saved.module_slug, saved.code, "pdf"), "notes");
+
+      btn.textContent = "Generating preview…";
+      const previewPng = await renderFirstPageToPng(file);
+      const { path: previewPath } = await uploadFile(
+        previewPng,
+        slugPath(saved.module_slug, saved.code, "png"),
+        "note-previews"
+      );
+
+      await updateProduct(saved.id, { file_path: path, preview_path: previewPath });
     }
 
     closeProductForm();

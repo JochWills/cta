@@ -11,5 +11,8 @@
   },
   "devDependencies": {
     "vite": "^5.4.10"
+  },
+  "dependencies": {
+    "pdfjs-dist": "^6.3.289"
   }
 }

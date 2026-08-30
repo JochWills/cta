@@ -1,5 +1,6 @@
 import { MODULES, MOD } from "./catalogue.js";
 import { state, rands, esc, $ } from "./state.js";
+import { publicStorageUrl } from "./supabase.js";
 
 /* ------------------------------------------------------------------
    Module cards
@@ -64,6 +65,7 @@ export function renderProducts() {
       <span class="tag" style="background:${m.tint};color:${m.ink}">${esc(m.tag)}</span>
       <h3>${esc(p.title)}</h3>
       <p>${esc(p.description || "")}</p>
+      ${p.preview_path ? `<button class="preview-link" data-preview="${esc(p.id)}">Preview this note</button>` : ""}
       <div class="card-foot">
         <span class="price">${rands(p.price_cents)}</span>
         <button class="add-btn" style="background:${m.tint};color:${m.ink}"
@@ -180,6 +182,41 @@ export function syncCart() {
   $("#cartCount").textContent = state.cart.length;
   renderProducts();
   renderDrawer();
+}
+
+/* ------------------------------------------------------------------
+   Preview modal — a page-1 image with the lower portion blurred/faded,
+   so a shopper can judge the note without it being usable in place of
+   buying it. The image itself is generated once, at upload time, by the
+   admin page (src/admin/pdfPreview.js) — this side just displays it.
+------------------------------------------------------------------ */
+export function openPreview(id) {
+  const p = state.products.find((x) => x.id === id);
+  if (!p) return;
+  const m = MOD[p.module_slug] || MODULES[0];
+
+  $("#previewFrame").innerHTML = p.preview_path
+    ? `
+      <img class="preview-img" src="${esc(publicStorageUrl("note-previews", p.preview_path))}" alt="Preview of the first page of ${esc(p.title)}">
+      <div class="preview-blur-panel"><span>Buy to see the rest</span></div>`
+    : `<div class="empty-state">No preview available for this section yet.</div>`;
+
+  $("#previewTag").textContent = m.name;
+  $("#previewTag").style.background = m.tint;
+  $("#previewTag").style.color = m.ink;
+  $("#previewTitle").textContent = p.title;
+  $("#previewAddBtn").dataset.add = p.id;
+  $("#previewAddBtn").textContent = state.cart.some((c) => c.id === p.id)
+    ? "Already in cart"
+    : `Add to cart — ${rands(p.price_cents)}`;
+
+  $("#previewModal").hidden = false;
+  document.body.style.overflow = "hidden";
+}
+
+export function closePreview() {
+  $("#previewModal").hidden = true;
+  document.body.style.overflow = "";
 }
 
 /* ------------------------------------------------------------------

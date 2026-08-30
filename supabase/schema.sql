@@ -24,20 +24,28 @@ on conflict (slug) do nothing;
 -- ------------------------------------------------------------
 -- 2. PRODUCTS  (one row = one section = one PDF)
 --    file_path points at an object in the private `notes` bucket,
---    e.g. 'financial-reporting/FR1-conceptual-framework.pdf'
+--    e.g. 'financial-reporting/fr1-a1b2.pdf'.
+--    preview_path points at a page-1 image in the *public* `note-previews`
+--    bucket (see section 5) — generated once by the admin page when the
+--    PDF is uploaded (src/admin/pdfPreview.js), shown blurred on the shop.
 -- ------------------------------------------------------------
 create table if not exists public.products (
-  id           uuid primary key default gen_random_uuid(),
-  code         text not null unique,              -- FR1, TAX3, ...
-  title        text not null,
-  description  text,
-  module_slug  text not null references public.modules(slug),
-  price_cents  int  not null default 2500,        -- R25.00
-  file_path    text,                              -- storage path to the PDF
-  is_active    boolean not null default true,
-  sort_order   int not null default 0,
-  created_at   timestamptz not null default now()
+  id            uuid primary key default gen_random_uuid(),
+  code          text not null unique,              -- server-generated, invisible in the admin UI (see admin-products)
+  title         text not null,
+  description   text,
+  module_slug   text not null references public.modules(slug),
+  price_cents   int  not null default 2500,        -- R25.00
+  file_path     text,                              -- storage path to the PDF, in `notes` (private)
+  preview_path  text,                              -- storage path to the page-1 preview, in `note-previews` (public)
+  is_active     boolean not null default true,
+  sort_order    int not null default 0,
+  created_at    timestamptz not null default now()
 );
+
+-- Column added after the table already existed in deployed projects —
+-- safe to re-run.
+alter table public.products add column if not exists preview_path text;
 
 create index if not exists products_module_idx on public.products (module_slug, sort_order);
 
@@ -102,12 +110,17 @@ create policy "anyone can create an order"
 
 
 -- ------------------------------------------------------------
--- 5. PRIVATE STORAGE BUCKET FOR THE PDFS
---    Private = nobody can hotlink the files. After payment you
---    generate a short-lived signed URL and email it.
+-- 5. STORAGE BUCKETS
+--    `notes` is private — nobody can hotlink the actual PDFs. After
+--    payment you generate a short-lived signed URL and email it.
+--    `note-previews` is public on purpose — it only ever holds a single
+--    page-1 image per note (the free preview shown on the shop), so
+--    there's nothing in it worth protecting with a signed URL.
 -- ------------------------------------------------------------
 insert into storage.buckets (id, name, public)
-values ('notes', 'notes', false)
+values
+  ('notes', 'notes', false),
+  ('note-previews', 'note-previews', true)
 on conflict (id) do nothing;
 
 

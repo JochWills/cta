@@ -144,6 +144,11 @@ export function openProductForm(product) {
   $("#pf_sort").value = product?.sort_order ?? 0;
   $("#pf_active").checked = product ? Boolean(product.is_active) : true;
   $("#pf_file").value = "";
+  // Required unless this note already has a PDF — editing an existing
+  // note's title/price shouldn't force a re-upload, but a new one (or an
+  // old row saved before this was enforced) must get one now.
+  $("#pf_file").required = !product?.file_path;
+  $("#pf_file_hint").textContent = product?.file_path ? "Leave blank to keep the current PDF." : "Required.";
   productFormError("");
   $("#productModal").hidden = false;
 }

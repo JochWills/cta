@@ -58,5 +58,5 @@ export const SEED = [
   ["CGA6","Professional Ethics & Independence","The IRBA/SAICA codes, threats, safeguards and independence in practice.","corporate-governance-auditing"]
 ].map(([code,title,description,module_slug],i)=>({
   id:"seed-"+code, code, title, description, module_slug,
-  price_cents:PRICE, sort_order:i
+  price_cents:PRICE, sort_order:i, preview_path:null
 }));

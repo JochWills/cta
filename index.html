@@ -360,6 +360,23 @@
   <div class="drawer-foot" id="drawerFoot"></div>
 </aside>
 
+<!-- ══════════════ PREVIEW MODAL ══════════════ -->
+<div class="preview-modal" id="previewModal" hidden role="dialog" aria-modal="true" aria-label="Note preview">
+  <div class="preview-scrim" id="previewScrim"></div>
+  <div class="preview-panel">
+    <button class="icon-btn preview-close" id="closePreview" aria-label="Close preview">
+      <svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg>
+    </button>
+    <div class="preview-frame" id="previewFrame"></div>
+    <div class="preview-info">
+      <span class="tag" id="previewTag"></span>
+      <h3 id="previewTitle"></h3>
+      <button class="btn" id="previewAddBtn"></button>
+      <p class="note">First page only — the rest unlocks once you buy it.</p>
+    </div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script type="module" src="/src/main.js"></script>

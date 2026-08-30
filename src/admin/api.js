@@ -46,9 +46,11 @@ export const createProduct = (fields) => call("admin-products", { body: { action
 export const updateProduct = (id, fields) => call("admin-products", { body: { action: "update", id, ...fields } });
 export const deleteProduct = (id) => call("admin-products", { body: { action: "delete", id } });
 
-export function uploadPdf(file, path) {
+/** bucket is "notes" (private, the real PDF) or "note-previews" (public, the page-1 image). */
+export function uploadFile(file, path, bucket = "notes") {
   const form = new FormData();
   form.append("file", file);
   form.append("path", path);
+  form.append("bucket", bucket);
   return call("admin-upload", { body: form, isForm: true });
 }
