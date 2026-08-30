@@ -51,7 +51,7 @@ export const SEED = [
   ["TAX7","Trusts, Estate Duty & Donations Tax","Trust taxation, attribution rules, estate duty and donations tax computations.","taxation"],
 
   ["CGA1","Corporate Governance & King IV","King IV principles, board responsibilities, stakeholder inclusivity and ethics.","corporate-governance-auditing"],
-  ["CGA2","Companies Act & Legal Framework","Directors' duties, solvency and liquidity, and the CA 2008 essentials for CTA.","corporate-governance-auditing"],
+  ["CGA2","Companies Act & Legal Framework","Directors' duties, solvency and liquidity, and the CA 2008 essentials for PGDA.","corporate-governance-auditing"],
   ["CGA3","Audit Planning & Risk Assessment","Engagement acceptance, materiality, risk of material misstatement and strategy.","corporate-governance-auditing"],
   ["CGA4","Audit Evidence & Procedures","Assertions, sampling, substantive procedures and tests of controls by cycle.","corporate-governance-auditing"],
   ["CGA5","Reporting & Audit Opinions","Forming an opinion, modifications, KAMs, going concern and other reports.","corporate-governance-auditing"],

@@ -145,7 +145,7 @@ insert into public.products (code, title, description, module_slug, price_cents,
 
 -- Corporate Governance & Auditing
 ('CGA1','Corporate Governance & King IV','King IV principles, board responsibilities, stakeholder inclusivity and ethics.','corporate-governance-auditing',2500,23),
-('CGA2','Companies Act & Legal Framework','Directors'' duties, solvency and liquidity, and the CA 2008 essentials for CTA.','corporate-governance-auditing',2500,24),
+('CGA2','Companies Act & Legal Framework','Directors'' duties, solvency and liquidity, and the CA 2008 essentials for PGDA.','corporate-governance-auditing',2500,24),
 ('CGA3','Audit Planning & Risk Assessment','Engagement acceptance, materiality, risk of material misstatement and strategy.','corporate-governance-auditing',2500,25),
 ('CGA4','Audit Evidence & Procedures','Assertions, sampling, substantive procedures and tests of controls by cycle.','corporate-governance-auditing',2500,26),
 ('CGA5','Reporting & Audit Opinions','Forming an opinion, modifications, KAMs, going concern and other reports.','corporate-governance-auditing',2500,27),
