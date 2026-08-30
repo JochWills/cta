@@ -154,7 +154,7 @@ h1,h2,h3{font-family:'Playfair Display',Georgia,serif;font-weight:400;letter-spa
   font-style:normal;font-family:'Inter',sans-serif;font-size:11px;
   letter-spacing:.08em;text-transform:uppercase;color:var(--ink-faint);
 }
-.module-card h3{font-size:18.5px;line-height:1.28;margin-top:18px;}
+.module-card h3{font-size:18.5px;line-height:1.28;margin:18px 0 14px;}
 .module-link{
   margin-top:auto;padding-top:16px;border-top:1px solid var(--rule);width:100%;
   display:inline-flex;align-items:center;gap:8px;
