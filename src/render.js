@@ -59,8 +59,7 @@ export function renderProducts() {
 
   if (!list.length) {
     grid.innerHTML = `<div class="empty-state">
-      No sections here yet. Add rows to the <strong>products</strong> table in Supabase
-      and they'll show up automatically.
+      No notes here yet.
     </div>`;
     return;
   }
