@@ -46,7 +46,7 @@ export function addToCart(id) {
   });
   state.checkoutStep = "cart";
   syncCart();
-  toast(`${product.code} added to cart`);
+  toast(`${product.title} added to cart`);
 }
 
 export function removeFromCart(id) {

@@ -62,13 +62,13 @@ export function renderProducts() {
       return `
     <article class="card">
       <span class="tag" style="background:${m.tint};color:${m.ink}">${esc(m.tag)}</span>
-      <h3>${esc(p.code)} — ${esc(p.title)}</h3>
+      <h3>${esc(p.title)}</h3>
       <p>${esc(p.description || "")}</p>
       <div class="card-foot">
         <span class="price">${rands(p.price_cents)}</span>
         <button class="add-btn" style="background:${m.tint};color:${m.ink}"
                 data-add="${esc(p.id)}"
-                aria-label="${inCart ? "Already in cart" : "Add " + esc(p.code) + " to cart"}">
+                aria-label="${inCart ? "Already in cart" : "Add " + esc(p.title) + " to cart"}">
           ${
             inCart
               ? '<svg viewBox="0 0 24 24" style="stroke:currentColor"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>'
@@ -119,7 +119,9 @@ export function renderDrawer() {
       const m = MOD[i.module_slug] || MODULES[0];
       return `
     <div class="line">
-      <span class="line-swatch" style="background:${m.tint};color:${m.ink}">${esc(i.code)}</span>
+      <span class="line-swatch" style="background:${m.tint}">
+        <svg viewBox="0 0 24 24" style="stroke:${m.ink}">${m.icon}</svg>
+      </span>
       <div>
         <h4>${esc(i.title)}</h4>
         <div class="meta">${esc(m.name)} · PDF</div>
