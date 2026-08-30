@@ -16,17 +16,17 @@ function previewPageUrl(module_slug, code, page) {
 ------------------------------------------------------------------ */
 export function renderModules() {
   $("#moduleGrid").innerHTML = MODULES.map(
-    (m) => `
+    (m, i) => `
     <button class="module-card" data-jump="${m.slug}">
-      <span class="module-icon" style="background:${m.tint}">
-        <svg viewBox="0 0 24 24" style="stroke:${m.ink}">${m.icon}</svg>
-      </span>
-      <span>
-        <h3>${esc(m.name)}</h3>
-        <p>${esc(m.blurb)}</p>
-        <span class="module-link">View sections
-          <svg viewBox="0 0 16 10"><path d="M1 5h13M10 1l4 4-4 4"/></svg>
+      <span class="module-card-top">
+        <span class="module-icon" style="background:${m.tint}">
+          <svg viewBox="0 0 24 24" style="stroke:${m.ink}">${m.icon}</svg>
         </span>
+        <span class="module-num">0${i + 1}<i>/0${MODULES.length}</i></span>
+      </span>
+      <h3>${esc(m.name)}</h3>
+      <span class="module-link">View sections
+        <svg viewBox="0 0 16 10"><path d="M1 5h13M10 1l4 4-4 4"/></svg>
       </span>
     </button>`
   ).join("");
