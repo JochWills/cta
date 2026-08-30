@@ -252,31 +252,41 @@ details.faq p{margin:12px 0 0;color:var(--ink-soft);font-size:14px;max-width:66c
 .field input:focus,.field textarea:focus{outline:none;border-color:var(--accent);background:#fff;}
 .field textarea{min-height:110px;resize:vertical;}
 
-/* Small "i" hint next to a field label — hover or focus (so it's reachable
-   by keyboard/tap, not just a mouse) reveals a short tooltip bubble. Tinted
-   like the module tag chips (.tag) rather than a plain grey outline, so it
-   reads as an on-brand hint rather than a generic form-validation icon. */
+/* Small "i" hint next to a field label. The hover trigger is the whole
+   label span (text + icon) — see .field span:hover below — not the input,
+   which sits outside that span entirely, so moving toward the input never
+   pops it open. Bubble opens *upward*, off the label, so it never sits over
+   the input the way a downward one would. Tinted like the module tag chips
+   (.tag) rather than a plain grey outline, so the icon reads as an on-brand
+   hint rather than a generic form-validation icon; the bubble itself stays
+   light/paper-toned to match the rest of the site instead of an inverted
+   dark tooltip. */
 .info-tip{
   position:relative;display:inline-flex;align-items:center;justify-content:center;
   width:17px;height:17px;border-radius:50%;border:none;
   background:var(--blush);color:var(--accent-deep);padding:0;cursor:help;flex-shrink:0;
   transition:background-color .15s,transform .15s;
 }
-.info-tip svg{width:9px;height:9px;stroke:currentColor;fill:none;stroke-width:2.2;}
-.info-tip:hover,.info-tip:focus-visible{background:var(--accent-deep);color:#fff;outline:none;transform:scale(1.08);}
+.info-tip svg{width:9px;height:9px;fill:currentColor;stroke:none;}
+.field span:hover .info-tip,.info-tip:focus-visible{background:var(--accent-deep);color:#fff;outline:none;transform:scale(1.08);}
 .info-tip-bubble{
-  position:absolute;left:50%;top:calc(100% + 11px);transform:translateX(-50%) translateY(-3px) scale(.97);
-  width:206px;max-width:64vw;background:var(--ink);color:#fff;
+  position:absolute;left:50%;bottom:calc(100% + 11px);transform:translateX(-50%) translateY(3px) scale(.97);
+  width:206px;max-width:64vw;background:var(--cream);color:var(--ink-soft);
+  border:1px solid var(--rule);
   font-size:11.5px;font-weight:400;letter-spacing:normal;text-transform:none;line-height:1.5;
   padding:10px 12px;border-radius:10px;box-shadow:var(--shadow-lift);
   opacity:0;visibility:hidden;pointer-events:none;
-  transition:opacity .15s ease,transform .15s ease;transform-origin:top center;z-index:5;
+  transition:opacity .15s ease,transform .15s ease;transform-origin:bottom center;z-index:5;
+}
+.info-tip-bubble::before{
+  content:"";position:absolute;top:100%;left:50%;transform:translateX(-50%);
+  border:6px solid transparent;border-top-color:var(--rule);
 }
 .info-tip-bubble::after{
-  content:"";position:absolute;bottom:100%;left:50%;transform:translateX(-50%);
-  border:5px solid transparent;border-bottom-color:var(--ink);
+  content:"";position:absolute;top:calc(100% - 1px);left:50%;transform:translateX(-50%);
+  border:5px solid transparent;border-top-color:var(--cream);
 }
-.info-tip:hover .info-tip-bubble,.info-tip:focus-visible .info-tip-bubble{
+.field span:hover .info-tip-bubble,.info-tip:focus-visible .info-tip-bubble{
   opacity:1;visibility:visible;transform:translateX(-50%) translateY(0) scale(1);
 }
 .terms-field{display:flex;align-items:flex-start;gap:10px;margin-top:18px;text-align:left;}
