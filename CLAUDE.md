@@ -52,6 +52,8 @@ entry point.
 ```
 index.html                  All markup, including the hero SVG illustration
 admin.html                  Second page: password-gated order view + note CRUD
+terms.html                  Terms and conditions — static content, no JS module
+privacy.html                Privacy policy — same, linked from terms.html and the footer
 src/
   main.js                   Entry point: delegated event handlers, init
   state.js                  Shared state object + rands/esc/$/isEmail helpers

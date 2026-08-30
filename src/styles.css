@@ -254,6 +254,24 @@ details.faq p{margin:12px 0 0;color:var(--ink-soft);font-size:14px;max-width:66c
 .terms-field{display:flex;align-items:flex-start;gap:10px;margin-top:18px;text-align:left;}
 .terms-field input{width:auto;flex-shrink:0;margin-top:3px;accent-color:var(--accent);}
 .terms-field span{font-size:12.5px;color:var(--ink-soft);line-height:1.5;}
+.terms-field a{color:var(--accent-deep);}
+
+/* ============================================================
+   LEGAL PAGES — terms.html, privacy.html. Long-form reading, not app UI.
+   ============================================================ */
+.legal{max-width:720px;margin:0 auto;padding:64px 40px 100px;}
+.legal h1{font-size:clamp(28px,4vw,36px);}
+.legal .updated{font-size:12.5px;color:var(--ink-faint);margin-top:8px;}
+.legal .lede{font-size:15px;color:var(--ink-soft);margin-top:22px;max-width:60ch;}
+.legal h2{font-family:'Playfair Display',serif;font-weight:500;font-size:20px;margin:40px 0 12px;}
+.legal p{font-size:14.5px;color:var(--ink-soft);line-height:1.7;margin:0 0 14px;max-width:64ch;}
+.legal ul{font-size:14.5px;color:var(--ink-soft);line-height:1.7;margin:0 0 14px;padding-left:22px;max-width:60ch;}
+.legal li{margin-bottom:6px;}
+.legal a{color:var(--accent-deep);}
+.legal-footer{border-top:1px solid var(--rule);padding:22px 0 0;}
+.legal-footer .wrap{display:flex;align-items:center;justify-content:space-between;padding:22px 0;flex-wrap:wrap;gap:12px;}
+.legal-footer a{font-size:13px;color:var(--ink-soft);text-decoration:underline;}
+.legal-footer span{font-size:12.5px;color:var(--ink-faint);}
 
 /* ============================================================
    FOOTER

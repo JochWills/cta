@@ -167,7 +167,10 @@ export function renderDrawer() {
       Your download links and receipt go to this address, so check it's right.</p>
     <label class="terms-field">
       <input type="checkbox" id="acceptTerms">
-      <span>I understand this purchase is final. Notes are digital and delivered instantly, so there are no refunds — including if I change my mind.</span>
+      <span>I've read the <a href="/terms.html" target="_blank" rel="noopener">terms</a> and
+        <a href="/privacy.html" target="_blank" rel="noopener">privacy policy</a>, and understand this
+        purchase is final — notes are digital and delivered instantly, so there are no refunds,
+        including if I change my mind.</span>
     </label>
     <div id="checkoutError"></div>`;
   foot.innerHTML = `
