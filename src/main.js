@@ -105,7 +105,7 @@ const observer = new IntersectionObserver(
   },
   { rootMargin: "-45% 0px -50% 0px" }
 );
-["shop", "about", "how", "faqs", "contact"].forEach((id) => {
+["shop", "about", "faqs", "contact"].forEach((id) => {
   const el = document.getElementById(id);
   if (el) observer.observe(el);
 });
