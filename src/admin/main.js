@@ -88,7 +88,14 @@ function doLogout() {
   showLoggedOut();
 }
 
-/** e.g. ("taxation", "TAX3") -> "taxation/tax3.pdf" */
+/**
+ * e.g. ("taxation", "tax3-a1b2") -> "taxation/tax3-a1b2.pdf"
+ *
+ * `code` here is the server-generated identifier from admin-products (see
+ * its comment) — the admin page never asks for or shows one anymore, but
+ * the returned product row still carries it, and it's what keeps this path
+ * stable across title edits.
+ */
 function slugPath(module_slug, code) {
   const clean = code.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
   return `${module_slug}/${clean}.pdf`;
@@ -102,7 +109,6 @@ async function saveProductForm(e) {
   const id = $("#pf_id").value || null;
   const priceRands = parseFloat($("#pf_price").value);
   const fields = {
-    code: $("#pf_code").value.trim(),
     title: $("#pf_title").value.trim(),
     description: $("#pf_description").value.trim() || null,
     module_slug: $("#pf_module").value,
@@ -111,8 +117,8 @@ async function saveProductForm(e) {
     is_active: $("#pf_active").checked,
   };
 
-  if (!fields.code || !fields.title || Number.isNaN(fields.price_cents)) {
-    productFormError("Code, title and a valid price are required.");
+  if (!fields.title || Number.isNaN(fields.price_cents)) {
+    productFormError("Title and a valid price are required.");
     return;
   }
 
@@ -143,7 +149,7 @@ async function saveProductForm(e) {
 async function doDelete(id) {
   const product = adminState.products.find((p) => p.id === id);
   if (!product) return;
-  if (!confirm(`Delete ${product.code} — ${product.title}? This can't be undone.`)) return;
+  if (!confirm(`Delete ${product.title}? This can't be undone.`)) return;
   try {
     await deleteProduct(id);
     toast("Note deleted");

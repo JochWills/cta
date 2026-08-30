@@ -81,7 +81,7 @@ function orderRow(o) {
         <details>
           <summary>${items.length} section${items.length === 1 ? "" : "s"}</summary>
           <ul class="order-items">
-            ${items.map((i) => `<li>${esc(i.code)} — ${esc(i.title)} (${rands(i.price_cents)})</li>`).join("")}
+            ${items.map((i) => `<li>${esc(i.title)} (${rands(i.price_cents)})</li>`).join("")}
           </ul>
         </details>
       </td>
@@ -104,7 +104,7 @@ export function renderProducts() {
     <div class="admin-table-wrap">
       <table class="admin-table">
         <thead><tr>
-          <th>Code</th><th>Title</th><th>Module</th><th>Price</th><th>Active</th><th>PDF</th><th></th>
+          <th>Title</th><th>Module</th><th>Price</th><th>Active</th><th>PDF</th><th></th>
         </tr></thead>
         <tbody>
           ${adminState.products.map(productRow).join("")}
@@ -117,9 +117,8 @@ function productRow(p) {
   const m = MOD[p.module_slug] || MODULES[0];
   return `
     <tr>
-      <td><span class="tag" style="background:${m.tint};color:${m.ink}">${esc(p.code)}</span></td>
       <td>${esc(p.title)}</td>
-      <td>${esc(m.short)}</td>
+      <td><span class="tag" style="background:${m.tint};color:${m.ink}">${esc(m.short)}</span></td>
       <td>${rands(p.price_cents)}</td>
       <td>${p.is_active ? "Yes" : "No"}</td>
       <td>${p.file_path ? "Yes" : "—"}</td>
@@ -136,9 +135,8 @@ function moduleOptions(selected) {
 
 export function openProductForm(product) {
   adminState.editing = product || null;
-  $("#productFormTitle").textContent = product ? `Edit ${product.code}` : "Add note";
+  $("#productFormTitle").textContent = product ? `Edit ${product.title}` : "Add note";
   $("#pf_id").value = product?.id || "";
-  $("#pf_code").value = product?.code || "";
   $("#pf_module").innerHTML = moduleOptions(product?.module_slug || MODULES[0].slug);
   $("#pf_title").value = product?.title || "";
   $("#pf_description").value = product?.description || "";

@@ -34,6 +34,21 @@ function pickEditable(input: Record<string, unknown>) {
   return row;
 }
 
+/**
+ * `code` (FR1, MA3, ...) used to be something the admin typed in, but the
+ * admin page no longer asks for one — the title is enough to identify a
+ * note there. The column is still `not null unique` in the database though,
+ * and slugPath (src/admin/main.js) still uses it to build a stable storage
+ * path for the PDF, so a value still has to exist. Derived once from the
+ * title at creation time and never touched again, so editing the title
+ * later doesn't move the file out from under an already-uploaded PDF.
+ */
+function generateCode(title: string): string {
+  const slug = title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 40) || "note";
+  const suffix = Array.from(crypto.getRandomValues(new Uint8Array(4)), (b) => (b % 36).toString(36)).join("");
+  return `${slug}-${suffix}`;
+}
+
 Deno.serve(async (req) => {
   const preflight = handlePreflight(req);
   if (preflight) return preflight;
@@ -59,9 +74,10 @@ Deno.serve(async (req) => {
 
       case "create": {
         const row = pickEditable(body);
-        if (!row.code || !row.title || !row.module_slug) {
-          return json({ error: "Code, title and module are required" }, 400);
+        if (!row.title || !row.module_slug) {
+          return json({ error: "Title and module are required" }, 400);
         }
+        if (!row.code) row.code = generateCode(String(row.title));
         const { data, error } = await supabase.from("products").insert(row).select().single();
         if (error) throw error;
         return json(data);
