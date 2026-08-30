@@ -52,8 +52,8 @@ export async function placeOrder() {
 
   try {
     if (hasDB) {
-      const saved = await sbInsert("orders", order);
-      state.lastOrderRef = `Order ${saved.reference || reference}`;
+      await sbInsert("orders", order);
+      state.lastOrderRef = `Order ${reference}`;
     } else {
       state.lastOrderRef = `Order ${reference} (demo — Supabase not connected)`;
     }

@@ -28,16 +28,22 @@ export async function sbGet(path) {
   return res.json();
 }
 
-/** INSERT one row and return it. */
+/**
+ * INSERT one row. Uses "return=minimal" on purpose: the orders table has no
+ * SELECT policy for the public key (customers' emails shouldn't be readable
+ * by anyone holding the public key), so asking Supabase to hand the row back
+ * fails Row Level Security even though the insert itself is allowed. The
+ * caller already knows what it needs (the reference it generated), so it
+ * doesn't need anything back.
+ */
 export async function sbInsert(table, row) {
   const res = await fetch(`${SUPABASE_URL}/rest/v1/${table}`, {
     method: "POST",
-    headers: { ...headers(), Prefer: "return=representation" },
+    headers: { ...headers(), Prefer: "return=minimal" },
     body: JSON.stringify(row),
   });
   if (!res.ok) throw new Error(`Supabase write failed (${res.status}): ${await res.text()}`);
-  const [created] = await res.json();
-  return created;
+  return true;
 }
 
 /** Call a Supabase Edge Function (used for PayFast — see supabase/functions/). */
