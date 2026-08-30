@@ -26,4 +26,14 @@ export const esc = (s) =>
 
 export const $ = (sel) => document.querySelector(sel);
 
+/**
+ * Filename-safe stem from a product's code, e.g. "TAX3" -> "tax3". Shared by
+ * the admin upload's storage paths (src/admin/main.js) and the shop's
+ * preview image URLs (src/render.js) — both sides must derive the exact
+ * same path from the same code, or previews silently 404. Keep it here so
+ * there's exactly one place that can drift.
+ */
+export const slugifyCode = (code) =>
+  code.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+
 export const isEmail = (v) => /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v);

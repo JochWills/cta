@@ -3,7 +3,7 @@ import { SEED } from "./catalogue.js";
 import { hasDB, sbGet } from "./supabase.js";
 import { syncCart, toast, openCart } from "./render.js";
 
-const PRODUCT_COLUMNS = "id,code,title,description,module_slug,price_cents,sort_order,preview_path";
+const PRODUCT_COLUMNS = "id,code,title,description,module_slug,price_cents,sort_order,preview_pages";
 
 /**
  * Load the catalogue.

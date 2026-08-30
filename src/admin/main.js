@@ -1,4 +1,4 @@
-import { $ } from "../state.js";
+import { $, slugifyCode } from "../state.js";
 import { adminState, loadSession, saveSession, clearSession } from "./state.js";
 import {
   toast,
@@ -22,7 +22,9 @@ import {
   deleteProduct,
   uploadFile,
 } from "./api.js";
-import { renderFirstPageToPng } from "./pdfPreview.js";
+import { renderPreviewPages } from "./pdfPreview.js";
+
+const PREVIEW_MAX_PAGES = 3;
 
 async function boot() {
   loadSession();
@@ -95,11 +97,21 @@ function doLogout() {
  * `code` here is the server-generated identifier from admin-products (see
  * its comment) — the admin page never asks for or shows one anymore, but
  * the returned product row still carries it, and it's what keeps this path
- * (and the preview image's) stable across title edits.
+ * (and the preview images') stable across title edits.
  */
 function slugPath(module_slug, code, ext) {
-  const clean = code.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
-  return `${module_slug}/${clean}.${ext}`;
+  return `${module_slug}/${slugifyCode(code)}.${ext}`;
+}
+
+/**
+ * e.g. ("taxation", "tax3-a1b2", 2) -> "taxation/tax3-a1b2-p2.png"
+ *
+ * Must match exactly how the shop derives the same URL (previewPageUrl in
+ * src/render.js) — neither side stores the path, both compute it the same
+ * way from module_slug + code + page number.
+ */
+function previewPagePath(module_slug, code, page) {
+  return `${module_slug}/${slugifyCode(code)}-p${page}.png`;
 }
 
 async function saveProductForm(e) {
@@ -135,14 +147,14 @@ async function saveProductForm(e) {
       const { path } = await uploadFile(file, slugPath(saved.module_slug, saved.code, "pdf"), "notes");
 
       btn.textContent = "Generating preview…";
-      const previewPng = await renderFirstPageToPng(file);
-      const { path: previewPath } = await uploadFile(
-        previewPng,
-        slugPath(saved.module_slug, saved.code, "png"),
-        "note-previews"
+      const pages = await renderPreviewPages(file, PREVIEW_MAX_PAGES);
+      await Promise.all(
+        pages.map((png, i) =>
+          uploadFile(png, previewPagePath(saved.module_slug, saved.code, i + 1), "note-previews")
+        )
       );
 
-      await updateProduct(saved.id, { file_path: path, preview_path: previewPath });
+      await updateProduct(saved.id, { file_path: path, preview_pages: pages.length });
     }
 
     closeProductForm();

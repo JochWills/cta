@@ -25,27 +25,36 @@ on conflict (slug) do nothing;
 -- 2. PRODUCTS  (one row = one section = one PDF)
 --    file_path points at an object in the private `notes` bucket,
 --    e.g. 'financial-reporting/fr1-a1b2.pdf'.
---    preview_path points at a page-1 image in the *public* `note-previews`
---    bucket (see section 5) — generated once by the admin page when the
---    PDF is uploaded (src/admin/pdfPreview.js), shown blurred on the shop.
+--    preview_pages is how many page-preview images exist (0-3) in the
+--    *public* `note-previews` bucket (see section 5) — generated once by
+--    the admin page when the PDF is uploaded (src/admin/pdfPreview.js),
+--    up to 3 pages or the whole PDF if it's shorter than that, and shown
+--    on the shop with the last page's lower portion blurred. The path for
+--    page N is derived, not stored: 'financial-reporting/fr1-a1b2-pN.png'
+--    — see slugifyCode in src/state.js, used identically by both the
+--    admin upload (src/admin/main.js) and the shop (src/render.js) so
+--    they can't drift apart.
 -- ------------------------------------------------------------
 create table if not exists public.products (
-  id            uuid primary key default gen_random_uuid(),
-  code          text not null unique,              -- server-generated, invisible in the admin UI (see admin-products)
-  title         text not null,
-  description   text,
-  module_slug   text not null references public.modules(slug),
-  price_cents   int  not null default 2500,        -- R25.00
-  file_path     text,                              -- storage path to the PDF, in `notes` (private)
-  preview_path  text,                              -- storage path to the page-1 preview, in `note-previews` (public)
-  is_active     boolean not null default true,
-  sort_order    int not null default 0,
-  created_at    timestamptz not null default now()
+  id             uuid primary key default gen_random_uuid(),
+  code           text not null unique,              -- server-generated, invisible in the admin UI (see admin-products)
+  title          text not null,
+  description    text,
+  module_slug    text not null references public.modules(slug),
+  price_cents    int  not null default 2500,        -- R25.00
+  file_path      text,                              -- storage path to the PDF, in `notes` (private)
+  preview_pages  smallint not null default 0,       -- how many *-p1.png.. exist in `note-previews` (public)
+  is_active      boolean not null default true,
+  sort_order     int not null default 0,
+  created_at     timestamptz not null default now()
 );
 
--- Column added after the table already existed in deployed projects —
--- safe to re-run.
-alter table public.products add column if not exists preview_path text;
+-- Columns added after the table already existed in deployed projects —
+-- safe to re-run. preview_path (a single full path) was replaced by
+-- preview_pages (a count, with paths derived) when previews grew from one
+-- page to up to three.
+alter table public.products drop column if exists preview_path;
+alter table public.products add column if not exists preview_pages smallint not null default 0;
 
 create index if not exists products_module_idx on public.products (module_slug, sort_order);
 
