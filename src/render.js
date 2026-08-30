@@ -117,7 +117,7 @@ export function renderDrawer() {
   if (!state.cart.length) {
     title.textContent = "Your cart";
     body.innerHTML = `<div class="empty-state" style="margin-top:26px;">
-      Nothing here yet.<br>Pick the sections you need — R25 each.
+      Nothing here yet.<br>Pick the sections you need.
     </div>`;
     foot.innerHTML = `<button class="btn ghost" id="keepShopping">Browse notes</button>`;
     return;

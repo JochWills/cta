@@ -5,7 +5,8 @@ Context for Claude Code working in this repo.
 ## What this is
 
 **CTA Notes by Courts** — a small South African e-commerce site selling PGDA/CTA
-study notes as individual PDF sections, R25 each, grouped under four modules:
+study notes as individual PDF sections, priced per section (not a fixed price —
+see each product's `price_cents`), grouped under four modules:
 
 | Module | Slug | Sections |
 |---|---|---|
