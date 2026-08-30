@@ -1,11 +1,12 @@
 /**
  * order-download — self-serve download links for a paid order.
  *
- * There's no delivery email yet (no domain to send from — see CLAUDE.md's
- * "Not done" list), so this function *is* the delivery mechanism: the shop
- * calls it right after a buyer returns from Paystack (src/main.js's ?paid=1
+ * There's no email hosting on the domain yet (see CLAUDE.md's "Not done"
+ * list), so this function *is* the delivery mechanism: the shop calls it
+ * right after a buyer returns from Paystack (src/main.js's ?paid=1
  * handling), and again any time they come back to the "Get your notes"
- * footer link — src/downloads.js drives both.
+ * footer link or the inline copy of the same form in the Contact section —
+ * src/downloads.js drives all of it.
  *
  * Public (no admin token) since a buyer isn't logged in. Requiring the
  * email to match the order (not just the reference) is what stops someone

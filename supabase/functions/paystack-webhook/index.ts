@@ -91,9 +91,9 @@ Deno.serve(async (req) => {
     // Nothing to do here for delivery — this webhook only flips the status.
     // The buyer gets their signed download links from order-download, which
     // the shop calls once it sees them back from Paystack (and again any
-    // time from the "get your notes" footer link). See that function's
-    // comment for why: no domain to send delivery email from yet, so
-    // self-serve download is the mechanism, not a TODO waiting on one.
+    // time from the "get your notes" footer link or Contact section form).
+    // See that function's comment for why: no email hosting on the domain
+    // yet, so self-serve download is the mechanism, not a TODO waiting on one.
 
     return ok();
   } catch (err) {

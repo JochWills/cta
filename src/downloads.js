@@ -3,8 +3,8 @@ import { hasDB, sbFunction } from "./supabase.js";
 
 /**
  * The "get your notes" lookup — this is the actual delivery mechanism right
- * now, not just a nicety: there's no domain to send delivery email from yet
- * (see CLAUDE.md), so a buyer gets their download links either right after
+ * now, not just a nicety: there's no email hosting on the domain yet (see
+ * CLAUDE.md), so a buyer gets their download links either right after
  * paying (the modal opens automatically, see main.js's ?paid=1 handling),
  * from the always-on copy of the same form in the Contact section, or from
  * the footer link (which opens the modal) any time later.

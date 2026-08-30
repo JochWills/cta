@@ -1,8 +1,9 @@
-# Delivering the notes (no domain yet)
+# Delivering the notes (no email hosting yet)
 
-There's no domain with email hosting yet, so instead of emailing download
-links once an order is `paid`, the shop generates and shows them itself. This
-is `order-download` in `supabase/functions/`, driven from `src/downloads.js`.
+`pgdanotes.co.za` is a real domain now, but there's no email hosting set up
+on it yet — no mailbox to send from. So instead of emailing download links
+once an order is `paid`, the shop generates and shows them itself. This is
+`order-download` in `supabase/functions/`, driven from `src/downloads.js`.
 
 ## The flow
 
@@ -31,16 +32,18 @@ for anyone coming back later, on a different device, or from a lost tab.
 ## Why this over email
 
 - Works today, with nothing to sign up for or verify.
-- No spam-folder risk — a shared/unverified sending domain (the only option
-  without owning a domain) lands in spam noticeably more than it should for
-  something already paid for.
+- No spam-folder risk — sending from a shared/unverified address (the only
+  option before `pgdanotes.co.za` has SPF/DKIM records set up for a mail
+  provider) lands in spam noticeably more than it should for something
+  already paid for.
 - The self-serve lookup is also the disaster-recovery path for someone who
   loses their file down the line — email delivery alone doesn't cover that
   without also building a "resend" flow, so building the lookup first covers
   both cases in one function.
 
-Once a real domain exists, sending the same links by email too (Resend or
-Postmark) is a small addition on top of this, not a replacement for it — see
+Once the domain is verified with a mail provider, sending the same links by
+email too (Resend or Postmark) is a small addition on top of this, not a
+replacement for it — see
 `order-download`'s deploy comment for where that would slot in.
 
 ## order-download

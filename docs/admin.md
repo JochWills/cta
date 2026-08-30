@@ -42,7 +42,7 @@ supabase secrets set ADMIN_SESSION_SECRET=$(openssl rand -hex 32)
 isn't set yet:
 
 ```bash
-supabase secrets set SITE_URL=https://ctanotes.co.za
+supabase secrets set SITE_URL=https://pgdanotes.co.za
 ```
 
 **2. Deploy the four functions:**

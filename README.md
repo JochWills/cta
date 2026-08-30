@@ -117,9 +117,9 @@ on the demo catalogue.
 
 ## What's still to do
 
-1. **Delivery email** — a real domain would let the download links also go
-   out by email as a backup copy. Not required for delivery to work — see
-   `docs/order-download.md` for how it already works without one.
+1. **Delivery email** — email hosting on the domain would let the download
+   links also go out by email as a backup copy. Not required for delivery to
+   work — see `docs/order-download.md` for how it already works without one.
 2. **The PDFs** — bucket exists; upload them via `/admin.html`'s note editor.
 3. **Contact form** — currently shows a confirmation but sends nothing.
 4. **Hero photo** — placeholder illustration, see `public/README-hero.md`.

@@ -93,15 +93,26 @@ That last one is the real test — it proves the environment variables took.
 
 ## 5. Custom domain
 
-Once you have a domain (`ctanotes.co.za` or similar):
+This shop's live domain is `pgdanotes.co.za`, bought on GoDaddy — apex is
+canonical, `www.pgdanotes.co.za` redirects to it.
 
 1. Render → your site → **Settings → Custom Domains** → **Add Custom Domain**
-2. Add both the apex (`ctanotes.co.za`) and `www`
-3. At your registrar, add the DNS records Render shows you — an `ALIAS`/`ANAME`
-   for the apex and a `CNAME` for `www`. South African registrars sometimes call
-   the apex record "ALIAS" or "CNAME flattening".
-4. Wait for DNS to propagate. Render issues a Let's Encrypt certificate
-   automatically and redirects HTTP to HTTPS.
+2. Add both `pgdanotes.co.za` and `www.pgdanotes.co.za`; set the apex as the
+   primary domain (Render redirects the other one to it).
+3. Render shows the exact DNS records to add — copy those values rather than
+   guessing, they can change. Typically an `A` record (or `ALIAS`/`ANAME`,
+   which GoDaddy doesn't offer — use the `A` record Render gives instead) for
+   the apex, and a `CNAME` for `www` pointing at the site's `onrender.com`
+   hostname.
+4. At GoDaddy: **My Products → DNS** for the domain → add those records,
+   removing GoDaddy's default parking `A` record/forwarding for `@` first if
+   one's there, since it'll conflict.
+5. Wait for DNS to propagate (usually minutes, can take longer). Render
+   issues a Let's Encrypt certificate automatically once it sees the records
+   and redirects HTTP to HTTPS.
+6. Once it's live, update `SITE_URL` (see below) and re-test a full checkout
+   on the new domain — Paystack's CORS check and callback URL both depend on
+   it matching exactly.
 
 ## Ongoing deploys
 
@@ -121,8 +132,11 @@ Two things to remember, since both live partly on Supabase:
    callback and the admin page's CORS check both point at the right place:
 
    ```bash
-   supabase secrets set SITE_URL=https://ctanotes.co.za
+   supabase secrets set SITE_URL=https://pgdanotes.co.za
    ```
+
+   No trailing slash — a trailing slash here caused a real CORS bug once
+   (browsers never send one in the `Origin` header, so it stopped matching).
 
 2. The Edge Functions (`paystack-initiate`, `paystack-webhook`, and the four
    `admin-*` ones) deploy to **Supabase**, not to Render. Render only ever

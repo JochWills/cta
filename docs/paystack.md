@@ -66,7 +66,7 @@ restrict CORS on `paystack-initiate`) — it's the same secret the admin page
 uses, see `docs/admin.md`:
 
 ```bash
-supabase secrets set SITE_URL=https://ctanotes.co.za
+supabase secrets set SITE_URL=https://pgdanotes.co.za
 ```
 
 `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` are injected into Edge
@@ -124,7 +124,7 @@ retrying.
 Not this webhook's job — see `docs/order-download.md`. In short: once an
 order is `paid`, the shop fetches signed download links itself (via the
 `order-download` Edge Function) rather than waiting on an email, since
-there's no domain to send one from yet.
+there's no email hosting set up on the domain yet.
 
 ## 6. Testing
 

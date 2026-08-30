@@ -127,7 +127,7 @@ purchase time — `product_id`/`code`/`title`/`price_cents`, no `file_path`;
 checkbox ticked, and the column backs that with an actual record, not just
 a client-side gate).
 
-**Delivery.** There's no domain to send email from yet, so `order-download`
+**Delivery.** There's no email hosting set up on the domain yet, so `order-download`
 (called from `src/downloads.js`) is delivery: given a `reference` + matching
 `email`, it returns 24-hour signed URLs for each item's `file_path`. The
 shop calls it automatically when a buyer lands back on `/?paid=1&ref=...`
@@ -186,9 +186,10 @@ password-gated admin page at `/admin.html` for viewing orders and managing
 notes including PDF upload (`docs/admin.md`).
 
 Not done:
-1. **Delivery email** — a real domain would let `order-download`'s links also
-   go out by email as a backup copy (Resend/Postmark); not required for
-   delivery to work, since the download modal already handles that without one.
+1. **Delivery email** — email hosting on `pgdanotes.co.za` (or a verified
+   sending domain with Resend/Postmark) would let `order-download`'s links
+   also go out by email as a backup copy; not required for delivery to work,
+   since the download modal already handles that without one.
 2. **Contact form** — currently shows a toast and clears; it sends nothing.
 3. **Hero photo** — placeholder SVG illustration, see `public/README-hero.md`.
 
