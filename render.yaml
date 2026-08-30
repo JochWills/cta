@@ -29,15 +29,19 @@ services:
       - path: /assets/*
         name: Cache-Control
         value: public, max-age=31536000, immutable
-      # index.html must NOT be cached long, or visitors keep loading the old
-      # bundle after a deploy. Same for admin.html — the second page Vite
-      # builds (see vite.config.js).
+      # index.html and admin.html must NOT be cached anywhere, or visitors
+      # (and Courts, editing notes right after a deploy) keep loading an old
+      # bundle. no-store, not no-cache: no-cache still permits a shared/CDN
+      # cache to serve a stored copy after revalidation, which is exactly
+      # what happened here — a real deploy sat behind a stale cached
+      # admin.html for several minutes even past its own max-age. no-store
+      # forbids storing the response anywhere, full stop.
       - path: /index.html
         name: Cache-Control
-        value: no-cache
+        value: no-store
       - path: /admin.html
         name: Cache-Control
-        value: no-cache
+        value: no-store
       - path: /*
         name: X-Content-Type-Options
         value: nosniff
