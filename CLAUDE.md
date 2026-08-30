@@ -54,7 +54,9 @@ entry point.
 index.html                  All markup, including the hero SVG illustration
 admin.html                  Second page: password-gated order view + note CRUD
 terms.html                  Terms and conditions — static content, no JS module
+                             (served at /terms — see render.yaml's rewrite routes)
 privacy.html                Privacy policy — same, linked from terms.html and the footer
+                             (served at /privacy, same rewrite)
 src/
   main.js                   Entry point: delegated event handlers, init
   state.js                  Shared state object + rands/esc/$/isEmail helpers
@@ -79,7 +81,7 @@ supabase/
     paystack-initiate/        ┐ deployed — see docs/paystack.md
     paystack-webhook/         ┘
     order-download/          deployed — self-serve download links, see Data model below
-render.yaml                 Render Blueprint — build settings, cache headers
+render.yaml                 Render Blueprint — build settings, cache headers, URL rewrites
 public/                     favicon, and where hero.jpg goes
 ```
 

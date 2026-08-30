@@ -166,8 +166,8 @@ export function renderDrawer() {
       Your notes are matched to this address — check it's right, so you can find them again after paying.</p>
     <label class="terms-field">
       <input type="checkbox" id="acceptTerms">
-      <span>I've read the <a href="/terms.html" target="_blank" rel="noopener">terms</a> and
-        <a href="/privacy.html" target="_blank" rel="noopener">privacy policy</a>, and understand this
+      <span>I've read the <a href="/terms" target="_blank" rel="noopener">terms</a> and
+        <a href="/privacy" target="_blank" rel="noopener">privacy policy</a>, and understand this
         purchase is final — notes are digital and delivered instantly, so there are no refunds,
         including if I change my mind.</span>
     </label>

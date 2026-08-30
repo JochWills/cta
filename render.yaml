@@ -49,6 +49,17 @@ services:
         name: Referrer-Policy
         value: strict-origin-when-cross-origin
 
-# No catch-all rewrite rule here on purpose. This is a single page with anchor
-# navigation, not a client-side router, so /* -> /index.html would only hide
-# genuine 404s. Add one if you ever introduce real routes.
+    # Serve the legal pages without ".html" in the address bar — a rewrite,
+    # not a redirect, so the URL the visitor sees stays /terms, but Render
+    # serves the built terms.html for it. Deliberately not a catch-all
+    # (/* -> /index.html): this is a single page with anchor navigation, not
+    # a client-side router, so a catch-all would only hide genuine 404s.
+    # /terms.html and /privacy.html still work directly too — nothing here
+    # stops them, this just adds a second way in.
+    routes:
+      - type: rewrite
+        source: /terms
+        destination: /terms.html
+      - type: rewrite
+        source: /privacy
+        destination: /privacy.html
