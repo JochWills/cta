@@ -24,6 +24,7 @@ const EDITABLE_FIELDS = [
   "module_slug",
   "price_cents",
   "file_path",
+  "preview_path",
   "is_active",
   "sort_order",
 ] as const;
