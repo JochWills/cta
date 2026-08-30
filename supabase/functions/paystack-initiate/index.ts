@@ -17,8 +17,14 @@ const SITE_URL = Deno.env.get("SITE_URL")!;
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_ROLE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
+// Falls back to "*" so a missing SITE_URL secret doesn't turn into a
+// confusing "Access-Control-Allow-Origin: undefined" that every browser
+// silently blocks — same fallback _shared/admin.ts uses for the admin-*
+// functions. SITE_URL is still required below, for callback_url: unlike
+// CORS, there's no safe default for where Paystack should send the buyer
+// back to.
 const corsHeaders = {
-  "Access-Control-Allow-Origin": SITE_URL,
+  "Access-Control-Allow-Origin": Deno.env.get("SITE_URL") || "*",
   "Access-Control-Allow-Headers": "authorization, apikey, content-type",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
