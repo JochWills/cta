@@ -160,7 +160,7 @@ export function renderDrawer() {
   body.innerHTML = `
     ${lines}
     <label class="field"><span>Full name</span>
-      <input type="text" id="buyerName" placeholder="Courtney Smith" autocomplete="name"></label>
+      <input type="text" id="buyerName" placeholder="Jane Doe" autocomplete="name"></label>
     <label class="field"><span>Email for your notes</span>
       <input type="email" id="buyerEmail" placeholder="you@example.com" autocomplete="email"></label>
     <p class="note" style="text-align:left;margin-top:10px;">
