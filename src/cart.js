@@ -1,7 +1,7 @@
 import { state } from "./state.js";
 import { SEED } from "./catalogue.js";
 import { hasDB, sbGet } from "./supabase.js";
-import { syncCart, toast, openCart } from "./render.js";
+import { syncCart, toast, openCart, renderModules } from "./render.js";
 
 const PRODUCT_COLUMNS = "id,code,title,description,module_slug,price_cents,sort_order,preview_pages";
 
@@ -49,6 +49,7 @@ export async function loadProducts() {
   } else {
     state.products = SEED;
   }
+  renderModules(); // now that state.products is populated, the per-module section counts are real
   syncCart();
 }
 

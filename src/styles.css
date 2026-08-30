@@ -143,11 +143,17 @@ h1,h2,h3{font-family:'Playfair Display',Georgia,serif;font-weight:400;letter-spa
   width:52px;height:52px;border-radius:10px;flex-shrink:0;display:grid;place-items:center;
 }
 .module-icon svg{width:24px;height:24px;stroke-width:1.5;fill:none;stroke-linecap:round;stroke-linejoin:round;}
-/* "01/04" etc. — less "here's a blurb about this module" and more "this is
-   one of exactly four," which is the thing worth signalling once the
-   description copy is gone. */
-.module-num{font-family:'Playfair Display',serif;font-size:14px;color:var(--accent);}
-.module-num i{font-style:normal;color:var(--ink-faint);}
+/* How many sections are actually for sale in this module right now — reads
+   as a live stat rather than a static blurb, and updates once real product
+   counts come in (renderModules runs again from loadProducts). */
+.module-num{
+  font-family:'Playfair Display',serif;font-size:22px;color:var(--accent);
+  display:inline-flex;align-items:baseline;gap:6px;
+}
+.module-num i{
+  font-style:normal;font-family:'Inter',sans-serif;font-size:11px;
+  letter-spacing:.08em;text-transform:uppercase;color:var(--ink-faint);
+}
 .module-card h3{font-size:18.5px;line-height:1.28;margin-top:18px;}
 .module-link{
   margin-top:auto;padding-top:16px;border-top:1px solid var(--rule);width:100%;
