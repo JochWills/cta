@@ -23,7 +23,7 @@ export function renderModules() {
         <span class="module-icon" style="background:${m.tint}">
           <svg viewBox="0 0 24 24" style="stroke:${m.ink}">${m.icon}</svg>
         </span>
-        <span class="module-num">${count}<i>${count === 1 ? "section" : "sections"}</i></span>
+        <span class="module-num">${count}<i>${count === 1 ? "item" : "items"}</i></span>
       </span>
       <h3>${esc(m.name)}</h3>
       <span class="module-link">View sections
