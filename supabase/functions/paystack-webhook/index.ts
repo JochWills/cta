@@ -88,16 +88,12 @@ Deno.serve(async (req) => {
 
     if (!updated?.length) return ok(); // already handled
 
-    // TODO: create signed URLs for each item's file_path and email them.
-    //   const { data: items } = await supabase.from("orders").select("items").eq("id", order.id).single();
-    //   const links = await Promise.all(items.map(async (item) => {
-    //     const { data: p } = await supabase.from("products")
-    //       .select("file_path,title").eq("id", item.product_id).single();
-    //     const { data: signed } = await supabase.storage.from("notes")
-    //       .createSignedUrl(p.file_path, 60 * 60 * 24);
-    //     return { title: p.title, url: signed.signedUrl };
-    //   }));
-    //   await sendDownloadEmail(order.email, order.reference, links);
+    // Nothing to do here for delivery — this webhook only flips the status.
+    // The buyer gets their signed download links from order-download, which
+    // the shop calls once it sees them back from Paystack (and again any
+    // time from the "get your notes" footer link). See that function's
+    // comment for why: no domain to send delivery email from yet, so
+    // self-serve download is the mechanism, not a TODO waiting on one.
 
     return ok();
   } catch (err) {

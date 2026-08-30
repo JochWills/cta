@@ -319,6 +319,7 @@
         <li><a href="#about">About</a></li>
         <li><a href="#faqs">FAQs</a></li>
         <li><a href="#contact">Contact</a></li>
+        <li><a href="#" id="openDownload">Already paid? Get your notes</a></li>
         <li><a href="/terms.html">Terms and conditions</a></li>
         <li><a href="/privacy.html">Privacy policy</a></li>
       </ul>
@@ -344,10 +345,10 @@
 </aside>
 
 <!-- ══════════════ PREVIEW MODAL ══════════════ -->
-<div class="preview-modal" id="previewModal" hidden role="dialog" aria-modal="true" aria-label="Note preview">
-  <div class="preview-scrim" id="previewScrim"></div>
-  <div class="preview-panel">
-    <button class="icon-btn preview-close" id="closePreview" aria-label="Close preview">
+<div class="modal" id="previewModal" hidden role="dialog" aria-modal="true" aria-label="Note preview">
+  <div class="modal-scrim" id="previewScrim"></div>
+  <div class="modal-panel">
+    <button class="icon-btn modal-close" id="closePreview" aria-label="Close preview">
       <svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg>
     </button>
     <div class="preview-frame" id="previewFrame"></div>
@@ -356,6 +357,34 @@
       <h3 id="previewTitle"></h3>
       <button class="btn" id="previewAddBtn"></button>
       <p class="note">First page only — the rest unlocks once you buy it.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════ DOWNLOAD MODAL ══════════════
+     Self-serve delivery: there's no delivery email yet (no domain to send
+     from — see CLAUDE.md), so this is how a buyer actually gets their PDFs.
+     It opens automatically right after a successful payment, and is also
+     reachable any time from the footer link, in case someone loses the
+     file or comes back on another device. -->
+<div class="modal" id="downloadModal" hidden role="dialog" aria-modal="true" aria-label="Get your notes">
+  <div class="modal-scrim" id="downloadScrim"></div>
+  <div class="modal-panel">
+    <button class="icon-btn modal-close" id="closeDownload" aria-label="Close">
+      <svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg>
+    </button>
+    <div class="download-body">
+      <h3>Get your notes</h3>
+      <p class="note" style="margin:8px 0 0;">Enter your order reference and the email you paid with —
+        this regenerates your download links any time you need them.</p>
+      <form id="downloadForm">
+        <label class="field"><span>Order reference</span>
+          <input type="text" id="dlReference" placeholder="CTA-XXXXXX" autocomplete="off"></label>
+        <label class="field"><span>Email you paid with</span>
+          <input type="email" id="dlEmail" placeholder="you@example.com" autocomplete="email"></label>
+        <button class="btn" id="dlSubmit" type="submit" style="width:100%;margin-top:16px;">Find my notes</button>
+      </form>
+      <div id="dlResult"></div>
     </div>
   </div>
 </div>

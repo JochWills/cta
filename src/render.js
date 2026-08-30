@@ -106,8 +106,8 @@ export function renderDrawer() {
       <div class="ok-panel">
         <div class="ring"><svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></div>
         <h3>Thanks — you're in</h3>
-        <p>Your order is saved and your email is on the list. Payment gets wired up next,
-           then your download links are sent automatically.</p>
+        <p>Your order is saved. Once payment is wired up, this is where your download
+           links will show up automatically.</p>
         <span class="ref">${esc(state.lastOrderRef)}</span>
       </div>`;
     foot.innerHTML = `<button class="btn ghost" id="keepShopping">Keep browsing notes</button>`;
@@ -163,7 +163,7 @@ export function renderDrawer() {
     <label class="field"><span>Email for your notes</span>
       <input type="email" id="buyerEmail" placeholder="you@example.com" autocomplete="email"></label>
     <p class="note" style="text-align:left;margin-top:10px;">
-      Your download links and receipt go to this address, so check it's right.</p>
+      Your notes are matched to this address — check it's right, so you can find them again after paying.</p>
     <label class="terms-field">
       <input type="checkbox" id="acceptTerms">
       <span>I've read the <a href="/terms.html" target="_blank" rel="noopener">terms</a> and

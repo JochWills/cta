@@ -2,7 +2,8 @@
 
 The payment processor for checkout. `paystack-initiate` and `paystack-webhook`
 in `supabase/functions/` are deployed; this is how they work and what's left
-to configure.
+to configure. Delivery of the purchased PDFs afterwards is `order-download` —
+see `docs/order-download.md` — not part of this flow.
 
 ## Why it can't be done in the browser
 
@@ -36,9 +37,9 @@ The browser is never trusted. The order only becomes `paid` when the webhook
 fires and its signature checks out — **not** when the browser lands back on
 `callback_url`. Paystack sends the buyer back there whether the payment
 succeeded, failed, or was abandoned, so that redirect is just "the buyer is
-back," never proof of payment. That's why `main.js`'s message for `?paid=1`
-says "we'll email your download links once the payment is confirmed" rather
-than "thanks for your purchase."
+back," never proof of payment. That's why landing on `?paid=1` opens the
+download modal (`src/downloads.js`) and lets *it* ask the database what
+actually happened, rather than the redirect itself claiming success.
 
 ## 1. Account setup
 
@@ -113,25 +114,17 @@ where reference = $reference and status = 'pending';
 
 Guard against duplicates — Paystack retries on anything but a fast 200. The
 `and status = 'pending'` clause makes the update idempotent, so a repeated
-webhook won't re-send the email once delivery is wired up.
+webhook doesn't do anything the second time round.
 
 Always respond `200 OK`, even on rejection — a non-200 makes Paystack keep
 retrying.
 
 ## 5. Delivering the notes
 
-Not built yet — the same gap the PayFast plan had (see `paystack-webhook`'s
-`TODO`). After an order flips to `paid`:
-
-```ts
-const { data } = await supabase.storage
-  .from("notes")
-  .createSignedUrl(product.file_path, 60 * 60 * 24); // 24 hours
-```
-
-Email the links (Resend, Postmark, or Supabase's SMTP). Keep the `notes`
-bucket private — a public bucket means one shared link ends up circulating
-forever.
+Not this webhook's job — see `docs/order-download.md`. In short: once an
+order is `paid`, the shop fetches signed download links itself (via the
+`order-download` Edge Function) rather than waiting on an email, since
+there's no domain to send one from yet.
 
 ## 6. Testing
 
@@ -144,7 +137,7 @@ against the live URL, or tunnel with `ngrok http 54321` and set that tunnel
 URL as the Webhook URL in the Paystack dashboard temporarily.
 
 Before going live: confirm an abandoned/declined payment leaves the order
-`pending`; a duplicate webhook doesn't send two emails once delivery exists;
-an amount mismatch is rejected and logged; switch `PAYSTACK_SECRET_KEY` from
-`sk_test_...` to `sk_live_...` and re-set the webhook URL if you registered a
-separate live-mode webhook.
+`pending`; a duplicate webhook is a no-op the second time; an amount mismatch
+is rejected and logged; switch `PAYSTACK_SECRET_KEY` from `sk_test_...` to
+`sk_live_...` and re-set the webhook URL if you registered a separate
+live-mode webhook.

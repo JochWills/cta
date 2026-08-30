@@ -82,8 +82,9 @@ src/
   admin/                   Admin page's state/api/render/main + admin.css
 supabase/
   schema.sql               Tables, RLS, storage bucket, seed data
-  functions/                Paystack + admin Edge Functions (deployed)
+  functions/                Paystack, admin + order-download Edge Functions (deployed)
 docs/paystack.md           Full Paystack integration guide
+docs/order-download.md     How the notes actually get delivered (no email yet)
 docs/admin.md              Admin page setup and usage
 docs/deploy-render.md      Deploying to Render, step by step
 render.yaml                Render Blueprint (build settings, headers, env vars)
@@ -116,8 +117,9 @@ on the demo catalogue.
 
 ## What's still to do
 
-1. **Delivery emails** — signed download links after an order is marked paid.
-   `supabase/functions/paystack-webhook` has a `TODO` marking exactly where.
+1. **Delivery email** — a real domain would let the download links also go
+   out by email as a backup copy. Not required for delivery to work — see
+   `docs/order-download.md` for how it already works without one.
 2. **The PDFs** — bucket exists; upload them via `/admin.html`'s note editor.
 3. **Contact form** — currently shows a confirmation but sends nothing.
 4. **Hero photo** — placeholder illustration, see `public/README-hero.md`.
@@ -130,6 +132,6 @@ re-scan, and it will pick that file up automatically.
 
 Good first prompts:
 
-- "Read docs/paystack.md and wire up the delivery email in paystack-webhook."
+- "Read docs/order-download.md and wire up a backup delivery email using Resend."
 - "Wire the contact form to a Supabase Edge Function using Resend."
 - "Add a search box above the filter chips that filters sections by title."

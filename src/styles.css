@@ -315,19 +315,24 @@ details.faq p{margin:12px 0 0;color:var(--ink-soft);font-size:14px;max-width:66c
 .drawer-foot{border-top:1px solid var(--rule);padding:22px 26px;background:var(--cream);}
 
 /* ============================================================
+   MODAL CHROME — shared scrim/panel/close-button shell for any modal
+   (the PDF preview and the "get your notes" download lookup).
+   ============================================================ */
+.modal{position:fixed;inset:0;z-index:110;display:grid;place-items:center;padding:24px;}
+.modal[hidden]{display:none;}
+.modal-scrim{position:absolute;inset:0;background:rgba(43,37,35,.5);}
+.modal-panel{
+  position:relative;width:min(480px,100%);max-height:88vh;overflow:auto;
+  background:var(--paper);border-radius:var(--radius);box-shadow:var(--shadow-lift);
+}
+.modal-close{position:absolute;top:14px;right:14px;z-index:5;background:rgba(255,255,255,.9);}
+.modal-close:hover{background:#fff;}
+
+/* ============================================================
    PREVIEW MODAL — up to 3 pages, stacked and scrollable, with the lower
    portion of the last one blurred/faded so it's a taste of a note rather
    than a substitute for buying it.
    ============================================================ */
-.preview-modal{position:fixed;inset:0;z-index:110;display:grid;place-items:center;padding:24px;}
-.preview-modal[hidden]{display:none;}
-.preview-scrim{position:absolute;inset:0;background:rgba(43,37,35,.5);}
-.preview-panel{
-  position:relative;width:min(480px,100%);max-height:88vh;overflow:auto;
-  background:var(--paper);border-radius:var(--radius);box-shadow:var(--shadow-lift);
-}
-.preview-close{position:absolute;top:14px;right:14px;z-index:5;background:rgba(255,255,255,.9);}
-.preview-close:hover{background:#fff;}
 .preview-frame{
   overflow-y:auto;max-height:56vh;background:var(--cream);min-height:220px;
   border-radius:var(--radius) var(--radius) 0 0;
@@ -349,6 +354,14 @@ details.faq p{margin:12px 0 0;color:var(--ink-soft);font-size:14px;max-width:66c
 .preview-info h3{font-size:19px;margin:10px 0 0;}
 .preview-info .btn{width:100%;margin-top:16px;}
 .preview-info .note{margin-top:10px;}
+
+/* ============================================================
+   DOWNLOAD MODAL — the "get your notes" self-serve lookup.
+   ============================================================ */
+.download-body{padding:26px;}
+.download-body h3{font-size:19px;margin:0;}
+.download-body .line{align-items:center;}
+.download-body .line .btn{width:auto;margin-left:auto;padding:9px 18px;font-size:12.5px;}
 
 .line{display:flex;gap:14px;padding:18px 0;border-bottom:1px solid var(--rule);}
 .line>div{flex:1;min-width:0;}

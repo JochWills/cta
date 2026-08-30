@@ -13,6 +13,7 @@ import {
 } from "./render.js";
 import { loadProducts, loadCart, addToCart, removeFromCart } from "./cart.js";
 import { placeOrder } from "./checkout.js";
+import { openDownloadModal, closeDownloadModal, submitDownloadRequest } from "./downloads.js";
 
 /* ------------------------------------------------------------------
    Delegated click handling — the grid and drawer are re-rendered often,
@@ -32,6 +33,12 @@ document.addEventListener("click", (e) => {
   const preview = e.target.closest("[data-preview]");
   if (preview) return openPreview(preview.dataset.preview);
   if (e.target.closest("#closePreview") || e.target.closest("#previewScrim")) return closePreview();
+
+  if (e.target.closest("#openDownload")) {
+    e.preventDefault();
+    return openDownloadModal();
+  }
+  if (e.target.closest("#closeDownload") || e.target.closest("#downloadScrim")) return closeDownloadModal();
 
   const jump = e.target.closest("[data-jump]");
   if (jump) {
@@ -85,9 +92,16 @@ document.addEventListener("click", (e) => {
   }
 });
 
+document.addEventListener("submit", (e) => {
+  if (e.target.id !== "downloadForm") return;
+  e.preventDefault();
+  submitDownloadRequest();
+});
+
 document.addEventListener("keydown", (e) => {
   if (e.key !== "Escape") return;
   if (!$("#previewModal").hidden) return closePreview();
+  if (!$("#downloadModal").hidden) return closeDownloadModal();
   closeCart();
 });
 
@@ -114,13 +128,24 @@ const observer = new IntersectionObserver(
    Returning from Paystack's payment page. paid=1 only means the buyer came
    back through the flow — not that the payment actually succeeded (Paystack
    sends everyone here, declined or cancelled included). The real answer
-   comes from paystack-webhook, which the browser can't see, so the message
-   stays deliberately non-committal rather than promising a purchase that
-   might not have gone through.
+   comes from paystack-webhook, which the browser can't see, so this opens
+   the download modal and lets it check (and quietly retry) rather than
+   promising a purchase that might not have gone through. The email comes
+   from localStorage (saved by checkout.js right before the Paystack
+   redirect) so this works with no typing — a buyer using a different
+   device or browser just uses the footer's "Get your notes" link instead.
 ------------------------------------------------------------------ */
-if (new URLSearchParams(location.search).get("paid") === "1") {
-  toast("Thanks — we'll email your download links once the payment is confirmed.");
+const returnParams = new URLSearchParams(location.search);
+if (returnParams.get("paid") === "1") {
+  const reference = returnParams.get("ref") || "";
+  let email = "";
+  try {
+    email = localStorage.getItem("cta_last_email") || "";
+  } catch {
+    // localStorage unavailable — the download modal still opens, just without a prefilled email
+  }
   history.replaceState({}, "", location.pathname + location.hash);
+  openDownloadModal({ reference, email, auto: Boolean(reference && email) });
 }
 
 /* ------------------------------------------------------------------

@@ -62,6 +62,8 @@ src/
   supabase.js               Env config, sbGet/sbInsert/sbFunction
   cart.js                   loadProducts, addToCart, removeFromCart
   checkout.js               placeOrder — writes the order, then hands off to Paystack
+  downloads.js               openDownloadModal/submitDownloadRequest — the "get your
+                             notes" self-serve lookup, see Data model/Current state
   render.js                 All DOM rendering + toast/drawer/filter helpers
   styles.css                Everything, token-first, one file
   admin/                    Admin page's own state/api/render/main split + admin.css
@@ -76,6 +78,7 @@ supabase/
     admin-upload/            ┘
     paystack-initiate/        ┐ deployed — see docs/paystack.md
     paystack-webhook/         ┘
+    order-download/          deployed — self-serve download links, see Data model below
 render.yaml                 Render Blueprint — build settings, cache headers
 public/                     favicon, and where hero.jpg goes
 ```
@@ -116,11 +119,23 @@ are derived from `module_slug`/`code`/page number via `slugifyCode` in
 
 `orders` — `reference` (CTA-XXXXXX, also used as the Paystack transaction
 reference), `email`, `full_name`, `items` (jsonb snapshot of the cart at
-purchase time), `total_cents`, `status` (`pending` | `paid` | `failed` |
-`refunded`), `payment_ref` (Paystack's transaction id), `paid_at`,
-`terms_accepted_at` (not null — checkout won't submit without the "this
-purchase is final" checkbox ticked, and the column backs that with an
-actual record, not just a client-side gate).
+purchase time — `product_id`/`code`/`title`/`price_cents`, no `file_path`;
+`order-download` looks that up live from `products` by `product_id`),
+`total_cents`, `status` (`pending` | `paid` | `failed` | `refunded`),
+`payment_ref` (Paystack's transaction id), `paid_at`, `terms_accepted_at`
+(not null — checkout won't submit without the "this purchase is final"
+checkbox ticked, and the column backs that with an actual record, not just
+a client-side gate).
+
+**Delivery.** There's no domain to send email from yet, so `order-download`
+(called from `src/downloads.js`) is delivery: given a `reference` + matching
+`email`, it returns 24-hour signed URLs for each item's `file_path`. The
+shop calls it automatically when a buyer lands back on `/?paid=1&ref=...`
+from Paystack (email comes from `localStorage`'s `cta_last_email`, saved by
+`checkout.js` right before the redirect), and it's reachable any other time
+via the "Already paid? Get your notes" footer link. See that function's own
+comment for why it always responds `200 { ok, reason }` rather than
+404/403.
 
 `modules` — the four module rows. Currently the frontend uses the hardcoded
 `MODULES` array for presentation and only reads `products` from the database.
@@ -130,11 +145,12 @@ actual record, not just a client-side gate).
 - Anyone may `select` active products.
 - Anyone may `insert` an order, but only with `status = 'pending'`.
 - **Nobody with the anon key can read, update or delete orders.** That is
-  deliberate. Order updates happen server-side with the service_role key inside
-  an Edge Function (`paystack-webhook` for marking paid, `admin-orders` for the
-  admin page's read-only view). If a browser-side query to `orders` returns
-  nothing, RLS is working as designed — do not "fix" it by loosening the
-  policy.
+  deliberate. Order reads/updates happen server-side with the service_role key
+  inside an Edge Function (`paystack-webhook` for marking paid, `admin-orders`
+  for the admin page's read-only view, `order-download` for a buyer looking up
+  their own order by reference + email — see Data model below). If a
+  browser-side query to `orders` returns nothing, RLS is working as designed —
+  do not "fix" it by loosening the policy.
 
 ## Running without a database
 
@@ -164,14 +180,15 @@ needs a redeploy to take effect.
 
 Done: full front end, module filtering, cart drawer, two-step checkout, order +
 email capture into Supabase, responsive down to 390px, keyboard focus states,
-reduced-motion support, Paystack checkout (`docs/paystack.md`), and a
+reduced-motion support, Paystack checkout (`docs/paystack.md`), self-serve PDF
+delivery with no email required (`order-download`, see Data model above), and a
 password-gated admin page at `/admin.html` for viewing orders and managing
 notes including PDF upload (`docs/admin.md`).
 
 Not done:
-1. **Delivery emails** — after an order is marked paid, generate signed URLs for
-   each `file_path` and email them (Resend or Postmark). `paystack-webhook` has
-   a `TODO` marking exactly where this goes.
+1. **Delivery email** — a real domain would let `order-download`'s links also
+   go out by email as a backup copy (Resend/Postmark); not required for
+   delivery to work, since the download modal already handles that without one.
 2. **Contact form** — currently shows a toast and clears; it sends nothing.
 3. **Hero photo** — placeholder SVG illustration, see `public/README-hero.md`.
 

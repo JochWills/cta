@@ -74,6 +74,16 @@ export async function placeOrder() {
       state.cart = [];
       saveCart();
 
+      // So the download modal can prefill and auto-check on return from
+      // Paystack (see main.js's ?paid=1 handling) without asking the buyer
+      // to retype the email they just gave us. Stays on their device only —
+      // same as the cart (see privacy.html).
+      try {
+        localStorage.setItem("cta_last_email", email);
+      } catch {
+        // ignore — worst case the download modal just isn't prefilled
+      }
+
       button.textContent = "Redirecting to payment…";
       const { authorization_url } = await sbFunction("paystack-initiate", { reference });
       window.location.href = authorization_url; // leaving the page — Paystack takes it from here
