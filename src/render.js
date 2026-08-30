@@ -185,9 +185,13 @@ export function closeCart() {
   document.body.style.overflow = "";
 }
 
+export function updateCartCount() {
+  $("#cartCount").textContent = state.cart.length;
+}
+
 /** Re-render everything that depends on cart contents. */
 export function syncCart() {
-  $("#cartCount").textContent = state.cart.length;
+  updateCartCount();
   renderProducts();
   renderDrawer();
 }

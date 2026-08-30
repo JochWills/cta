@@ -22,11 +22,11 @@ const TOKEN_KEY = "cta_admin_token";
 const EXPIRES_KEY = "cta_admin_expires";
 
 /**
- * The token lives in sessionStorage, not localStorage — a deliberate
- * exception to the "no localStorage anywhere" rule in CLAUDE.md, which is
- * about the customer cart. An admin auth token shouldn't linger forever on
- * a shared machine, so it's cleared the moment the tab closes rather than
- * persisted indefinitely.
+ * The token lives in sessionStorage, not localStorage — unlike the shop
+ * cart (src/cart.js), which persists to localStorage on purpose so a
+ * refresh doesn't lose it. An admin auth token is a different kind of
+ * thing: it shouldn't linger forever on a shared machine, so it's cleared
+ * the moment the tab closes rather than persisted indefinitely.
  */
 export function loadSession() {
   try {

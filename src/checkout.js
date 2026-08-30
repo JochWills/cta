@@ -1,6 +1,7 @@
 import { state, $, isEmail } from "./state.js";
 import { hasDB, sbInsert, sbFunction } from "./supabase.js";
 import { cartTotal, syncCart } from "./render.js";
+import { saveCart } from "./cart.js";
 
 /** Human-readable order reference, e.g. CTA-M4K2P9. Also used as the Paystack transaction reference. */
 function makeReference() {
@@ -56,6 +57,12 @@ export async function placeOrder() {
     if (hasDB) {
       await sbInsert("orders", order);
 
+      // The order is placed at this point regardless of what happens next —
+      // clear the cart (and its saved copy) now rather than leaving stale
+      // items sitting there if the buyer comes back after Paystack.
+      state.cart = [];
+      saveCart();
+
       button.textContent = "Redirecting to payment…";
       const { authorization_url } = await sbFunction("paystack-initiate", { reference });
       window.location.href = authorization_url; // leaving the page — Paystack takes it from here
@@ -66,6 +73,7 @@ export async function placeOrder() {
     // so the shop stays clickable for design work (see CLAUDE.md).
     state.lastOrderRef = `Order ${reference} (demo — Supabase not connected)`;
     state.cart = [];
+    saveCart();
     state.checkoutStep = "done";
     syncCart();
   } catch (err) {

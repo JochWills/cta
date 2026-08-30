@@ -3,6 +3,7 @@ import {
   renderModules,
   renderFilters,
   renderDrawer,
+  updateCartCount,
   openCart,
   closeCart,
   setFilter,
@@ -10,7 +11,7 @@ import {
   openPreview,
   closePreview,
 } from "./render.js";
-import { loadProducts, addToCart, removeFromCart } from "./cart.js";
+import { loadProducts, loadCart, addToCart, removeFromCart } from "./cart.js";
 import { placeOrder } from "./checkout.js";
 
 /* ------------------------------------------------------------------
@@ -126,6 +127,8 @@ if (new URLSearchParams(location.search).get("paid") === "1") {
    Init
 ------------------------------------------------------------------ */
 $("#yr").textContent = new Date().getFullYear();
+loadCart(); // before the first render, so a restored cart shows immediately rather than popping in
+updateCartCount();
 renderModules();
 renderFilters();
 renderDrawer();

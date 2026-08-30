@@ -82,10 +82,15 @@ public/                     favicon, and where hero.jpg goes
 - **Prices are integers in cents.** `price_cents: 2500` is R25. Never store rands
   as floats. Format with `rands()` from `state.js`.
 - **`state` is mutated in place**, then a render function is called. There is no
-  reactivity — if you change `state.cart`, call `syncCart()`.
+  reactivity — if you change `state.cart`, call `syncCart()` (or, if you're
+  bypassing that, at least `saveCart()` — see below).
 - **Everything from the database goes through `esc()`** before hitting innerHTML.
-- **No `localStorage`** anywhere. The cart is in memory and resets on reload;
-  that is intentional for now.
+- **The cart persists to `localStorage`** (`cart.js`'s `loadCart`/`saveCart`,
+  key `cta_cart`) so a refresh doesn't lose it. This used to be deliberately
+  in-memory-only; that changed. `loadCart()` runs once at startup in
+  `main.js`, before the first render. The admin page's session token uses
+  `sessionStorage` instead, on purpose — see its own comment in
+  `src/admin/state.js` for why that one stays separate.
 - CSS custom properties at the top of `styles.css` are the single source of
   colour and spacing truth. Module tints (`--fr-tint`, `--tax-ink`, …) are paired
   with the `MODULES` array in `catalogue.js` — change both together.
