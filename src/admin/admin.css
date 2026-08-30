@@ -4,6 +4,18 @@
    redefines a token, it only arranges admin-specific structure.
    ============================================================ */
 
+/*
+ * main.js toggles visibility on a few elements via the `hidden` attribute
+ * (el.hidden = true/false), rather than the is-open/is-on classes the shop
+ * uses elsewhere. That only works as long as nothing else sets `display`
+ * on the same element — a plain author rule like `.admin-modal{display:
+ * grid}` below always wins over the browser's built-in `[hidden]{display:
+ * none}`, no matter the source order. These two are the ones that need
+ * the explicit override so `hidden` actually hides them.
+ */
+.header-actions[hidden],
+.admin-modal[hidden]{display:none;}
+
 .admin-main{padding:44px 0 100px;}
 
 .admin-card{
