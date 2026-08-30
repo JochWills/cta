@@ -165,6 +165,10 @@ export function renderDrawer() {
       <input type="email" id="buyerEmail" placeholder="you@example.com" autocomplete="email"></label>
     <p class="note" style="text-align:left;margin-top:10px;">
       Your download links and receipt go to this address, so check it's right.</p>
+    <label class="terms-field">
+      <input type="checkbox" id="acceptTerms">
+      <span>I understand this purchase is final. Notes are digital and delivered instantly, so there are no refunds — including if I change my mind.</span>
+    </label>
     <div id="checkoutError"></div>`;
   foot.innerHTML = `
     <div class="totals"><span class="lbl">Total due</span><span class="val">${rands(cartTotal())}</span></div>

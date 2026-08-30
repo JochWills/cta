@@ -114,7 +114,10 @@ are derived from `module_slug`/`code`/page number via `slugifyCode` in
 `orders` — `reference` (CTA-XXXXXX, also used as the Paystack transaction
 reference), `email`, `full_name`, `items` (jsonb snapshot of the cart at
 purchase time), `total_cents`, `status` (`pending` | `paid` | `failed` |
-`refunded`), `payment_ref` (Paystack's transaction id), `paid_at`.
+`refunded`), `payment_ref` (Paystack's transaction id), `paid_at`,
+`terms_accepted_at` (not null — checkout won't submit without the "this
+purchase is final" checkbox ticked, and the column backs that with an
+actual record, not just a client-side gate).
 
 `modules` — the four module rows. Currently the frontend uses the hardcoded
 `MODULES` array for presentation and only reads `products` from the database.

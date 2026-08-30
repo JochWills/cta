@@ -63,20 +63,34 @@ create index if not exists products_module_idx on public.products (module_slug, 
 -- 3. ORDERS  (customer email captured here)
 --    items is a snapshot of the cart at purchase time, so the
 --    order stays correct even if a product is later edited.
+--    terms_accepted_at is not just a checkout UI gate (src/checkout.js
+--    won't submit without the checkbox ticked) — it's not-null here too,
+--    so there's a real server-side record that every order came with an
+--    acknowledgment that the purchase is final, in case that's ever
+--    needed as evidence (a chargeback dispute, say).
 -- ------------------------------------------------------------
 create table if not exists public.orders (
-  id             uuid primary key default gen_random_uuid(),
-  reference      text not null unique,
-  email          text not null,
-  full_name      text,
-  items          jsonb not null default '[]'::jsonb,
-  total_cents    int not null,
-  status         text not null default 'pending'  -- pending | paid | failed | refunded
-                 check (status in ('pending','paid','failed','refunded')),
-  payment_ref    text,                            -- Paystack transaction id later
-  paid_at        timestamptz,
-  created_at     timestamptz not null default now()
+  id                  uuid primary key default gen_random_uuid(),
+  reference           text not null unique,
+  email               text not null,
+  full_name           text,
+  items               jsonb not null default '[]'::jsonb,
+  total_cents         int not null,
+  status              text not null default 'pending'  -- pending | paid | failed | refunded
+                      check (status in ('pending','paid','failed','refunded')),
+  payment_ref         text,                            -- Paystack transaction id later
+  paid_at             timestamptz,
+  terms_accepted_at   timestamptz not null,
+  created_at          timestamptz not null default now()
 );
+
+-- Column added after the table already existed in deployed projects — safe
+-- to re-run. No default on purpose (see the comment above); existing rows
+-- are backfilled from their own created_at as the closest honest stand-in,
+-- since they predate this column existing at all.
+alter table public.orders add column if not exists terms_accepted_at timestamptz;
+update public.orders set terms_accepted_at = created_at where terms_accepted_at is null;
+alter table public.orders alter column terms_accepted_at set not null;
 
 create index if not exists orders_email_idx  on public.orders (email);
 create index if not exists orders_status_idx on public.orders (status, created_at desc);

@@ -251,6 +251,9 @@ details.faq p{margin:12px 0 0;color:var(--ink-soft);font-size:14px;max-width:66c
 }
 .field input:focus,.field textarea:focus{outline:none;border-color:var(--accent);background:#fff;}
 .field textarea{min-height:110px;resize:vertical;}
+.terms-field{display:flex;align-items:flex-start;gap:10px;margin-top:18px;text-align:left;}
+.terms-field input{width:auto;flex-shrink:0;margin-top:3px;accent-color:var(--accent);}
+.terms-field span{font-size:12.5px;color:var(--ink-soft);line-height:1.5;}
 
 /* ============================================================
    FOOTER

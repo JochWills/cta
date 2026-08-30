@@ -21,6 +21,7 @@ function makeReference() {
 export async function placeOrder() {
   const nameInput = $("#buyerName");
   const emailInput = $("#buyerEmail");
+  const termsInput = $("#acceptTerms");
   const errorBox = $("#checkoutError");
   const button = $("#placeOrder");
 
@@ -31,6 +32,12 @@ export async function placeOrder() {
   if (!isEmail(email)) {
     errorBox.innerHTML = `<div class="err">Enter a valid email address so your notes can reach you.</div>`;
     emailInput?.focus();
+    return;
+  }
+
+  if (!termsInput?.checked) {
+    errorBox.innerHTML = `<div class="err">Confirm you understand the purchase is final before placing your order.</div>`;
+    termsInput?.focus();
     return;
   }
 
@@ -51,6 +58,10 @@ export async function placeOrder() {
     })),
     total_cents: cartTotal(),
     status: "pending",
+    // Record-keeping, not just a UI gate — see the terms_accepted_at column
+    // comment in supabase/schema.sql. Only reachable once termsInput.checked
+    // is confirmed true above.
+    terms_accepted_at: new Date().toISOString(),
   };
 
   try {
