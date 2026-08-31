@@ -36,20 +36,22 @@
  * .field input/.field span in styles.css style a labelled text field (full-
  * width padded/bordered input, an uppercase caption span) — fine for every
  * other field on this form, wrong for a checkbox + its inline label. These
- * reset every property .field sets that a checkbox shouldn't inherit,
- * rather than relying on this file loading after styles.css to win ties;
- * that's what actually broke here once styles.css's .field span picked up
- * display:flex for an unrelated tooltip (see its own comment) — this input
- * and span were still only overriding a few of .field's properties, so the
- * rest (padding/border/background on the input, display/margin on the
- * span) kept leaking through.
+ * reset every property .field sets that a checkbox shouldn't inherit —
+ * and are prefixed with .admin-form-grid purely to outrank styles.css's
+ * equal-specificity .field/.field input/.field span on their own terms,
+ * not by hoping this file loads after styles.css. It doesn't reliably:
+ * Vite's production build emits admin.html's two stylesheet <link> tags
+ * in the opposite order from admin.html's own source (admin.css first
+ * there), so in prod styles.css's rules were winning every tie — this
+ * looked fixed in dev (where the source order is served as-is) and then
+ * broke again the moment it actually deployed.
  */
-.checkbox-field{display:flex;align-items:center;gap:10px;margin-top:20px;}
-.checkbox-field input{
+.admin-form-grid .checkbox-field{display:flex;align-items:center;gap:10px;margin-top:20px;}
+.admin-form-grid .checkbox-field input{
   width:auto;height:auto;padding:0;border:none;border-radius:0;background:none;
   accent-color:var(--accent);
 }
-.checkbox-field span{
+.admin-form-grid .checkbox-field span{
   display:inline;margin-bottom:0;
   font-size:13.5px;color:var(--ink);text-transform:none;letter-spacing:0;
 }
