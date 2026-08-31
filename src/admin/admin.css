@@ -1,7 +1,16 @@
 /* ============================================================
    ADMIN — layout only. Colour/spacing tokens come from styles.css'
-   :root (linked before this file in admin.html); nothing here
-   redefines a token, it only arranges admin-specific structure.
+   :root; nothing here redefines a token, it only arranges
+   admin-specific structure.
+
+   Don't rely on this file loading after styles.css to win a
+   same-specificity tie against a shared class like .field. Source
+   order in admin.html says it does, npm run dev serves it that way —
+   but Vite's production build emits admin.html's two stylesheet
+   <link> tags in the OPPOSITE order (this file first), so in prod
+   styles.css wins those ties instead. Any override of a shared
+   .field-family selector needs to actually out-specify it (see the
+   .checkbox-field rules below for the pattern), not just come later.
    ============================================================ */
 
 /*
