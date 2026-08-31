@@ -32,9 +32,27 @@
   font:inherit;font-size:14px;background:var(--cream);color:var(--ink);
 }
 .field select:focus{outline:none;border-color:var(--accent);background:#fff;}
+/*
+ * .field input/.field span in styles.css style a labelled text field (full-
+ * width padded/bordered input, an uppercase caption span) — fine for every
+ * other field on this form, wrong for a checkbox + its inline label. These
+ * reset every property .field sets that a checkbox shouldn't inherit,
+ * rather than relying on this file loading after styles.css to win ties;
+ * that's what actually broke here once styles.css's .field span picked up
+ * display:flex for an unrelated tooltip (see its own comment) — this input
+ * and span were still only overriding a few of .field's properties, so the
+ * rest (padding/border/background on the input, display/margin on the
+ * span) kept leaking through.
+ */
 .checkbox-field{display:flex;align-items:center;gap:10px;margin-top:20px;}
-.checkbox-field input{width:auto;accent-color:var(--accent);}
-.checkbox-field span{font-size:13.5px;color:var(--ink);text-transform:none;letter-spacing:0;}
+.checkbox-field input{
+  width:auto;height:auto;padding:0;border:none;border-radius:0;background:none;
+  accent-color:var(--accent);
+}
+.checkbox-field span{
+  display:inline;margin-bottom:0;
+  font-size:13.5px;color:var(--ink);text-transform:none;letter-spacing:0;
+}
 .field-hint{display:block;font-size:11.5px;color:var(--ink-faint);margin-top:6px;}
 
 .admin-tabs{display:flex;gap:10px;margin:8px 0 24px;}
