@@ -475,23 +475,15 @@ details.faq p{margin:12px 0 0;color:var(--ink-soft);font-size:14px;max-width:66c
   }
   .nav.is-open a{padding:11px 0;}
   .menu-btn{display:grid;}
-  /* Below the header breakpoint, this drops the full-bleed photo-behind-
-     text treatment entirely and goes back to how the hero looked before
-     that photo existed: a plain edge-to-edge image band on top, ordinary
-     padded text below it in its own solid area — not photo-behind-text.
-     Two earlier attempts here tried to keep the overlay look on mobile via
-     a scrim whose fade boundary was computed from the section's height —
-     first as a percentage, then as a fixed offset from the bottom — and
-     both broke because that boundary depends on how many lines the
-     heading/lede wrap to, which varies by phone width. Simply not
-     overlapping the two at all sidesteps that whole class of bug, and
-     matches what mobile looked like pre-photo anyway. Desktop keeps the
-     full-bleed version untouched. */
+  /* Below the header breakpoint, no photo at all — just the copy on the
+     plain hero background. Simpler than fitting the photo in somewhere
+     small, and sidesteps the text-legibility issues chasing an overlaid
+     or banded version of it kept running into on narrow screens. Desktop
+     keeps the full-bleed photo untouched. */
   .hero{display:block;min-height:0;}
-  .hero-bg{position:static;height:240px;}
-  .hero-scrim{display:none;}
+  .hero-bg{display:none;}
   .hero-grid{display:block;}
-  .hero-copy{padding:40px 26px 40px;max-width:none;}
+  .hero-copy{padding:56px 26px 40px;max-width:none;}
   .modules{margin-top:34px;}
   .trust-grid{grid-template-columns:repeat(2,1fr);gap:26px;}
   .two-col{grid-template-columns:1fr;gap:40px;}
