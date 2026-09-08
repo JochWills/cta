@@ -122,7 +122,6 @@ on the demo catalogue.
    work — see `docs/order-download.md` for how it already works without one.
 2. **The PDFs** — bucket exists; upload them via `/admin.html`'s note editor.
 3. **Contact form** — currently shows a confirmation but sends nothing.
-4. **Hero photo** — placeholder illustration, see `public/README-hero.md`.
 
 ## Using Claude Code
 

@@ -82,7 +82,7 @@ supabase/
     paystack-webhook/         ┘
     order-download/          deployed — self-serve download links, see Data model below
 render.yaml                 Render Blueprint — build settings, cache headers, URL rewrites
-public/                     favicon, and where hero.jpg goes
+public/                     favicon, hero.png (the hero photo)
 ```
 
 ## Conventions that matter
@@ -193,7 +193,6 @@ Not done:
    also go out by email as a backup copy; not required for delivery to work,
    since the download modal already handles that without one.
 2. **Contact form** — currently shows a toast and clears; it sends nothing.
-3. **Hero photo** — placeholder SVG illustration, see `public/README-hero.md`.
 
 A PDF is now required to add a note in the admin page (it generates the
 `note-previews` image at the same time), so the old "PDFs not uploaded yet"
