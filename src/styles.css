@@ -107,12 +107,6 @@ h1,h2,h3{font-family:'Playfair Display',Georgia,serif;font-weight:400;letter-spa
   position:absolute;inset:0;
   background:linear-gradient(100deg,var(--hero-a) 0%,var(--hero-a) 32%,rgba(247,234,227,.5) 47%,rgba(247,234,227,0) 62%);
 }
-.hero-tagline{
-  position:absolute;top:44px;right:48px;z-index:1;max-width:16ch;
-  text-align:right;font-size:11px;letter-spacing:.16em;text-transform:uppercase;
-  color:var(--ink-soft);line-height:1.8;text-shadow:0 1px 3px rgba(255,255,255,.5);
-}
-.hero-tagline::after{content:"";display:block;width:26px;height:1px;background:var(--ink-faint);margin:10px 0 0 auto;}
 .hero-grid{
   position:relative;z-index:1;max-width:var(--maxw);margin:0 auto;width:100%;
   display:flex;align-items:center;
@@ -124,7 +118,7 @@ h1,h2,h3{font-family:'Playfair Display',Georgia,serif;font-weight:400;letter-spa
 .hero p.lede{
   margin:22px 0 0;max-width:36ch;color:var(--ink-soft);font-size:16px;line-height:1.65;
 }
-.hero-cta{margin-top:34px;}
+.hero-cta{display:flex;align-items:center;gap:26px;flex-wrap:wrap;margin-top:34px;}
 .btn{
   display:inline-flex;align-items:center;justify-content:center;gap:10px;
   padding:15px 30px;border-radius:4px;background:var(--accent);color:#fff;
@@ -137,14 +131,9 @@ h1,h2,h3{font-family:'Playfair Display',Georgia,serif;font-weight:400;letter-spa
 }
 .btn.ghost:hover{background:var(--accent);color:#fff;}
 .btn[disabled]{opacity:.45;pointer-events:none;}
-.hero-assure{display:flex;align-items:center;flex-wrap:wrap;row-gap:10px;margin-top:30px;}
-.hero-assure-item{
-  display:flex;align-items:center;gap:8px;font-size:13px;color:var(--ink);
-  padding-right:14px;margin-right:14px;border-right:1px solid var(--rule);
-  white-space:nowrap;
-}
-.hero-assure-item:last-child{border-right:none;margin-right:0;padding-right:0;}
-.hero-assure-item svg{width:18px;height:18px;stroke:var(--accent);stroke-width:1.5;fill:none;flex-shrink:0;}
+.hero-assure{display:flex;align-items:center;gap:10px;font-size:14px;color:var(--ink);}
+.hero-assure svg{width:19px;height:19px;stroke:var(--accent);stroke-width:1.4;fill:none;}
+.hero-assure .dot{color:var(--ink-faint);}
 
 /* ============================================================
    MODULE CARDS
