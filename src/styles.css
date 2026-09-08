@@ -107,10 +107,6 @@ h1,h2,h3{font-family:'Playfair Display',Georgia,serif;font-weight:400;letter-spa
   position:absolute;inset:0;
   background:linear-gradient(100deg,var(--hero-a) 0%,var(--hero-a) 32%,rgba(247,234,227,.5) 47%,rgba(247,234,227,0) 62%);
 }
-/* Mobile-only decorative strip below the (opaque, on mobile) copy block that
-   reveals the photo — see the max-width:1024px block for why this replaced
-   a gradient-based approach. display:none here; the media query turns it on. */
-.hero-photo-strip{display:none;}
 .hero-grid{
   position:relative;z-index:1;max-width:var(--maxw);margin:0 auto;width:100%;
   display:flex;align-items:center;
@@ -479,34 +475,23 @@ details.faq p{margin:12px 0 0;color:var(--ink-soft);font-size:14px;max-width:66c
   }
   .nav.is-open a{padding:11px 0;}
   .menu-btn{display:grid;}
-  /* Below the header breakpoint there's no room for text-over-photo to stay
-     legible, so this drops the left-to-right scrim entirely and instead
-     gives the copy block its own solid background, with a fixed-height
-     strip stacked below it that reveals the photo.
-     A first version tried to do this with one gradient sized by percentage
-     (or later, by pixels counted from the bottom) — both approaches tied
-     the boundary between "solid text" and "photo" to the *container's*
-     height, which shifts with how many lines the heading/lede wrap to on
-     a given phone's width. On a wider phone the content is shorter, so
-     that boundary crept upward into the assurance row and the book spines'
-     printed text showed through behind it — a real bug, found each time by
-     actually rendering at a phone width rather than by reading the CSS.
-     Splitting the copy and the photo strip into two separate elements next
-     to each other in normal flow removes the coincidence entirely: the
-     strip is always exactly its own fixed height, wherever the copy above
-     it ends. */
-  .hero{min-height:0;}
-  .hero-grid{display:block;}
+  /* Below the header breakpoint, this drops the full-bleed photo-behind-
+     text treatment entirely and goes back to how the hero looked before
+     that photo existed: a plain edge-to-edge image band on top, ordinary
+     padded text below it in its own solid area — not photo-behind-text.
+     Two earlier attempts here tried to keep the overlay look on mobile via
+     a scrim whose fade boundary was computed from the section's height —
+     first as a percentage, then as a fixed offset from the bottom — and
+     both broke because that boundary depends on how many lines the
+     heading/lede wrap to, which varies by phone width. Simply not
+     overlapping the two at all sidesteps that whole class of bug, and
+     matches what mobile looked like pre-photo anyway. Desktop keeps the
+     full-bleed version untouched. */
+  .hero{display:block;min-height:0;}
+  .hero-bg{position:static;height:240px;}
   .hero-scrim{display:none;}
-  .hero-copy{
-    position:relative;z-index:2;background:var(--hero-a);
-    padding:64px 26px 40px;max-width:none;
-  }
-  .hero-photo-strip{display:block;position:relative;z-index:1;height:170px;}
-  .hero-photo-strip::before{
-    content:"";position:absolute;top:0;left:0;right:0;height:28px;
-    background:linear-gradient(180deg,var(--hero-a) 0%,rgba(247,234,227,0) 100%);
-  }
+  .hero-grid{display:block;}
+  .hero-copy{padding:40px 26px 40px;max-width:none;}
   .modules{margin-top:34px;}
   .trust-grid{grid-template-columns:repeat(2,1fr);gap:26px;}
   .two-col{grid-template-columns:1fr;gap:40px;}
