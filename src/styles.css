@@ -107,6 +107,10 @@ h1,h2,h3{font-family:'Playfair Display',Georgia,serif;font-weight:400;letter-spa
   position:absolute;inset:0;
   background:linear-gradient(100deg,var(--hero-a) 0%,var(--hero-a) 32%,rgba(247,234,227,.5) 47%,rgba(247,234,227,0) 62%);
 }
+/* Mobile-only decorative strip below the (opaque, on mobile) copy block that
+   reveals the photo — see the max-width:1024px block for why this replaced
+   a gradient-based approach. display:none here; the media query turns it on. */
+.hero-photo-strip{display:none;}
 .hero-grid{
   position:relative;z-index:1;max-width:var(--maxw);margin:0 auto;width:100%;
   display:flex;align-items:center;
@@ -476,25 +480,33 @@ details.faq p{margin:12px 0 0;color:var(--ink-soft);font-size:14px;max-width:66c
   .nav.is-open a{padding:11px 0;}
   .menu-btn{display:grid;}
   /* Below the header breakpoint there's no room for text-over-photo to stay
-     legible, so the scrim goes top-to-bottom instead of left-to-right —
-     solid over the copy, fading in a strip of the photo underneath — and
-     the tagline (no space to spare) is dropped entirely. */
+     legible, so this drops the left-to-right scrim entirely and instead
+     gives the copy block its own solid background, with a fixed-height
+     strip stacked below it that reveals the photo.
+     A first version tried to do this with one gradient sized by percentage
+     (or later, by pixels counted from the bottom) — both approaches tied
+     the boundary between "solid text" and "photo" to the *container's*
+     height, which shifts with how many lines the heading/lede wrap to on
+     a given phone's width. On a wider phone the content is shorter, so
+     that boundary crept upward into the assurance row and the book spines'
+     printed text showed through behind it — a real bug, found each time by
+     actually rendering at a phone width rather than by reading the CSS.
+     Splitting the copy and the photo strip into two separate elements next
+     to each other in normal flow removes the coincidence entirely: the
+     strip is always exactly its own fixed height, wherever the copy above
+     it ends. */
   .hero{min-height:0;}
-  /* Fixed pixel stops, not percentages: a percentage fade drifts with
-     content length (this one used to land its transition zone right on
-     top of the assurance row, letting the book spines' text show through
-     behind it — found by actually rendering this at 390px, not by eye).
-     Anchoring the fade to the bottom, matching hero-copy's own reserved
-     bottom padding below, keeps the safe/solid zone exactly as tall as
-     the text block above it however that block reflows. */
-  .hero-scrim{
-    background:linear-gradient(180deg,
-      var(--hero-a) 0,var(--hero-a) calc(100% - 210px),
-      rgba(247,234,227,.35) calc(100% - 130px),
-      rgba(247,234,227,0) calc(100% - 40px));
+  .hero-grid{display:block;}
+  .hero-scrim{display:none;}
+  .hero-copy{
+    position:relative;z-index:2;background:var(--hero-a);
+    padding:64px 26px 40px;max-width:none;
   }
-  .hero-tagline{display:none;}
-  .hero-copy{padding:64px 26px 200px;max-width:none;}
+  .hero-photo-strip{display:block;position:relative;z-index:1;height:170px;}
+  .hero-photo-strip::before{
+    content:"";position:absolute;top:0;left:0;right:0;height:28px;
+    background:linear-gradient(180deg,var(--hero-a) 0%,rgba(247,234,227,0) 100%);
+  }
   .modules{margin-top:34px;}
   .trust-grid{grid-template-columns:repeat(2,1fr);gap:26px;}
   .two-col{grid-template-columns:1fr;gap:40px;}
