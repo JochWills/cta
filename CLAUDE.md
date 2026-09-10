@@ -192,12 +192,15 @@ Not done:
    sending domain with Resend/Postmark) would let `order-download`'s links
    also go out by email as a backup copy; not required for delivery to work,
    since the download modal already handles that without one.
-2. **Contact form** — currently shows a toast and clears; it sends nothing.
+2. **The catalogue itself** — the live database has one real product in it
+   (added through the admin page, PDF + preview working end-to-end). The
+   other ~27 sections from `SEED`/`schema.sql` exist as local demo/seed data
+   only — they still need to be added for real, through `/admin.html`, one
+   at a time, before this reflects "all four PGDA modules" for a real buyer.
 
-A PDF is now required to add a note in the admin page (it generates the
-`note-previews` image at the same time), so the old "PDFs not uploaded yet"
-gap only remains for whichever of the 28 seed rows haven't been given one
-through the admin page yet.
+A PDF is now required to add a note in the admin page, and it generates the
+`note-previews` image at the same time — so adding a section is one step,
+not two.
 
 ## Working style
 
