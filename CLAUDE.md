@@ -42,11 +42,16 @@ Supabase is the only backend. It is called over its PostgREST endpoint with
 `fetch` rather than `@supabase/supabase-js`, because the shop only ever reads
 products and inserts orders.
 
-One real npm dependency: `pdfjs-dist`, used only from `src/admin/pdfPreview.js`
-to render a PDF's first page to PNG at upload time. It is not imported by
-anything the shop bundle touches — `npm run build`'s `main-*.js` output should
-stay a few KB; if it balloons, something pulled pdfjs-dist into the wrong
-entry point.
+One real npm dependency: `pdfjs-dist`, used only from `src/admin/` (see
+`pdfPreview.js`) to render a PDF's first page to PNG at upload time. It is
+not imported by anything the shop bundle touches — `npm run build`'s
+`main-*.js` output should stay a few KB; if it balloons, something pulled
+pdfjs-dist into the wrong entry point. `pdfPreview.js` runs pdf.js in its own
+Web Worker via `pdfjsWorkerEntry.js` (built as a real worker chunk — see that
+file's comment) rather than pointing straight at pdfjs-dist's own worker
+bundle, so `mapUpsertPolyfill.js`'s fix for a Safari gap (Map/WeakMap lack
+`getOrInsertComputed`, which pdfjs-dist 6.x calls with no fallback) can run
+inside the worker's own global scope, not just the main thread.
 
 ## Layout
 

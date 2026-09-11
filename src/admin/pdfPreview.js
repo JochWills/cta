@@ -5,12 +5,18 @@
  * for why: PDF.js only loads in this admin bundle, never the customer-facing
  * one).
  */
+import "./mapUpsertPolyfill.js"; // must run before pdfjsLib touches a single Map — see that file's comment
 import * as pdfjsLib from "pdfjs-dist";
 
-pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
-  "pdfjs-dist/build/pdf.worker.min.mjs",
-  import.meta.url
-).href;
+// Constructing the worker ourselves (via Vite's own `new Worker(new URL(...))`
+// handling) rather than just pointing GlobalWorkerOptions.workerSrc at
+// pdfjs-dist's bundle directly, so pdfjsWorkerEntry.js's own polyfill import
+// gets a chance to run inside the worker before the real worker code does —
+// see that file's comment for why that's necessary too, not just here.
+pdfjsLib.GlobalWorkerOptions.workerPort = new Worker(
+  new URL("./pdfjsWorkerEntry.js", import.meta.url),
+  { type: "module" }
+);
 
 function canvasToPng(canvas) {
   return new Promise((resolve, reject) => {
