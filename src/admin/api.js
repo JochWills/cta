@@ -46,6 +46,10 @@ export const createProduct = (fields) => call("admin-products", { body: { action
 export const updateProduct = (id, fields) => call("admin-products", { body: { action: "update", id, ...fields } });
 export const deleteProduct = (id) => call("admin-products", { body: { action: "delete", id } });
 
+/** Short-lived signed URL for a note's current PDF, from the private "notes" bucket. */
+export const getSignedPdfUrl = (filePath) =>
+  call("admin-products", { body: { action: "signed_url", file_path: filePath } });
+
 /** bucket is "notes" (private, the real PDF) or "note-previews" (public, the page-1 image). */
 export function uploadFile(file, path, bucket = "notes") {
   const form = new FormData();

@@ -103,6 +103,18 @@ Deno.serve(async (req) => {
         return json({ ok: true });
       }
 
+      // The "notes" bucket is private (buyers only ever get a file through
+      // order-download's own signed URLs), so the admin page needs its own
+      // way to open a note's current PDF — same signing call, just gated by
+      // the admin token instead of an order reference + email. Short expiry
+      // since this is only ever used right after the click that requested it.
+      case "signed_url": {
+        if (!body.file_path) return json({ error: "file_path is required" }, 400);
+        const { data, error } = await supabase.storage.from("notes").createSignedUrl(body.file_path, 300);
+        if (error) throw error;
+        return json({ url: data.signedUrl });
+      }
+
       default:
         return json({ error: "Unknown action" }, 400);
     }

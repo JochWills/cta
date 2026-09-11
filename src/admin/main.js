@@ -21,6 +21,7 @@ import {
   updateProduct,
   deleteProduct,
   uploadFile,
+  getSignedPdfUrl,
 } from "./api.js";
 import { renderPreviewPages } from "./pdfPreview.js";
 
@@ -183,6 +184,39 @@ async function doDelete(id) {
   }
 }
 
+async function viewCurrentPdf() {
+  const filePath = adminState.editing?.file_path;
+  if (!filePath) return;
+  const btn = $("#pf_view_pdf");
+  // Open the tab synchronously, in the same tick as the click, then point
+  // it at the real URL once it's back — waiting for the fetch before
+  // calling window.open at all gets treated as a non-user-gesture popup
+  // and blocked by most browsers.
+  //
+  // Deliberately not passing "noopener" here: per spec that makes
+  // window.open return null, which silently defeats the whole trick —
+  // without a reference there's nothing left to redirect, and the tab
+  // just sits on about:blank forever (caught by actually clicking this in
+  // a browser, not by reading the code). Same end result without that
+  // trap: keep the reference, then immediately null its own .opener so
+  // the new tab still can't reach back into this one.
+  const tab = window.open("", "_blank");
+  if (tab) tab.opener = null;
+  btn.disabled = true;
+  btn.textContent = "Opening…";
+  try {
+    const { url } = await getSignedPdfUrl(filePath);
+    if (tab) tab.location.href = url;
+  } catch (err) {
+    tab?.close();
+    if (err instanceof AuthError) return handleAuthError();
+    toast(err.message);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = "View current PDF ↗";
+  }
+}
+
 /* ------------------------------------------------------------------
    Delegated events (same pattern as src/main.js)
 ------------------------------------------------------------------ */
@@ -207,6 +241,8 @@ document.addEventListener("click", (e) => {
 
   const del = e.target.closest("[data-del]");
   if (del) return doDelete(del.dataset.del);
+
+  if (e.target.closest("#pf_view_pdf")) return viewCurrentPdf();
 });
 
 document.addEventListener("keydown", (e) => {

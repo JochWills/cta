@@ -149,6 +149,12 @@ export function openProductForm(product) {
   // old row saved before this was enforced) must get one now.
   $("#pf_file").required = !product?.file_path;
   $("#pf_file_hint").textContent = product?.file_path ? "Leave blank to keep the current PDF." : "Required.";
+  // The signed URL is fetched on click (see main.js), not here — no point
+  // asking Supabase for one on every open when most edits never need it.
+  const viewBtn = $("#pf_view_pdf");
+  viewBtn.hidden = !product?.file_path;
+  viewBtn.disabled = false;
+  viewBtn.textContent = "View current PDF ↗";
   productFormError("");
   $("#productModal").hidden = false;
 }

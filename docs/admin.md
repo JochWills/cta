@@ -67,9 +67,10 @@ newest first — expand a row to see which sections were bought. **Notes**
 lists every product, including inactive ones; **Add note** or a row's
 **Edit** opens the same form. Attaching a PDF there uploads it to the
 `notes` bucket under `<module_slug>/<code>.pdf` and sets `file_path`
-automatically — that's the one field customers never see but the eventual
-delivery email will need (`docs/paystack.md`, "not done" item 1 in
-`CLAUDE.md`).
+automatically. Editing a note that already has one shows a **View current
+PDF** link — since the `notes` bucket is private, this asks `admin-products`
+for a short-lived signed URL (same mechanism `order-download` uses for
+buyers) rather than linking to it directly.
 
 Deleting a note asks for confirmation first and can't be undone — it removes
 the database row, not the underlying PDF in storage.
