@@ -4,7 +4,7 @@
  * instead of the REST endpoint, since those are the only things allowed to
  * use the service_role key.
  */
-import { SUPABASE_URL, SUPABASE_ANON_KEY } from "../supabase.js";
+import { SUPABASE_URL, SUPABASE_ANON_KEY, sbRpc } from "../supabase.js";
 import { adminState, clearSession } from "./state.js";
 
 /** Thrown on a 401 from anything but admin-login — the caller should drop back to the login screen. */
@@ -58,3 +58,11 @@ export function uploadFile(file, path, bucket = "notes") {
   form.append("bucket", bucket);
   return call("admin-upload", { body: form, isForm: true });
 }
+
+/**
+ * Not an admin-* Edge Function — this one goes straight to the anon-callable
+ * RPC the shop's own heartbeat writes to (see supabase/schema.sql), no admin
+ * token involved. It's just a count, safe for anyone holding the anon key;
+ * living here anyway keeps every admin-page data fetch behind one api.js.
+ */
+export const fetchActiveVisitors = () => sbRpc("active_visitor_count");

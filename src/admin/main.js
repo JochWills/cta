@@ -22,6 +22,7 @@ import {
   deleteProduct,
   uploadFile,
   getSignedPdfUrl,
+  fetchActiveVisitors,
 } from "./api.js";
 import { renderPreviewPages } from "./pdfPreview.js";
 
@@ -59,9 +60,33 @@ async function enterDashboard() {
   showLoggedIn();
   setTab(adminState.tab);
   await Promise.all([loadOrders(), loadProducts()]);
+  startVisitorPoll();
+}
+
+const VISITOR_POLL_MS = 15_000;
+let visitorPollTimer = null;
+
+async function updateVisitorCount() {
+  try {
+    const count = await fetchActiveVisitors();
+    $("#liveVisitorsCount").textContent = count;
+  } catch {
+    // Not worth a toast over — the dot just shows whatever it last knew.
+  }
+}
+
+function startVisitorPoll() {
+  updateVisitorCount();
+  visitorPollTimer = setInterval(updateVisitorCount, VISITOR_POLL_MS);
+}
+
+function stopVisitorPoll() {
+  clearInterval(visitorPollTimer);
+  visitorPollTimer = null;
 }
 
 function handleAuthError() {
+  stopVisitorPoll();
   clearSession();
   showLoggedOut();
   loginError("Session expired — log in again");
@@ -88,6 +113,7 @@ async function loadProducts() {
 }
 
 function doLogout() {
+  stopVisitorPoll();
   clearSession();
   showLoggedOut();
 }

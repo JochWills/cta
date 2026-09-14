@@ -187,3 +187,50 @@ insert into public.products (code, title, description, module_slug, price_cents,
 ('CGA5','Reporting & Audit Opinions','Forming an opinion, modifications, KAMs, going concern and other reports.','corporate-governance-auditing',2500,27),
 ('CGA6','Professional Ethics & Independence','The IRBA/SAICA codes, threats, safeguards and independence in practice.','corporate-governance-auditing',2500,28)
 on conflict (code) do nothing;
+
+
+-- ------------------------------------------------------------
+-- 7. LIVE VISITOR COUNT (admin page)
+--    One row per open tab, keyed by a random id the shop makes up client-
+--    side (src/presence.js) — not a cookie, not tied to a person, nothing
+--    else stored. A heartbeat every ~20s keeps last_seen current; the admin
+--    page counts rows updated in the last 45s as "active now". No select
+--    policy on the raw table for anon — only the count is exposed, via
+--    active_visitor_count() below, so a visitor's session id/timestamp
+--    isn't itself something anyone holding the anon key can browse.
+-- ------------------------------------------------------------
+create table if not exists public.site_sessions (
+  session_id text primary key,
+  last_seen  timestamptz not null default now()
+);
+
+alter table public.site_sessions enable row level security;
+-- No policies at all for site_sessions itself — every access goes through
+-- the two security definer functions below, which run as their owner
+-- (bypassing RLS) rather than as the calling anon role. Supabase's linter
+-- flags both of those functions being anon-executable, and the table
+-- having RLS enabled with zero policies — that's this design working as
+-- intended, not a gap: the table is meant to be reachable only through
+-- them, never queried directly.
+
+-- Upsert this tab's heartbeat, and take the opportunity to prune rows
+-- that are clearly gone for good — bounds the table's growth without
+-- needing a separate scheduled job for something this low-stakes.
+create or replace function public.heartbeat(p_session_id text) returns void
+language plpgsql security definer set search_path = public as $$
+begin
+  insert into public.site_sessions (session_id, last_seen)
+  values (p_session_id, now())
+  on conflict (session_id) do update set last_seen = now();
+
+  delete from public.site_sessions where last_seen < now() - interval '1 day';
+end;
+$$;
+
+create or replace function public.active_visitor_count() returns bigint
+language sql security definer set search_path = public as $$
+  select count(*) from public.site_sessions where last_seen > now() - interval '45 seconds';
+$$;
+
+grant execute on function public.heartbeat(text) to anon, authenticated;
+grant execute on function public.active_visitor_count() to anon, authenticated;

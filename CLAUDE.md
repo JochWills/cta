@@ -66,11 +66,13 @@ src/
   main.js                   Entry point: delegated event handlers, init
   state.js                  Shared state object + rands/esc/$/isEmail helpers
   catalogue.js              MODULES (colours, icons, labels) + SEED fallback catalogue
-  supabase.js               Env config, sbGet/sbInsert/sbFunction
+  supabase.js               Env config, sbGet/sbInsert/sbFunction/sbRpc
   cart.js                   loadProducts, addToCart, removeFromCart
   checkout.js               placeOrder — writes the order, then hands off to Paystack
   downloads.js               openDownloadModal/submitDownloadRequest — the "get your
                              notes" self-serve lookup, see Data model/Current state
+  presence.js               startPresence — anonymous heartbeat behind the admin
+                             page's live visitor count, see Data model below
   render.js                 All DOM rendering + toast/drawer/filter helpers
   styles.css                Everything, token-first, one file
   admin/                    Admin page's own state/api/render/main split + admin.css
@@ -147,6 +149,15 @@ comment for why it always responds `200 { ok, reason }` rather than
 `modules` — the four module rows. Currently the frontend uses the hardcoded
 `MODULES` array for presentation and only reads `products` from the database.
 
+`site_sessions` — one row per open browser tab, keyed by a random id made up
+client-side (`src/presence.js`), heartbeat-updated every ~20s. Backs the
+admin page's live visitor count. No RLS policies at all on the table itself
+— both reads and writes go through two `security definer` functions
+(`heartbeat`, `active_visitor_count` — see `supabase/schema.sql`'s "LIVE
+VISITOR COUNT" section) that anon can call directly, so the raw table (and
+its session ids/timestamps) is never itself queryable. `heartbeat` also
+prunes rows older than a day, so the table doesn't grow forever.
+
 ### RLS — read this before changing any query
 
 - Anyone may `select` active products.
@@ -190,7 +201,8 @@ email capture into Supabase, responsive down to 390px, keyboard focus states,
 reduced-motion support, Paystack checkout (`docs/paystack.md`), self-serve PDF
 delivery with no email required (`order-download`, see Data model above), and a
 password-gated admin page at `/admin.html` for viewing orders and managing
-notes including PDF upload (`docs/admin.md`).
+notes including PDF upload (`docs/admin.md`), and a live visitor count on
+the admin page (`site_sessions`, see Data model above).
 
 Not done:
 1. **Delivery email** — email hosting on `pgdanotes.co.za` (or a verified

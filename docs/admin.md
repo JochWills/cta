@@ -75,6 +75,10 @@ buyers) rather than linking to it directly.
 Deleting a note asks for confirmation first and can't be undone — it removes
 the database row, not the underlying PDF in storage.
 
+The header shows a live count of browser tabs with the site open right now
+(polled every 15s) — see the "LIVE VISITOR COUNT" section of
+`supabase/schema.sql` and `src/presence.js` for how it's tracked.
+
 ## Not done here
 
 - **No audit log.** Anyone with the password can do anything; there's no

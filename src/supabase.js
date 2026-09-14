@@ -65,3 +65,14 @@ export async function sbFunction(name, payload) {
   if (!res.ok) throw new Error(`Function ${name} failed (${res.status}): ${await res.text()}`);
   return res.json();
 }
+
+/** Call a Postgres function exposed at PostgREST's /rpc/ endpoint (see supabase/schema.sql). */
+export async function sbRpc(fn, args = {}) {
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/${fn}`, {
+    method: "POST",
+    headers: headers(),
+    body: JSON.stringify(args),
+  });
+  if (!res.ok) throw new Error(`Supabase rpc ${fn} failed (${res.status}): ${await res.text()}`);
+  return res.json();
+}

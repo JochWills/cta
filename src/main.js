@@ -14,6 +14,7 @@ import { loadProducts, loadCart, addToCart, removeFromCart } from "./cart.js";
 import { placeOrder } from "./checkout.js";
 import { openDownloadModal, closeDownloadModal, submitDownloadRequest } from "./downloads.js";
 import { initFaqAccordions } from "./faq.js";
+import { startPresence } from "./presence.js";
 
 /* ------------------------------------------------------------------
    Delegated click handling — the grid and drawer are re-rendered often,
@@ -148,3 +149,4 @@ renderFilters();
 renderDrawer();
 loadProducts();
 initFaqAccordions();
+startPresence();
