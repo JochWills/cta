@@ -7,6 +7,7 @@
  */
 import "./mapUpsertPolyfill.js"; // must run before pdfjsLib touches a single Map — see that file's comment
 import * as pdfjsLib from "pdfjs-dist";
+import { fixSymbolicFontEncoding } from "./fixSymbolicFontEncoding.js";
 
 // Constructing the worker ourselves (via Vite's own `new Worker(new URL(...))`
 // handling) rather than just pointing GlobalWorkerOptions.workerSrc at
@@ -30,20 +31,18 @@ function canvasToPng(canvas) {
  * @returns {Promise<Blob[]>} One PNG per rendered page, in order.
  */
 export async function renderPreviewPages(file, maxPages = 3) {
-  const data = await file.arrayBuffer();
-  // disableFontFace: by default pdf.js converts embedded fonts to OpenType
-  // and loads them via the browser's own @font-face/Font Loading API — which
-  // hands glyph selection for a subset/custom-encoded font to the browser's
-  // native text-shaping engine. Safari's (CoreText) and Chrome's (HarfBuzz)
-  // don't always agree on that for the same font, which showed up as
-  // individual letters silently swapped for the wrong glyph in a preview
-  // generated on Safari (a real note upload, not a synthetic test — see the
-  // "getOrInsertComputed" crash fix commit for the related-but-different
-  // Safari issue this isn't). Disabling it makes pdf.js draw every glyph
-  // itself from the font's own outline data as vector paths, which doesn't
-  // depend on either engine's font matching, so it renders identically
-  // everywhere. No downside for this use — this only ever runs offscreen,
-  // once, to export a PNG; there's no live @font-face loading to benefit from.
+  const rawData = new Uint8Array(await file.arrayBuffer());
+  // Some PDF producers embed a Symbolic TrueType font with no /Encoding,
+  // relying on the font's own internal cmap — valid per spec, but a real
+  // pdf.js bug misreads it and silently swaps some letters for the wrong
+  // glyph (T, D, x, q and others, consistently, regardless of browser — see
+  // fixSymbolicFontEncoding.js for the full diagnosis and fix). Cheap no-op
+  // for any PDF that isn't built this way.
+  const data = await fixSymbolicFontEncoding(rawData);
+  // disableFontFace: makes pdf.js draw every glyph itself from the font's
+  // own outline data as vector paths instead of via the browser's native
+  // @font-face/text-shaping — deterministic across engines, and harmless
+  // here since this only ever runs offscreen, once, to export a PNG.
   const pdf = await pdfjsLib.getDocument({ data, disableFontFace: true }).promise;
   const pageCount = Math.min(pdf.numPages, maxPages);
 

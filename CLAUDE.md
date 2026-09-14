@@ -53,6 +53,14 @@ bundle, so `mapUpsertPolyfill.js`'s fix for a Safari gap (Map/WeakMap lack
 `getOrInsertComputed`, which pdfjs-dist 6.x calls with no fallback) can run
 inside the worker's own global scope, not just the main thread.
 
+`pdfPreview.js` also runs every PDF through `fixSymbolicFontEncoding.js`
+before handing it to pdf.js — a real pdf.js bug silently swaps some letters
+for the wrong glyph in a PDF from at least one real-world producer (a
+Symbolic TrueType font with no `/Encoding`, e.g. LibreOffice's own
+subsetting output), consistently and regardless of browser. See that
+file's own comment for the full diagnosis; it's a no-op for any PDF that
+isn't built that way.
+
 ## Layout
 
 ```
