@@ -31,7 +31,20 @@ function canvasToPng(canvas) {
  */
 export async function renderPreviewPages(file, maxPages = 3) {
   const data = await file.arrayBuffer();
-  const pdf = await pdfjsLib.getDocument({ data }).promise;
+  // disableFontFace: by default pdf.js converts embedded fonts to OpenType
+  // and loads them via the browser's own @font-face/Font Loading API — which
+  // hands glyph selection for a subset/custom-encoded font to the browser's
+  // native text-shaping engine. Safari's (CoreText) and Chrome's (HarfBuzz)
+  // don't always agree on that for the same font, which showed up as
+  // individual letters silently swapped for the wrong glyph in a preview
+  // generated on Safari (a real note upload, not a synthetic test — see the
+  // "getOrInsertComputed" crash fix commit for the related-but-different
+  // Safari issue this isn't). Disabling it makes pdf.js draw every glyph
+  // itself from the font's own outline data as vector paths, which doesn't
+  // depend on either engine's font matching, so it renders identically
+  // everywhere. No downside for this use — this only ever runs offscreen,
+  // once, to export a PNG; there's no live @font-face loading to benefit from.
+  const pdf = await pdfjsLib.getDocument({ data, disableFontFace: true }).promise;
   const pageCount = Math.min(pdf.numPages, maxPages);
 
   const pages = [];
