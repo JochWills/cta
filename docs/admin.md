@@ -62,9 +62,17 @@ next to `index.html` automatically; no separate Render service is needed.
 
 ## Using it
 
-Visit `/admin.html`, enter the password. **Orders** shows every order,
-newest first — expand a row to see which sections were bought. **Notes**
-lists every product, including inactive ones; **Add note** or a row's
+Visit `/admin.html`, enter the password. It opens on **Dashboard** — revenue,
+paid/pending order counts and average order value for a chosen range (7/30/90
+days or all time), a bar chart of revenue over that range, and the
+best-selling notes within it. All of it is computed in the browser from the
+same order data the Orders tab loads (`src/admin/dashboard.js`) — no separate
+endpoint or query, so it's never out of sync with Orders and adds no load on
+Supabase beyond what already happens today.
+
+**Orders** shows every order, newest first — expand a row to see which
+sections were bought. **Notes** lists every product, including inactive
+ones; **Add note** or a row's
 **Edit** opens the same form. Attaching a PDF there uploads it to the
 `notes` bucket under `<module_slug>/<code>.pdf` and sets `file_path`
 automatically. Editing a note that already has one shows a **View current

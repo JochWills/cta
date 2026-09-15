@@ -25,6 +25,7 @@ import {
   fetchActiveVisitors,
 } from "./api.js";
 import { renderPreviewPages } from "./pdfPreview.js";
+import { renderDashboard } from "./dashboard.js";
 
 const PREVIEW_MAX_PAGES = 3;
 
@@ -96,6 +97,7 @@ async function loadOrders() {
   try {
     adminState.orders = await fetchOrders();
     renderOrders();
+    renderDashboard(); // the Dashboard tab is derived entirely from orders — see dashboard.js
   } catch (err) {
     if (err instanceof AuthError) return handleAuthError();
     toast(err.message);
@@ -258,6 +260,12 @@ document.addEventListener("click", (e) => {
 
   const tab = e.target.closest("[data-tab]");
   if (tab) return setTab(tab.dataset.tab);
+
+  const range = e.target.closest("[data-range]");
+  if (range) {
+    adminState.dashboardRange = range.dataset.range;
+    return renderDashboard();
+  }
 
   if (e.target.closest("#addNoteBtn")) return openProductForm(null);
   if (e.target.closest("#cancelForm") || e.target.closest("#closeModal")) return closeProductForm();

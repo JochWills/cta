@@ -84,7 +84,10 @@ src/
   render.js                 All DOM rendering + toast/drawer/filter helpers
   styles.css                Everything, token-first, one file
   admin/                    Admin page's own state/api/render/main split + admin.css
-                             (pdfPreview.js renders page 1 of an upload to PNG)
+                             (pdfPreview.js renders page 1 of an upload to PNG;
+                             dashboard.js computes and renders the Dashboard tab's
+                             revenue stats/chart/top-notes, entirely client-side
+                             from the orders the Orders tab already loads)
 supabase/
   schema.sql                Tables, RLS policies, both storage buckets, 28 seed rows
   functions/

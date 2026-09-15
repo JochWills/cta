@@ -12,10 +12,12 @@ export const adminState = {
   orders: [],
   /** All products, including inactive ones, once loaded. */
   products: [],
-  /** Which dashboard tab is showing: "orders" | "notes". */
-  tab: "orders",
+  /** Which dashboard tab is showing: "dashboard" | "orders" | "notes". */
+  tab: "dashboard",
   /** Product row being edited in the modal, or null when adding a new one. */
   editing: null,
+  /** Date range the Dashboard tab's stats/chart/top-notes are scoped to. */
+  dashboardRange: "30",
 };
 
 const TOKEN_KEY = "cta_admin_token";

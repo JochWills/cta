@@ -38,6 +38,7 @@ export function loginError(message) {
 export function setTab(tab) {
   adminState.tab = tab;
   document.querySelectorAll("[data-tab]").forEach((b) => b.classList.toggle("is-on", b.dataset.tab === tab));
+  $("#dashOverview").hidden = tab !== "dashboard";
   $("#ordersView").hidden = tab !== "orders";
   $("#notesView").hidden = tab !== "notes";
 }
