@@ -93,11 +93,30 @@
 .admin-table tbody tr:last-child td{border-bottom:none;}
 .admin-table td .meta{font-size:12px;color:var(--ink-faint);margin-top:2px;}
 .admin-table .tag{padding:5px 10px;border-radius:6px;font-size:11.5px;font-weight:600;white-space:nowrap;}
+/* An auto-layout table with mostly nowrap cells dumps whatever width is
+   left over into the last column — barely visible with the Notes table's
+   two-button Edit/Delete pair, but a wide empty gap in front of the
+   Orders table's single Delete button. width:1% is the standard trick to
+   make a column claim only what its content needs instead. */
+.admin-table th:last-child,.admin-table td:last-child{width:1%;}
+/* The Items column's content changes a lot between an order's <details>
+   closed ("2 sections") and open (a wrapped list) — without a width
+   pinned here, auto-layout resizes it (and, since the table is 100% wide,
+   every other column along with it) the moment any row is expanded. A
+   fixed width plus .order-items' own wrapping (below) keeps every column
+   still while a row opens or closes. */
+.admin-table th:nth-child(4){width:260px;}
 .admin-row-actions{display:flex;gap:8px;}
 .admin-row-actions .btn{padding:8px 16px;font-size:11px;}
 
 .admin-table details summary{cursor:pointer;list-style:none;color:var(--accent-deep);}
 .admin-table details summary::-webkit-details-marker{display:none;}
+/* white-space:normal lets a long item name wrap instead of overflowing —
+   but an auto-layout table still sizes a column by its widest UNWRAPPED
+   line unless something caps it, so opening one long order's item list
+   was silently reflowing every column in the whole table (found by
+   actually expanding one, not by reading the CSS). max-width gives the
+   column something finite to size against; items wrap inside it. */
 .order-items{margin:8px 0 0;padding-left:16px;font-size:12.5px;color:var(--ink-soft);white-space:normal;}
 .order-items li{margin-top:3px;}
 
