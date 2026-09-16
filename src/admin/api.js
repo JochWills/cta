@@ -40,6 +40,7 @@ async function call(name, { body, isForm = false } = {}) {
 export const login = (password) => call("admin-login", { body: { password } });
 
 export const fetchOrders = () => call("admin-orders");
+export const deleteOrder = (id) => call("admin-orders", { body: { action: "delete", id } });
 
 export const listProducts = () => call("admin-products", { body: { action: "list" } });
 export const createProduct = (fields) => call("admin-products", { body: { action: "create", ...fields } });

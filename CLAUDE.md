@@ -174,9 +174,9 @@ prunes rows older than a day, so the table doesn't grow forever.
 - Anyone may `select` active products.
 - Anyone may `insert` an order, but only with `status = 'pending'`.
 - **Nobody with the anon key can read, update or delete orders.** That is
-  deliberate. Order reads/updates happen server-side with the service_role key
+  deliberate. Order reads/writes happen server-side with the service_role key
   inside an Edge Function (`paystack-webhook` for marking paid, `admin-orders`
-  for the admin page's read-only view, `order-download` for a buyer looking up
+  for the admin page's list + delete, `order-download` for a buyer looking up
   their own order by reference + email — see Data model below). If a
   browser-side query to `orders` returns nothing, RLS is working as designed —
   do not "fix" it by loosening the policy.

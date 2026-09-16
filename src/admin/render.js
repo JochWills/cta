@@ -44,7 +44,8 @@ export function setTab(tab) {
 }
 
 /* ------------------------------------------------------------------
-   Orders (view-only)
+   Orders — status is still read-only (see admin-orders' own comment for
+   why), but a row can be deleted.
 ------------------------------------------------------------------ */
 const STATUS_LABEL = { pending: "Pending", paid: "Paid", failed: "Failed", refunded: "Refunded" };
 
@@ -59,7 +60,7 @@ export function renderOrders() {
     <div class="admin-table-wrap">
       <table class="admin-table">
         <thead><tr>
-          <th>Reference</th><th>Date</th><th>Buyer</th><th>Items</th><th>Total</th><th>Status</th>
+          <th>Reference</th><th>Date</th><th>Buyer</th><th>Items</th><th>Total</th><th>Status</th><th></th>
         </tr></thead>
         <tbody>
           ${adminState.orders.map(orderRow).join("")}
@@ -88,6 +89,7 @@ function orderRow(o) {
       </td>
       <td>${rands(o.total_cents)}</td>
       <td><span class="status-badge status-${esc(o.status)}">${esc(STATUS_LABEL[o.status] || o.status)}</span></td>
+      <td class="admin-row-actions"><button class="btn ghost" data-del-order="${esc(o.id)}">Delete</button></td>
     </tr>`;
 }
 

@@ -1,4 +1,4 @@
-import { $, slugifyCode } from "../state.js";
+import { $, rands, slugifyCode } from "../state.js";
 import { adminState, loadSession, saveSession, clearSession } from "./state.js";
 import {
   toast,
@@ -16,6 +16,7 @@ import {
   AuthError,
   login,
   fetchOrders,
+  deleteOrder,
   listProducts,
   createProduct,
   updateProduct,
@@ -198,6 +199,31 @@ async function saveProductForm(e) {
   }
 }
 
+/**
+ * Deleting an order is permanent and, unlike deleting a note, removes an
+ * actual financial record — the confirm text says so plainly for a paid
+ * one, and makes clear this doesn't touch Paystack or refund the buyer
+ * (that's a separate, deliberate action on Paystack's own side if it's
+ * ever needed — this only ever removes the local row).
+ */
+async function doDeleteOrder(id) {
+  const order = adminState.orders.find((o) => o.id === id);
+  if (!order) return;
+  const warning =
+    order.status === "paid"
+      ? `Delete this PAID order (${order.reference}, ${rands(order.total_cents)})? This does not refund the buyer — it only removes the record, permanently.`
+      : `Delete order ${order.reference}? This can't be undone.`;
+  if (!confirm(warning)) return;
+  try {
+    await deleteOrder(id);
+    toast("Order deleted");
+    await loadOrders();
+  } catch (err) {
+    if (err instanceof AuthError) return handleAuthError();
+    toast(err.message);
+  }
+}
+
 async function doDelete(id) {
   const product = adminState.products.find((p) => p.id === id);
   if (!product) return;
@@ -275,6 +301,9 @@ document.addEventListener("click", (e) => {
 
   const del = e.target.closest("[data-del]");
   if (del) return doDelete(del.dataset.del);
+
+  const delOrder = e.target.closest("[data-del-order]");
+  if (delOrder) return doDeleteOrder(delOrder.dataset.delOrder);
 
   if (e.target.closest("#pf_view_pdf")) return viewCurrentPdf();
 });

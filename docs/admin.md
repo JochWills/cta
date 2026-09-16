@@ -4,7 +4,8 @@
 second, unlinked page at `/admin.html` on the same Render site. It lets
 Courts:
 
-- **See every order** — reference, buyer, items, total, status — read-only.
+- **See every order** — reference, buyer, items, total, status — and delete
+  one if it needs to go (status itself still isn't editable here).
 - **Add, edit and delete notes** — code, title, description, module, price,
   active flag, sort order — and upload the PDF for each one straight into
   the private `notes` storage bucket.
@@ -83,6 +84,11 @@ buyers) rather than linking to it directly.
 Deleting a note asks for confirmation first and can't be undone — it removes
 the database row, not the underlying PDF in storage.
 
+Orders can be deleted the same way, from a **Delete** button on each row —
+also confirmed first, also permanent. Deleting a paid order doesn't refund
+the buyer or touch Paystack; the confirm text says so, since it's a real
+financial record disappearing, not just tidying up a stray row.
+
 The header shows a live count of browser tabs with the site open right now
 (polled every 15s) — see the "LIVE VISITOR COUNT" section of
 `supabase/schema.sql` and `src/presence.js` for how it's tracked.
@@ -95,5 +101,6 @@ The header shows a live count of browser tabs with the site open right now
 - **No rate limiting on `admin-login`.** A determined attacker could brute
   force the password over the network. Pick a long, random one.
 - **Order status is still only changed by the Paystack webhook** (or by hand
-  in the Supabase table editor) — the admin page is read-only for orders on
-  purpose, per the working decision when this was built.
+  in the Supabase table editor) — the admin page can delete an order but has
+  no way to edit one, on purpose, per the working decision when this was
+  built.
