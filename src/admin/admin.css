@@ -211,6 +211,10 @@
 .stat-tile{
   background:var(--paper);border:1px solid var(--rule);border-radius:var(--radius);
   padding:20px 22px;box-shadow:var(--shadow);display:flex;flex-direction:column;gap:16px;
+  min-width:0; /* same grid-item trap as .dash-card — the icon/label row and
+    value+sparkline row don't shrink below their own content's width by
+    default, so at some widths (700px, say — 4 columns of ~165px each) the
+    grid track was forced wider than the page instead of wrapping/shrinking. */
 }
 .stat-tile-top{display:flex;align-items:center;gap:12px;}
 .stat-icon{width:38px;height:38px;border-radius:11px;display:grid;place-items:center;flex-shrink:0;}
@@ -308,14 +312,36 @@
    push .header-actions to the right — admin.html has no .nav, so without
    this the live-visitor count and Log out button just sit bunched up
    against the logo instead of on the far side of the header. */
-#logoutWrap{margin-left:auto;}
+/* A bit more breathing room than styles.css's shared 6px — .live-visitors
+   is a proper padded pill now, not plain text, so it wants more air next
+   to the Log out button than an icon-button pair would. */
+#logoutWrap{margin-left:auto;gap:14px;}
 
-.live-visitors{display:flex;align-items:center;gap:7px;font-size:12.5px;color:var(--ink-soft);}
-.live-dot{
-  width:7px;height:7px;border-radius:50%;background:var(--tax-ink);
-  animation:live-pulse 2s ease-in-out infinite;
+/* A tinted pill, like a status badge, rather than plain text floating in
+   the header — reuses the same green as a "Paid" order/the Orders Paid
+   stat tile, since "people currently on the site" reads as the same kind
+   of good-news-green signal. */
+.live-visitors{
+  display:flex;align-items:center;gap:8px;
+  padding:7px 14px;border-radius:999px;
+  background:var(--tax-tint);color:var(--tax-ink);
+  font-size:12.5px;font-weight:600;
 }
-@keyframes live-pulse{0%,100%{opacity:1;}50%{opacity:.35;}}
+.live-dot{
+  position:relative;width:7px;height:7px;border-radius:50%;
+  background:var(--tax-ink);flex-shrink:0;
+}
+/* A ring expanding outward and fading, rather than the dot itself just
+   fading in place — reads more like an actual live/radar signal. */
+.live-dot::after{
+  content:"";position:absolute;inset:-5px;border-radius:50%;
+  border:1.5px solid var(--tax-ink);
+  animation:live-ping 2s ease-out infinite;
+}
+@keyframes live-ping{
+  0%{opacity:.6;transform:scale(.4);}
+  75%,100%{opacity:0;transform:scale(1.8);}
+}
 
 @media (max-width:840px){
   /* Not enough width left for a 220px sidebar beside real content — it
