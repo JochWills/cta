@@ -38,7 +38,17 @@
   background:var(--paper);border:1px solid var(--rule);border-radius:var(--radius);
   padding:32px;box-shadow:var(--shadow);
 }
-.login-card{max-width:380px;margin:108px auto 0;text-align:left;} /* was 64px, plus .admin-main's own 44px top padding — that padding moved to .admin-content (dashboard only) so this keeps the login screen sitting exactly where it did */
+/* #loginView carries both .login-card and .wrap (added so it keeps a
+   side gutter now that <main> no longer has one — see .admin-main).
+   .wrap's own max-width:1360px is equal specificity to this max-width:380px
+   — exactly this file's own documented stylesheet-order trap at the top:
+   .login-card wins in `npm run dev` (styles.css loads first, admin.css
+   second) but loses in the production build, where Vite emits admin.html's
+   two <link> tags in the opposite order, so styles.css's 1360px won there
+   instead — stretching the login card edge-to-edge. .login-card.wrap
+   (both classes, so it still only matches #loginView) out-specifies plain
+   .wrap regardless of load order, same fix as .checkbox-field below. */
+.login-card.wrap{max-width:380px;margin:108px auto 0;text-align:left;} /* margin was 64px, plus .admin-main's own 44px top padding — that padding moved to .admin-content (dashboard only) so this keeps the login screen sitting exactly where it did */
 .login-card h1{font-size:26px;}
 .login-card .lede{color:var(--ink-soft);font-size:14px;margin:10px 0 0;}
 
@@ -377,7 +387,7 @@
 
 @media (max-width:640px){
   .admin-card{padding:24px;}
-  .login-card{margin-top:32px;}
+  .login-card.wrap{margin-top:32px;} /* .login-card alone (0,1,0) would lose to the base .login-card.wrap rule's own margin (0,2,0) now — same specificity needed here to actually override it */
   .admin-form-grid{grid-template-columns:1fr;}
   .dash-stats{grid-template-columns:repeat(2,1fr);}
 }
