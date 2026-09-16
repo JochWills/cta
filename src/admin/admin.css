@@ -77,7 +77,23 @@
 .field-link:hover{color:var(--accent);}
 .field-link[disabled]{opacity:.5;cursor:default;text-decoration:none;}
 
-.admin-tabs{display:flex;gap:10px;margin:8px 0 24px;}
+/* ── sidebar nav (Dashboard / Orders / Notes) ─────────────── */
+.admin-shell{display:flex;align-items:flex-start;gap:32px;}
+.admin-content{flex:1;min-width:0;} /* min-width:0 so a wide table can still scroll inside it rather than push the sidebar off-screen */
+
+.admin-sidebar{
+  width:200px;flex-shrink:0;display:flex;flex-direction:column;gap:3px;
+  background:var(--paper);border:1px solid var(--rule);border-radius:var(--radius);
+  padding:12px;box-shadow:var(--shadow);
+  position:sticky;top:96px; /* matches styles.css' scroll-padding-top — sits just under the sticky site header */
+}
+.side-nav-item{
+  display:flex;align-items:center;gap:12px;width:100%;padding:11px 14px;border-radius:10px;
+  font-size:14px;color:var(--ink-soft);text-align:left;transition:background .15s ease,color .15s ease;
+}
+.side-nav-item svg{width:19px;height:19px;stroke:currentColor;stroke-width:1.6;fill:none;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0;}
+.side-nav-item:hover{background:var(--cream);color:var(--ink);}
+.side-nav-item.is-on{background:var(--blush);color:var(--accent-deep);font-weight:600;}
 
 .admin-toolbar{display:flex;justify-content:flex-end;margin-bottom:16px;}
 
@@ -195,6 +211,22 @@
   animation:live-pulse 2s ease-in-out infinite;
 }
 @keyframes live-pulse{0%,100%{opacity:1;}50%{opacity:.35;}}
+
+@media (max-width:840px){
+  /* Not enough width left for a 200px sidebar beside real content — it
+     becomes a horizontal strip above instead, same nav items either way.
+     align-items:flex-start (set above, for the desktop row so the sidebar
+     doesn't stretch to match a tall content column) has to be overridden
+     back to stretch here — the same property controls WIDTH once this
+     becomes a column, and flex-start left .admin-content sized to its
+     widest child (the revenue chart's real, unscaled pixel width) instead
+     of the viewport, pushing the whole page wider than the screen. */
+  .admin-shell{flex-direction:column;align-items:stretch;gap:20px;}
+  .admin-sidebar{
+    width:100%;flex-direction:row;overflow-x:auto;position:static;gap:6px;
+  }
+  .side-nav-item{width:auto;white-space:nowrap;flex-shrink:0;}
+}
 
 @media (max-width:640px){
   .admin-card{padding:24px;}
