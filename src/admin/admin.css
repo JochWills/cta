@@ -25,15 +25,20 @@
 .header-actions[hidden],
 .admin-modal[hidden],
 .field-link[hidden],
-.dash-tooltip[hidden]{display:none;}
+.dash-tooltip[hidden],
+.admin-shell[hidden]{display:none;}
 
-.admin-main{padding:44px 0 100px;}
+/* Login keeps the page's usual centred/padded gutter (it gets the .wrap
+   class directly, in admin.html); the dashboard shell doesn't — its
+   sidebar needs to run flush against the real edge of the page, so
+   .admin-main itself carries no padding of its own. See .admin-content. */
+.admin-main{padding:0;}
 
 .admin-card{
   background:var(--paper);border:1px solid var(--rule);border-radius:var(--radius);
   padding:32px;box-shadow:var(--shadow);
 }
-.login-card{max-width:380px;margin:64px auto 0;text-align:left;}
+.login-card{max-width:380px;margin:108px auto 0;text-align:left;} /* was 64px, plus .admin-main's own 44px top padding — that padding moved to .admin-content (dashboard only) so this keeps the login screen sitting exactly where it did */
 .login-card h1{font-size:26px;}
 .login-card .lede{color:var(--ink-soft);font-size:14px;margin:10px 0 0;}
 
@@ -78,27 +83,33 @@
 .field-link[disabled]{opacity:.5;cursor:default;text-decoration:none;}
 
 /* ── sidebar nav (Dashboard / Orders / Notes) ─────────────── */
-/* align-items:stretch (not flex-start) so the sidebar always matches the
+/* No card here on purpose — no border, radius or shadow around the sidebar
+   itself — a hairline border-right is the only seam between it and the
+   content, so it reads as a panel built into the page rather than a card
+   that happens to sit on it. align-items:stretch makes it always match the
    height of whichever tab is showing, instead of shrinking to just its
    three nav items and leaving a short floating box beside much taller
-   content — combined with the min-height below, it reads as a panel built
-   into the side of the page rather than a card that happens to sit there. */
-.admin-shell{display:flex;align-items:stretch;gap:32px;}
-.admin-content{flex:1;min-width:0;} /* min-width:0 so a wide table can still scroll inside it rather than push the sidebar off-screen */
+   content; the min-height below still reaches it near the bottom of the
+   screen even on a short tab (Notes with one row, say). */
+.admin-shell{display:flex;align-items:stretch;}
+.admin-content{flex:1;min-width:0;padding:44px 40px 100px;} /* min-width:0 so a wide table can still scroll inside it rather than push the sidebar off-screen; padding replaces what used to live on .admin-main */
 
 .admin-sidebar{
-  width:200px;flex-shrink:0;display:flex;flex-direction:column;gap:3px;
-  background:var(--paper);border:1px solid var(--rule);border-radius:var(--radius);
-  padding:12px;box-shadow:var(--shadow);
-  position:sticky;top:96px; /* matches styles.css' scroll-padding-top — sits just under the sticky site header */
-  min-height:calc(100vh - 240px); /* still reaches down near the bottom of the screen even on a short tab (Notes with one row, say) */
+  width:220px;flex-shrink:0;display:flex;flex-direction:column;gap:3px;
+  background:var(--cream);border-right:1px solid var(--rule);
+  padding:20px 14px;
+  position:sticky;top:80px; /* .site-header's own height — sits flush under it */
+  min-height:calc(100vh - 80px);
 }
 .side-nav-item{
   display:flex;align-items:center;gap:12px;width:100%;padding:11px 14px;border-radius:10px;
   font-size:14px;color:var(--ink-soft);text-align:left;transition:background .15s ease,color .15s ease;
 }
 .side-nav-item svg{width:19px;height:19px;stroke:currentColor;stroke-width:1.6;fill:none;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0;}
-.side-nav-item:hover{background:var(--cream);color:var(--ink);}
+/* Hover needs to read against the sidebar's own cream background now,
+   not the page's white — cream-on-cream (the old hover colour) would have
+   been invisible. */
+.side-nav-item:hover{background:var(--paper);color:var(--ink);}
 .side-nav-item.is-on{background:var(--blush);color:var(--accent-deep);font-weight:600;}
 
 .admin-toolbar{display:flex;justify-content:flex-end;margin-bottom:16px;}
@@ -293,6 +304,12 @@
 .rank-meta{font-size:12px;color:var(--ink-faint);white-space:nowrap;}
 .rank-value{font-size:13.5px;font-weight:600;color:var(--ink);white-space:nowrap;}
 
+/* styles.css's shared .header-inner relies on .nav's own margin:0 auto to
+   push .header-actions to the right — admin.html has no .nav, so without
+   this the live-visitor count and Log out button just sit bunched up
+   against the logo instead of on the far side of the header. */
+#logoutWrap{margin-left:auto;}
+
 .live-visitors{display:flex;align-items:center;gap:7px;font-size:12.5px;color:var(--ink-soft);}
 .live-dot{
   width:7px;height:7px;border-radius:50%;background:var(--tax-ink);
@@ -301,21 +318,25 @@
 @keyframes live-pulse{0%,100%{opacity:1;}50%{opacity:.35;}}
 
 @media (max-width:840px){
-  /* Not enough width left for a 200px sidebar beside real content — it
-     becomes a horizontal strip above instead, same nav items either way.
-     align-items:stretch is still what's needed once .admin-shell becomes a
-     column (the same property now controls WIDTH instead of height, and
-     without it .admin-content sizes to its widest child — the revenue
-     chart's real, unscaled pixel width — instead of the viewport, pushing
-     the whole page wider than the screen), it just doesn't need restating
-     since the desktop rule above already sets it. min-height, though, DOES
-     need resetting: full page height made sense for a vertical side panel,
-     not for this same element turned into a short horizontal strip. */
-  .admin-shell{flex-direction:column;gap:20px;}
+  /* Not enough width left for a 220px sidebar beside real content — it
+     becomes a seamless horizontal strip above instead (border-bottom
+     replacing border-right — still just a hairline seam, not a card),
+     same nav items either way. align-items:stretch is still what's needed
+     once .admin-shell becomes a column (the same property now controls
+     WIDTH instead of height, and without it .admin-content sizes to its
+     widest child — the revenue chart's real, unscaled pixel width —
+     instead of the viewport, pushing the whole page wider than the
+     screen), it just doesn't need restating since the desktop rule above
+     already sets it. min-height, though, DOES need resetting: full page
+     height made sense for a vertical side panel, not for this same
+     element turned into a short horizontal strip. */
+  .admin-shell{flex-direction:column;}
   .admin-sidebar{
-    width:100%;min-height:0;flex-direction:row;overflow-x:auto;position:static;gap:6px;
+    width:100%;min-height:0;flex-direction:row;overflow-x:auto;position:static;
+    gap:6px;padding:10px 16px;border-right:none;border-bottom:1px solid var(--rule);
   }
   .side-nav-item{width:auto;white-space:nowrap;flex-shrink:0;}
+  .admin-content{padding:24px 20px 100px;}
   .dash-grid-2{grid-template-columns:1fr;}
 }
 
@@ -324,6 +345,17 @@
   .login-card{margin-top:32px;}
   .admin-form-grid{grid-template-columns:1fr;}
   .dash-stats{grid-template-columns:repeat(2,1fr);}
+}
+
+@media (max-width:480px){
+  /* Logo + live-visitor count + Log out genuinely don't fit next to each
+     other under ~400px (found by measuring, not guessing — #logoutWrap's
+     own content was 198px wide with only ~330px of header left to put it
+     in) — pre-existing, just newly visible now that #logoutWrap is pushed
+     to the right instead of silently overflowing past the edge while
+     sitting flush against the logo. The live count is the more skippable
+     of the two on a small phone. */
+  .live-visitors{display:none;}
 }
 
 @media (max-width:420px){
