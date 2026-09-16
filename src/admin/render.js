@@ -89,7 +89,7 @@ function orderRow(o) {
       </td>
       <td>${rands(o.total_cents)}</td>
       <td><span class="status-badge status-${esc(o.status)}">${esc(STATUS_LABEL[o.status] || o.status)}</span></td>
-      <td class="admin-row-actions"><button class="btn ghost" data-del-order="${esc(o.id)}">Delete</button></td>
+      <td><div class="admin-row-actions"><button class="btn ghost" data-del-order="${esc(o.id)}">Delete</button></div></td>
     </tr>`;
 }
 
@@ -125,9 +125,11 @@ function productRow(p) {
       <td>${rands(p.price_cents)}</td>
       <td>${p.is_active ? "Yes" : "No"}</td>
       <td>${p.file_path ? "Yes" : "—"}</td>
-      <td class="admin-row-actions">
-        <button class="btn ghost" data-edit="${esc(p.id)}">Edit</button>
-        <button class="btn ghost" data-del="${esc(p.id)}">Delete</button>
+      <td>
+        <div class="admin-row-actions">
+          <button class="btn ghost" data-edit="${esc(p.id)}">Edit</button>
+          <button class="btn ghost" data-del="${esc(p.id)}">Delete</button>
+        </div>
       </td>
     </tr>`;
 }

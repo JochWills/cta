@@ -106,6 +106,13 @@
    fixed width plus .order-items' own wrapping (below) keeps every column
    still while a row opens or closes. */
 .admin-table th:nth-child(4){width:260px;}
+/* This must land on a <div> wrapping a row's action button(s), never on
+   the <td> itself — display:flex on a table-cell pulls it out of normal
+   row-height sizing, so its border-bottom stops lining up with the rest
+   of that row (found by actually measuring row/cell rects: this cell's
+   box was ~12px shorter than its siblings, every row, only ever on this
+   column). A td with default display:table-cell around it sizes to the
+   row like every other cell; the div inside is free to be a flex row. */
 .admin-row-actions{display:flex;gap:8px;}
 .admin-row-actions .btn{padding:8px 16px;font-size:11px;}
 
