@@ -520,11 +520,20 @@ export function renderDashboard() {
 ------------------------------------------------------------------ */
 function showTooltip(bar) {
   const tip = $("#dashTooltip");
-  const host = document.querySelector("#dashChartInner .dash-chart-scroll");
-  if (!tip || !host || !bar) return;
+  // #dashChartInner (.dash-chart-host) is the tooltip's actual position:
+  // relative ancestor — NOT .dash-chart-scroll, which only wraps the bars
+  // and starts partway in, after the fixed axis column. Positioning
+  // against the scroll container's own edge (and separately re-adding its
+  // scrollLeft, on top of getBoundingClientRect() already reflecting the
+  // current scroll) both threw this off — compounding, so the further a
+  // chart was scrolled, the further right the tooltip drifted, eventually
+  // landing on the card next to it. getBoundingClientRect() already gives
+  // each element's true on-screen position; no scroll math needed at all.
+  const container = $("#dashChartInner");
+  if (!tip || !container || !bar) return;
   tip.innerHTML = `<strong>${esc(bar.dataset.value)}</strong><span>${esc(bar.dataset.label)}</span>`;
   tip.hidden = false;
-  const hostBox = host.getBoundingClientRect();
+  const containerBox = container.getBoundingClientRect();
   const barBox = bar.getBoundingClientRect(); // the full-height hit rect, for horizontal centring
   // .bar-fill, when a bar was tall enough to draw one, is always the element
   // right before its .bar-hit sibling (see renderRevenueChart) — point the
@@ -534,8 +543,15 @@ function showTooltip(bar) {
   // measure, so fall back to the baseline instead of the chart's very top.
   const fill = bar.previousElementSibling;
   const top = fill?.classList.contains("bar-fill") ? fill.getBoundingClientRect().top : barBox.bottom;
-  tip.style.left = `${barBox.left - hostBox.left + host.scrollLeft + barBox.width / 2}px`;
-  tip.style.top = `${top - hostBox.top}px`;
+  // The tooltip is centred on `left` (translate(-50%, ...) in CSS) — clamp
+  // that centre so its own width never pushes it past the card's edge,
+  // which the very first/last bar would otherwise do by design (a bar
+  // flush against the edge centres a wider tooltip half outside it).
+  const rawLeft = barBox.left - containerBox.left + barBox.width / 2;
+  const tipHalfWidth = tip.getBoundingClientRect().width / 2;
+  const clampedLeft = Math.min(Math.max(rawLeft, tipHalfWidth), containerBox.width - tipHalfWidth);
+  tip.style.left = `${clampedLeft}px`;
+  tip.style.top = `${top - containerBox.top}px`;
 }
 
 function hideTooltip() {
