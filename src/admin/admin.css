@@ -113,6 +113,10 @@
   background:var(--cream);font-weight:500;
 }
 .admin-table tbody tr:last-child td{border-bottom:none;}
+/* Recent Orders on the Dashboard tab — same table, tighter padding/type so
+   five columns actually fit a half-width dashboard card instead of forcing
+   a horizontal scrollbar on a "just glance at it" widget. */
+.admin-table-compact th,.admin-table-compact td{padding:10px 12px;font-size:12.5px;}
 .admin-table td .meta{font-size:12px;color:var(--ink-faint);margin-top:2px;}
 .admin-table .tag{padding:5px 10px;border-radius:6px;font-size:11.5px;font-weight:600;white-space:nowrap;}
 /* An auto-layout table with mostly nowrap cells dumps whatever width is
@@ -171,32 +175,79 @@
 .admin-modal-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:24px;}
 
 /* ── dashboard tab ─────────────────────────────────────────── */
-.dash-range{display:flex;gap:8px;flex-wrap:wrap;margin:4px 0 24px;}
+.dash-header{display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:16px;margin-bottom:24px;}
+.dash-header h2{font-size:26px;}
+.dash-sub{color:var(--ink-soft);font-size:14px;margin:6px 0 0;}
+
+/* A native <select> (real keyboard/screen-reader support, no custom popover
+   to build and maintain) styled to read as a pill-shaped dropdown — the
+   chevron is a separate absolutely-positioned SVG, matching this file's
+   existing icon convention, rather than a CSS background-image data URI. */
+.dash-range-select{position:relative;}
+.dash-range-select select{
+  appearance:none;-webkit-appearance:none;
+  padding:11px 38px 11px 16px;border:1px solid var(--rule);border-radius:10px;
+  background:var(--paper);font:inherit;font-size:13.5px;color:var(--ink);cursor:pointer;
+}
+.dash-range-select select:focus{outline:none;border-color:var(--accent);}
+.dash-range-chevron{
+  position:absolute;right:12px;top:50%;transform:translateY(-50%);
+  width:15px;height:15px;stroke:var(--ink-soft);stroke-width:1.8;fill:none;
+  stroke-linecap:round;stroke-linejoin:round;pointer-events:none;
+}
 
 .dash-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px;}
 .stat-tile{
   background:var(--paper);border:1px solid var(--rule);border-radius:var(--radius);
-  padding:20px 22px;box-shadow:var(--shadow);display:flex;flex-direction:column;gap:6px;
+  padding:20px 22px;box-shadow:var(--shadow);display:flex;flex-direction:column;gap:16px;
 }
-.stat-label{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-soft);font-weight:500;}
+.stat-tile-top{display:flex;align-items:center;gap:12px;}
+.stat-icon{width:38px;height:38px;border-radius:11px;display:grid;place-items:center;flex-shrink:0;}
+.stat-icon svg{width:19px;height:19px;stroke:currentColor;stroke-width:1.7;fill:none;stroke-linecap:round;stroke-linejoin:round;}
+.stat-label{font-size:13px;color:var(--ink-soft);}
+.stat-tile-bottom{display:flex;align-items:flex-end;justify-content:space-between;gap:10px;}
 /* Deliberately not an h-tag: h1/h2/h3 above are set to Playfair Display
    (styles.css), which reads as off-brand decoration on a hero number —
    this stays in the body's own sans, just bigger and heavier. */
-.stat-value{font-size:30px;font-weight:600;color:var(--ink);line-height:1.15;}
+.stat-value{font-size:26px;font-weight:600;color:var(--ink);line-height:1.2;}
+.stat-sub-row{margin-top:4px;}
 .stat-sub{font-size:11.5px;color:var(--ink-faint);}
-.stat-sub.stat-warn{color:var(--fr-ink);font-weight:600;}
+.stat-delta{font-size:12px;font-weight:600;}
+.stat-delta.is-good{color:var(--tax-ink);}
+.stat-delta.is-bad{color:#A6403A;}
+.stat-delta-sub{display:block;font-size:10.5px;font-weight:400;color:var(--ink-faint);margin-top:1px;}
+.stat-sparkline{flex-shrink:0;}
+.stat-sparkline path{fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;opacity:.55;}
+.stat-sparkline circle{fill:currentColor;}
 
-.dash-card{margin-bottom:24px;}
-.dash-card h3{font-size:16px;margin-bottom:16px;}
+.dash-grid-2{display:grid;grid-template-columns:1.3fr 1fr;gap:20px;margin-bottom:20px;}
+
+/* Grid items default to min-width:auto (their content's min-content size),
+   the same trap flex items have — without this, the revenue card's wide,
+   horizontally-scrollable chart forced the whole grid TRACK wider than the
+   page instead of scrolling inside its own card (found by measuring: the
+   card itself was 934px in a 390px-wide layout). */
+.dash-card{min-width:0;}
+.dash-card h3{font-size:16px;}
+.dash-card-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:16px;}
+.dash-card-sub{font-size:12.5px;color:var(--ink-soft);margin:4px 0 0;}
+.dash-figure{text-align:right;flex-shrink:0;}
+.dash-figure-value{display:block;font-size:22px;font-weight:600;color:var(--ink);}
+.dash-figure-sub{display:block;margin-top:2px;}
+.dash-view-all{font-size:12.5px;color:var(--accent-deep);font-weight:600;white-space:nowrap;}
+.dash-view-all:hover{color:var(--accent);}
 
 .dash-chart-host{position:relative;margin-top:28px;} /* clearance for the tooltip above a full-height bar */
-.dash-chart-scroll{overflow-x:auto;}
+.dash-chart-row{display:flex;align-items:flex-start;}
+.dash-axis{flex-shrink:0;display:block;overflow:visible;}
+.axis-tick-label{font-size:10px;fill:var(--ink-faint);font-family:'Inter',system-ui,sans-serif;}
+.dash-chart-scroll{overflow-x:auto;flex:1;min-width:0;}
 /* styles.css sets `svg{max-width:100%}` globally, which would otherwise
    shrink this chart to fit the card instead of letting .dash-chart-scroll
    scroll it at its real pixel size — overridden here on purpose. overflow:
    hidden clips each bar's rounded top flush at the baseline (see dashboard.js). */
 .dash-chart{display:block;overflow:hidden;max-width:none;}
-.bar-baseline{stroke:var(--rule);stroke-width:1;}
+.bar-gridline{stroke:var(--rule);stroke-width:1;}
 .bar-fill{fill:var(--accent-deep);}
 .bar-hit{fill:transparent;cursor:pointer;}
 .bar-hit:hover,.bar-hit:focus{fill:rgba(43,37,35,.05);outline:none;}
@@ -210,6 +261,37 @@
 }
 .dash-tooltip strong{font-size:12.5px;font-weight:600;}
 .dash-tooltip span{font-size:10.5px;color:rgba(255,255,255,.7);}
+
+/* ── sales-by-module donut ────────────────────────────────── */
+.donut-wrap{position:relative;display:flex;justify-content:center;margin:8px 0 20px;}
+.donut-chart{overflow:visible;}
+.donut-center{
+  position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+  display:flex;flex-direction:column;align-items:center;text-align:center;
+}
+.donut-total{font-size:19px;font-weight:600;color:var(--ink);}
+.donut-total-label{font-size:10.5px;color:var(--ink-faint);margin-top:2px;}
+.donut-legend{display:flex;flex-direction:column;gap:10px;}
+.legend-row{display:flex;align-items:center;gap:9px;font-size:13px;}
+.legend-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0;}
+.legend-label{flex:1;color:var(--ink);}
+.legend-pct{color:var(--ink-soft);font-weight:600;font-size:12.5px;}
+
+/* ── top selling notes — ranked list ──────────────────────── */
+.rank-list{display:flex;flex-direction:column;}
+.rank-row{
+  display:flex;align-items:center;gap:12px;padding:11px 0;
+  border-bottom:1px solid var(--rule);
+}
+.rank-row:last-child{border-bottom:none;}
+.rank-badge{
+  width:24px;height:24px;border-radius:50%;flex-shrink:0;display:grid;place-items:center;
+  background:var(--cream);color:var(--ink-soft);font-size:11.5px;font-weight:600;
+}
+.rank-row:first-child .rank-badge{background:var(--accent-deep);color:#fff;}
+.rank-title{flex:1;font-size:13.5px;color:var(--ink);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.rank-meta{font-size:12px;color:var(--ink-faint);white-space:nowrap;}
+.rank-value{font-size:13.5px;font-weight:600;color:var(--ink);white-space:nowrap;}
 
 .live-visitors{display:flex;align-items:center;gap:7px;font-size:12.5px;color:var(--ink-soft);}
 .live-dot{
@@ -234,6 +316,7 @@
     width:100%;min-height:0;flex-direction:row;overflow-x:auto;position:static;gap:6px;
   }
   .side-nav-item{width:auto;white-space:nowrap;flex-shrink:0;}
+  .dash-grid-2{grid-template-columns:1fr;}
 }
 
 @media (max-width:640px){

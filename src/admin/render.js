@@ -47,7 +47,7 @@ export function setTab(tab) {
    Orders — status is still read-only (see admin-orders' own comment for
    why), but a row can be deleted.
 ------------------------------------------------------------------ */
-const STATUS_LABEL = { pending: "Pending", paid: "Paid", failed: "Failed", refunded: "Refunded" };
+export const STATUS_LABEL = { pending: "Pending", paid: "Paid", failed: "Failed", refunded: "Refunded" };
 
 export function renderOrders() {
   const box = $("#ordersTable");

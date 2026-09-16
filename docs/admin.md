@@ -65,11 +65,18 @@ next to `index.html` automatically; no separate Render service is needed.
 
 Visit `/admin.html`, enter the password. It opens on **Dashboard** — revenue,
 paid/pending order counts and average order value for a chosen range (7/30/90
-days or all time), a bar chart of revenue over that range, and the
-best-selling notes within it. All of it is computed in the browser from the
-same order data the Orders tab loads (`src/admin/dashboard.js`) — no separate
-endpoint or query, so it's never out of sync with Orders and adds no load on
-Supabase beyond what already happens today.
+days or all time), each compared against the equal-length period right
+before it ("All time" skips that comparison — there's no "before all time");
+a bar chart of revenue over that range; a breakdown of revenue by module (an
+order's own item snapshot only knows a product's id, so this looks each one
+up in the Notes list currently loaded — a since-deleted note's sales land in
+"Other" rather than vanishing); a Recent Orders glance (customer names
+trimmed to initials — the full name is one click away on Orders, this is
+just a lighter-weight summary, not a real access restriction); and the
+best-selling notes in the chosen range. All of it is computed in the browser
+from the same order and product data the Orders/Notes tabs already load
+(`src/admin/dashboard.js`) — no separate endpoint or query, so it's never
+out of sync and adds no load on Supabase beyond what already happens today.
 
 **Orders** shows every order, newest first — expand a row to see which
 sections were bought. **Notes** lists every product, including inactive

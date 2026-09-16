@@ -85,9 +85,12 @@ src/
   styles.css                Everything, token-first, one file
   admin/                    Admin page's own state/api/render/main split + admin.css
                              (pdfPreview.js renders page 1 of an upload to PNG;
-                             dashboard.js computes and renders the Dashboard tab's
-                             revenue stats/chart/top-notes, entirely client-side
-                             from the orders the Orders tab already loads)
+                             dashboard.js computes and renders the Dashboard tab —
+                             stat tiles with period-over-period % change, a
+                             revenue chart, a sales-by-module donut, Recent
+                             Orders and Top Selling Notes — entirely client-side
+                             from the orders/products the Orders/Notes tabs
+                             already load)
 supabase/
   schema.sql                Tables, RLS policies, both storage buckets, 28 seed rows
   functions/

@@ -109,6 +109,7 @@ async function loadProducts() {
   try {
     adminState.products = await listProducts();
     renderProducts();
+    renderDashboard(); // the "sales by module" chart needs products to map an order item back to its module
   } catch (err) {
     if (err instanceof AuthError) return handleAuthError();
     toast(err.message);
@@ -281,17 +282,16 @@ $("#loginForm").addEventListener("submit", (e) => {
 
 $("#productForm").addEventListener("submit", saveProductForm);
 
+$("#dashRange").addEventListener("change", (e) => {
+  adminState.dashboardRange = e.target.value;
+  renderDashboard();
+});
+
 document.addEventListener("click", (e) => {
   if (e.target.closest("#logoutBtn")) return doLogout();
 
   const tab = e.target.closest("[data-tab]");
   if (tab) return setTab(tab.dataset.tab);
-
-  const range = e.target.closest("[data-range]");
-  if (range) {
-    adminState.dashboardRange = range.dataset.range;
-    return renderDashboard();
-  }
 
   if (e.target.closest("#addNoteBtn")) return openProductForm(null);
   if (e.target.closest("#cancelForm") || e.target.closest("#closeModal")) return closeProductForm();
