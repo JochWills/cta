@@ -14,8 +14,8 @@ import { adminState } from "./state.js";
 import { MODULES } from "../catalogue.js";
 import { STATUS_LABEL } from "./render.js";
 
-const RANGE_LABELS = { "7": "last 7 days", "30": "last 30 days", "90": "last 90 days", all: "all time" };
-const PERIOD_NOUN = { "7": "7 days", "30": "30 days", "90": "90 days" };
+const RANGE_LABELS = { today: "today", "7": "last 7 days", "30": "last 30 days", "90": "last 90 days", all: "all time" };
+const PERIOD_NOUN = { today: "day", "7": "7 days", "30": "30 days", "90": "90 days" };
 
 /** An order's date for both bucketing and range filtering — when it was
  * actually paid, falling back to when it was placed for orders that never
@@ -49,6 +49,16 @@ function bucketConfig(rangeKey, orders) {
       cur.setMonth(cur.getMonth() + 1);
     }
     return { rangeStart: start, buckets, keyFor: (d) => `${d.getFullYear()}-${d.getMonth()}` };
+  }
+
+  if (rangeKey === "today") {
+    const rangeStart = new Date(now);
+    rangeStart.setHours(0, 0, 0, 0);
+    const buckets = [];
+    for (let h = 0; h < 24; h++) {
+      buckets.push({ key: String(h), label: h === 0 ? "12am" : h < 12 ? `${h}am` : h === 12 ? "12pm" : `${h - 12}pm` });
+    }
+    return { rangeStart, buckets, keyFor: (d) => String(d.getHours()) };
   }
 
   const days = parseInt(rangeKey, 10);
@@ -116,7 +126,7 @@ function computeDashboard(rangeKey) {
 
   let deltas = { revenueCents: null, paidCount: null, avgCents: null, pendingCount: null };
   if (rangeKey !== "all") {
-    const days = parseInt(rangeKey, 10);
+    const days = rangeKey === "today" ? 1 : parseInt(rangeKey, 10);
     const prevStart = new Date(cfg.rangeStart);
     prevStart.setDate(prevStart.getDate() - days);
     const prev = periodTotals(orders, prevStart, cfg.rangeStart);

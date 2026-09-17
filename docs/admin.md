@@ -64,9 +64,11 @@ next to `index.html` automatically; no separate Render service is needed.
 ## Using it
 
 Visit `/admin.html`, enter the password. It opens on **Dashboard** — revenue,
-paid/pending order counts and average order value for a chosen range (7/30/90
-days or all time), each compared against the equal-length period right
-before it ("All time" skips that comparison — there's no "before all time");
+paid/pending order counts and average order value for a chosen range (today,
+7/30/90 days or all time), each compared against the equal-length period
+right before it — today's own comparison is against yesterday, and the
+revenue chart buckets by hour instead of by day when "Today" is picked
+("All time" skips the comparison entirely — there's no "before all time");
 a bar chart of revenue over that range; a breakdown of revenue by module (an
 order's own item snapshot only knows a product's id, so this looks each one
 up in the Notes list currently loaded — a since-deleted note's sales land in
