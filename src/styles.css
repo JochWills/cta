@@ -194,9 +194,14 @@ h1,h2,h3{font-family:'Playfair Display',Georgia,serif;font-weight:400;letter-spa
 }
 .card:hover{transform:translateY(-3px);box-shadow:var(--shadow-lift);border-color:#E4D8D2;}
 .card[data-preview]{cursor:pointer;}
+.card-top-row{display:flex;align-items:center;gap:8px;}
 .tag{
   align-self:flex-start;white-space:nowrap;font-size:9.5px;letter-spacing:.11em;text-transform:uppercase;
   padding:5px 9px;border-radius:5px;font-weight:600;
+}
+.new-badge{
+  align-self:flex-start;white-space:nowrap;font-size:9.5px;letter-spacing:.11em;text-transform:uppercase;
+  padding:5px 9px;border-radius:5px;font-weight:600;background:var(--accent);color:#fff;
 }
 .card h3{font-size:18px;line-height:1.3;margin:14px 0 0;}
 .card p{margin:10px 0 0;font-size:13px;color:var(--ink-soft);line-height:1.55;}

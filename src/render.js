@@ -69,9 +69,13 @@ export function renderProducts() {
     .map((p) => {
       const m = MOD[p.module_slug] || MODULES[0];
       const inCart = state.cart.some((c) => c.id === p.id);
+      const isNew = p.created_at && Date.now() - new Date(p.created_at).getTime() < 24 * 60 * 60 * 1000;
       return `
     <article class="card" ${p.preview_pages > 0 ? `data-preview="${esc(p.id)}"` : ""}>
-      <span class="tag" style="background:${m.tint};color:${m.ink}">${esc(m.tag)}</span>
+      <div class="card-top-row">
+        <span class="tag" style="background:${m.tint};color:${m.ink}">${esc(m.tag)}</span>
+        ${isNew ? `<span class="new-badge">New</span>` : ""}
+      </div>
       <h3>${esc(p.title)}</h3>
       <p>${esc(p.description || "")}</p>
       <div class="card-foot">
