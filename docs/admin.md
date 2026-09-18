@@ -9,10 +9,12 @@ Courts:
 - **Add, edit and delete notes** — code, title, description, module, price,
   active flag, sort order — and upload the PDF for each one straight into
   the private `notes` storage bucket.
+- **Create and delete discount codes** — a code plus a % off (1-99) that
+  buyers can enter at checkout.
 
 It exists because the anon key the shop ships to browsers deliberately
 cannot do any of that (see `supabase/schema.sql` and the RLS section of
-`CLAUDE.md`), so the admin page talks to four small Supabase Edge Functions
+`CLAUDE.md`), so the admin page talks to five small Supabase Edge Functions
 that use the `service_role` key on the server instead. `admin.html` itself
 never sees that key.
 
@@ -22,7 +24,7 @@ There's one shared password, not a per-user account — this is a one-person
 shop. `admin-login` checks it against the `ADMIN_PASSWORD` secret and, on a
 match, issues a signed token good for 12 hours. The admin page sends that
 token back as `X-Admin-Token` on every call to `admin-orders`,
-`admin-products` and `admin-upload`, which each verify it before touching
+`admin-products`, `admin-upload` and `admin-discounts`, which each verify it before touching
 the database. The token lives in `sessionStorage` in the browser — cleared
 when the tab closes, never `localStorage` — so it doesn't linger on a shared
 computer.
@@ -46,13 +48,14 @@ isn't set yet:
 supabase secrets set SITE_URL=https://pgdanotes.co.za
 ```
 
-**2. Deploy the four functions:**
+**2. Deploy the five functions:**
 
 ```bash
 supabase functions deploy admin-login
 supabase functions deploy admin-orders
 supabase functions deploy admin-products
 supabase functions deploy admin-upload
+supabase functions deploy admin-discounts
 ```
 
 (`_shared/admin.ts` isn't deployed on its own — the CLI bundles it into
@@ -92,6 +95,16 @@ automatically. Editing a note that already has one shows a **View current
 PDF** link — since the `notes` bucket is private, this asks `admin-products`
 for a short-lived signed URL (same mechanism `order-download` uses for
 buyers) rather than linking to it directly.
+
+**Discounts** lists every code with its % off. Add one with the form at the
+top — codes are stored upper-case, 3-32 letters/numbers/`-`/`_`, and a buyer
+can type them in any case. There's no edit: delete a code and add it again.
+Deleting one stops new orders using it; orders that already did keep their
+own copy of the code and % (the Orders tab shows it under the total). A
+100% code isn't allowed — a R0 order has nothing for Paystack to charge, so
+it could never be marked paid. The % itself is only ever applied by the
+database when the order is saved (see section 8 of `supabase/schema.sql`),
+never trusted from the browser.
 
 Deleting a note asks for confirmation first and can't be undone — it removes
 the database row, not the underlying PDF in storage.

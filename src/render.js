@@ -102,6 +102,12 @@ export function renderProducts() {
 ------------------------------------------------------------------ */
 export const cartTotal = () => state.cart.reduce((sum, i) => sum + i.price_cents, 0);
 
+/** Same rounding as price_order() in supabase/schema.sql, so the total shown
+ * here is the total Paystack charges. */
+export const discountCents = () =>
+  state.discount ? Math.round((cartTotal() * state.discount.percent) / 100) : 0;
+export const totalDue = () => cartTotal() - discountCents();
+
 export function renderDrawer() {
   const body = $("#drawerBody");
   const foot = $("#drawerFoot");
@@ -171,6 +177,7 @@ export function renderDrawer() {
       <input type="email" id="buyerEmail" placeholder="you@example.com" autocomplete="email"></label>
     <p class="note" style="text-align:left;margin-top:10px;">
       Your notes are matched to this address — check it's right, so you can find them again after paying.</p>
+    <div id="discountBox"></div>
     <label class="terms-field">
       <input type="checkbox" id="acceptTerms">
       <span>I've read the <a href="/terms" target="_blank" rel="noopener">terms</a> and
@@ -180,10 +187,43 @@ export function renderDrawer() {
     </label>
     <div id="checkoutError"></div>`;
   foot.innerHTML = `
-    <div class="totals"><span class="lbl">Total due</span><span class="val">${rands(cartTotal())}</span></div>
+    <div id="checkoutTotals"></div>
     <button class="btn" id="placeOrder">Place order</button>
     <button class="btn ghost" id="backToCart" style="margin-top:10px;">Back to cart</button>
     <p class="note">Card, instant EFT and more via Paystack — connecting next.</p>`;
+  renderDiscount();
+}
+
+/**
+ * Just the discount field and the totals on the details step — applying or
+ * removing a code re-renders these two spots only, not the whole drawer,
+ * which would wipe the name/email the buyer has already typed.
+ */
+export function renderDiscount() {
+  const box = $("#discountBox");
+  const totals = $("#checkoutTotals");
+  if (!box || !totals) return;
+
+  box.innerHTML = state.discount
+    ? `<div class="discount-applied">
+         <span><strong>${esc(state.discount.code)}</strong> · ${state.discount.percent}% off</span>
+         <button class="rm" id="removeDiscount" type="button">Remove</button>
+       </div>`
+    : `<div class="field">
+         <span>Discount code</span>
+         <div class="discount-row">
+           <input type="text" id="discountInput" aria-label="Discount code" autocomplete="off"
+                  autocapitalize="characters" spellcheck="false" maxlength="32">
+           <button class="btn ghost" id="applyDiscount" type="button">Apply</button>
+         </div>
+       </div>
+       <div id="discountError"></div>`;
+
+  totals.innerHTML = state.discount
+    ? `<div class="totals totals-sub"><span class="lbl">Subtotal</span><span>${rands(cartTotal())}</span></div>
+       <div class="totals totals-sub"><span class="lbl">Discount (${state.discount.percent}%)</span><span>−${rands(discountCents())}</span></div>
+       <div class="totals"><span class="lbl">Total due</span><span class="val">${rands(totalDue())}</span></div>`
+    : `<div class="totals"><span class="lbl">Total due</span><span class="val">${rands(cartTotal())}</span></div>`;
 }
 
 export function openCart() {

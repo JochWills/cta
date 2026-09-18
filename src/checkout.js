@@ -1,6 +1,6 @@
 import { state, $, isEmail } from "./state.js";
-import { hasDB, sbInsert, sbFunction } from "./supabase.js";
-import { cartTotal, syncCart } from "./render.js";
+import { hasDB, sbInsert, sbFunction, sbRpc } from "./supabase.js";
+import { totalDue, syncCart, renderDiscount } from "./render.js";
 import { saveCart } from "./cart.js";
 
 /** Human-readable order reference, e.g. CTA-M4K2P9. Also used as the Paystack transaction reference. */
@@ -56,7 +56,10 @@ export async function placeOrder() {
       title: i.title,
       price_cents: i.price_cents,
     })),
-    total_cents: cartTotal(),
+    // Not trusted — price_order() in supabase/schema.sql overwrites this on
+    // insert, from the products table and a server-side check of the code.
+    total_cents: totalDue(),
+    discount_code: state.discount?.code || null,
     status: "pending",
     // Record-keeping, not just a UI gate — see the terms_accepted_at column
     // comment in supabase/schema.sql. Only reachable once termsInput.checked
@@ -72,6 +75,7 @@ export async function placeOrder() {
       // clear the cart (and its saved copy) now rather than leaving stale
       // items sitting there if the buyer comes back after Paystack.
       state.cart = [];
+      state.discount = null;
       saveCart();
 
       // So the download modal can prefill and auto-check on return from
@@ -94,13 +98,71 @@ export async function placeOrder() {
     // so the shop stays clickable for design work (see CLAUDE.md).
     state.lastOrderRef = `Order ${reference} (demo — Supabase not connected)`;
     state.cart = [];
+    state.discount = null;
     saveCart();
     state.checkoutStep = "done";
     syncCart();
   } catch (err) {
     console.error(err);
-    errorBox.innerHTML = `<div class="err">Couldn't start payment just now. Check your connection and try again.</div>`;
+    // price_order()'s own messages (see supabase/schema.sql) come back in
+    // the insert's error body — the two a buyer can actually act on.
+    if (/Invalid discount code/.test(err.message)) {
+      state.discount = null;
+      renderDiscount();
+      errorBox.innerHTML = `<div class="err">That discount code is no longer valid, so it's been removed and your total updated. Place the order again to continue.</div>`;
+    } else if (/no longer available/.test(err.message)) {
+      errorBox.innerHTML = `<div class="err">One of the notes in your cart is no longer available. Remove it and try again.</div>`;
+    } else {
+      errorBox.innerHTML = `<div class="err">Couldn't start payment just now. Check your connection and try again.</div>`;
+    }
     button.textContent = "Place order";
     button.disabled = false;
   }
+}
+
+/**
+ * Check a code against the database and, if it's real, show the discount.
+ * This is only ever for display — the order insert re-checks the code
+ * server-side (price_order()), so nothing here decides what's charged.
+ */
+export async function applyDiscount() {
+  const input = $("#discountInput");
+  const errorBox = $("#discountError");
+  const button = $("#applyDiscount");
+  const code = (input?.value || "").trim().toUpperCase();
+  errorBox.innerHTML = "";
+  if (!code) return input?.focus();
+
+  if (!hasDB) {
+    errorBox.innerHTML = `<div class="err">Discount codes only work on the live shop.</div>`;
+    return;
+  }
+
+  button.disabled = true;
+  button.textContent = "Checking…";
+  try {
+    const percent = await sbRpc("discount_percent", { p_code: code });
+    if (!percent) {
+      errorBox.innerHTML = `<div class="err">That code isn't valid.</div>`;
+      input.focus();
+      return;
+    }
+    state.discount = { code, percent };
+    renderDiscount();
+  } catch (err) {
+    console.error(err);
+    errorBox.innerHTML = `<div class="err">Couldn't check that code just now. Try again.</div>`;
+  } finally {
+    // Gone from the page after a successful apply (renderDiscount swaps
+    // the field for the "applied" line), so only reset it if it's still there.
+    if (button.isConnected) {
+      button.disabled = false;
+      button.textContent = "Apply";
+    }
+  }
+}
+
+export function removeDiscount() {
+  state.discount = null;
+  renderDiscount();
 }

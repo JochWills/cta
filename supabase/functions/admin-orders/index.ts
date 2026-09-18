@@ -47,7 +47,7 @@ Deno.serve(async (req) => {
 
     const { data, error } = await supabase
       .from("orders")
-      .select("id,reference,email,full_name,items,total_cents,status,payment_ref,paid_at,created_at")
+      .select("id,reference,email,full_name,items,total_cents,discount_code,discount_percent,status,payment_ref,paid_at,created_at")
       .order("created_at", { ascending: false });
 
     if (error) throw error;

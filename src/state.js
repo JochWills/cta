@@ -10,6 +10,9 @@ export const state = {
   checkoutStep: "cart",
   /** Reference shown on the confirmation panel after an order is saved. */
   lastOrderRef: "",
+  /** Applied discount code: { code, percent }, or null. Display only — the
+   * database re-checks the code and prices the order itself on insert. */
+  discount: null,
 };
 
 /** 2500 -> "R25". Prices are stored in cents so there is no float rounding. */

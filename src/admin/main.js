@@ -8,6 +8,8 @@ import {
   setTab,
   renderOrders,
   renderProducts,
+  renderDiscounts,
+  discountFormError,
   openProductForm,
   closeProductForm,
   productFormError,
@@ -24,6 +26,9 @@ import {
   uploadFile,
   getSignedPdfUrl,
   fetchActiveVisitors,
+  listDiscounts,
+  createDiscount,
+  deleteDiscount,
 } from "./api.js";
 import { renderPreviewPages } from "./pdfPreview.js";
 import { renderDashboard } from "./dashboard.js";
@@ -61,7 +66,7 @@ async function doLogin() {
 async function enterDashboard() {
   showLoggedIn();
   setTab(adminState.tab);
-  await Promise.all([loadOrders(), loadProducts()]);
+  await Promise.all([loadOrders(), loadProducts(), loadDiscounts()]);
   startVisitorPoll();
 }
 
@@ -118,6 +123,52 @@ async function refreshDashboard() {
   } finally {
     btn.disabled = false;
     btn.classList.remove("is-spinning");
+  }
+}
+
+async function loadDiscounts() {
+  try {
+    adminState.discounts = await listDiscounts();
+    renderDiscounts();
+  } catch (err) {
+    if (err instanceof AuthError) return handleAuthError();
+    toast(err.message);
+  }
+}
+
+async function saveDiscountForm(e) {
+  e.preventDefault();
+  const btn = $("#addDiscountBtn");
+  const code = $("#df_code").value.trim().toUpperCase();
+  const percent = parseInt($("#df_percent").value, 10);
+  discountFormError("");
+  btn.disabled = true;
+  btn.textContent = "Adding…";
+  try {
+    await createDiscount(code, percent);
+    $("#discountForm").reset();
+    toast(`${code} added — ${percent}% off`);
+    await loadDiscounts();
+  } catch (err) {
+    if (err instanceof AuthError) return handleAuthError();
+    discountFormError(err.message);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = "Add code";
+  }
+}
+
+async function doDeleteDiscount(id) {
+  const d = adminState.discounts.find((x) => x.id === id);
+  if (!d) return;
+  if (!confirm(`Delete ${d.code}? Buyers won't be able to use it any more. Orders that already used it keep their discount.`)) return;
+  try {
+    await deleteDiscount(id);
+    toast("Discount code deleted");
+    await loadDiscounts();
+  } catch (err) {
+    if (err instanceof AuthError) return handleAuthError();
+    toast(err.message);
   }
 }
 
@@ -297,6 +348,7 @@ $("#loginForm").addEventListener("submit", (e) => {
 });
 
 $("#productForm").addEventListener("submit", saveProductForm);
+$("#discountForm").addEventListener("submit", saveDiscountForm);
 
 $("#dashRange").addEventListener("change", (e) => {
   adminState.dashboardRange = e.target.value;
@@ -320,6 +372,9 @@ document.addEventListener("click", (e) => {
 
   const delOrder = e.target.closest("[data-del-order]");
   if (delOrder) return doDeleteOrder(delOrder.dataset.delOrder);
+
+  const delDiscount = e.target.closest("[data-del-discount]");
+  if (delDiscount) return doDeleteDiscount(delDiscount.dataset.delDiscount);
 
   if (e.target.closest("#pf_view_pdf")) return viewCurrentPdf();
   if (e.target.closest("#dashRefreshBtn")) return refreshDashboard();

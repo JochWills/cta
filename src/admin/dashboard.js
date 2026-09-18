@@ -171,16 +171,21 @@ function computeDashboard(rangeKey) {
   const byProductId = new Map(adminState.products.map((p) => [p.id, p]));
   const categoryCents = new Map(); // module_slug (or "other") -> cents
   for (const o of paidInRange) {
+    // Items carry list prices; a discounted order's real takings per item
+    // are scaled down by its own discount_percent, so these totals agree
+    // with the Revenue tile (which reads total_cents).
+    const factor = 1 - (o.discount_percent || 0) / 100;
     for (const item of Array.isArray(o.items) ? o.items : []) {
+      const cents = Math.round((item.price_cents || 0) * factor);
       const key = item.product_id || item.code || item.title;
       const cur = noteMap.get(key) || { title: item.title, count: 0, revenueCents: 0 };
       cur.count += 1;
-      cur.revenueCents += item.price_cents || 0;
+      cur.revenueCents += cents;
       noteMap.set(key, cur);
 
       const product = byProductId.get(item.product_id);
       const slug = product ? product.module_slug : "other";
-      categoryCents.set(slug, (categoryCents.get(slug) || 0) + (item.price_cents || 0));
+      categoryCents.set(slug, (categoryCents.get(slug) || 0) + cents);
     }
   }
   const topNotes = [...noteMap.values()].sort((a, b) => b.revenueCents - a.revenueCents).slice(0, 5);

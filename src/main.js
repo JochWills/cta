@@ -11,7 +11,7 @@ import {
   closePreview,
 } from "./render.js";
 import { loadProducts, loadCart, addToCart, removeFromCart } from "./cart.js";
-import { placeOrder } from "./checkout.js";
+import { placeOrder, applyDiscount, removeDiscount } from "./checkout.js";
 import { openDownloadModal, closeDownloadModal, submitDownloadRequest } from "./downloads.js";
 import { initFaqAccordions } from "./faq.js";
 import { startPresence } from "./presence.js";
@@ -69,6 +69,8 @@ document.addEventListener("click", (e) => {
     return renderDrawer();
   }
   if (e.target.closest("#placeOrder")) return placeOrder();
+  if (e.target.closest("#applyDiscount")) return applyDiscount();
+  if (e.target.closest("#removeDiscount")) return removeDiscount();
 
   if (e.target.closest("#menuBtn")) {
     const nav = $("#nav");
@@ -89,6 +91,8 @@ document.addEventListener("submit", (e) => {
 });
 
 document.addEventListener("keydown", (e) => {
+  // No <form> around the details step, so Enter wouldn't do anything here otherwise.
+  if (e.key === "Enter" && e.target.id === "discountInput") return applyDiscount();
   if (e.key !== "Escape") return;
   if (!$("#previewModal").hidden) return closePreview();
   if (!$("#downloadModal").hidden) return closeDownloadModal();

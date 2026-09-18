@@ -152,7 +152,7 @@
    every other column along with it) the moment any row is expanded. A
    fixed width plus .order-items' own wrapping (below) keeps every column
    still while a row opens or closes. */
-.admin-table th:nth-child(4){width:260px;}
+#ordersTable .admin-table th:nth-child(4){width:260px;}
 /* This must land on a <div> wrapping a row's action button(s), never on
    the <td> itself — display:flex on a table-cell pulls it out of normal
    row-height sizing, so its border-bottom stops lining up with the rest
@@ -182,6 +182,21 @@
 .status-paid{background:var(--tax-tint);color:var(--tax-ink);}
 .status-failed{background:#FBEDEC;color:#A6403A;}
 .status-refunded{background:var(--cga-tint);color:var(--cga-ink);}
+
+/* ── discounts tab ─────────────────────────────────────────── */
+.discount-form{
+  display:grid;grid-template-columns:1fr 160px auto;gap:0 14px;align-items:end;
+  background:var(--paper);border:1px solid var(--rule);border-radius:var(--radius);
+  padding:4px 20px 20px;margin-bottom:20px;
+}
+.discount-form .field input{text-transform:uppercase;}
+.discount-form .btn{height:50.4px;} /* .field input's rendered height, so the three line up */
+#discountFormError{grid-column:1/-1;}
+.discount-code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-weight:600;letter-spacing:.04em;}
+@media (max-width:640px){
+  .discount-form{grid-template-columns:1fr 1fr;}
+  .discount-form .btn{grid-column:1/-1;margin-top:14px;}
+}
 
 /* ── product editor modal ─────────────────────────────────── */
 .admin-modal{position:fixed;inset:0;z-index:200;display:grid;place-items:center;padding:24px;}

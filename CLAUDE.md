@@ -94,11 +94,12 @@ src/
 supabase/
   schema.sql                Tables, RLS policies, both storage buckets, 28 seed rows
   functions/
-    _shared/admin.ts        Token auth + CORS shared by the four admin-* functions
+    _shared/admin.ts        Token auth + CORS shared by the five admin-* functions
     admin-login/             ┐
     admin-orders/             } deployed — see docs/admin.md
     admin-products/           │
-    admin-upload/            ┘
+    admin-upload/            │
+    admin-discounts/         ┘
     paystack-initiate/        ┐ deployed — see docs/paystack.md
     paystack-webhook/         ┘
     order-download/          deployed — self-serve download links, see Data model below
@@ -149,7 +150,23 @@ purchase time — `product_id`/`code`/`title`/`price_cents`, no `file_path`;
 `payment_ref` (Paystack's transaction id), `paid_at`, `terms_accepted_at`
 (not null — checkout won't submit without the "this purchase is final"
 checkbox ticked, and the column backs that with an actual record, not just
-a client-side gate).
+a client-side gate), `discount_code`/`discount_percent` (null unless a code
+was used — a snapshot, so deleting the code later changes nothing here).
+
+**Orders are priced by the database, not the browser.** A `before insert`
+trigger, `price_order()` (`supabase/schema.sql` section 8), rebuilds
+`items` from the live `products` rows (by `product_id`, active only) and
+overwrites `total_cents` = subtotal minus the discount code's %. Whatever
+the browser sent for prices or the total is ignored — before this existed,
+anyone could insert an order for every note at R1 and pay R1. Don't move
+pricing back into `checkout.js`; its `total_cents` is a placeholder.
+
+`discount_codes` — `code` (upper-case, 3-32 of A-Z/0-9/`-`/`_`, unique),
+`percent_off` (1-99 — a 100% order would be R0, which Paystack can't
+charge). RLS on, no policies: the shop checks one code at a time through
+the `discount_percent(code)` security definer function (returns the % or
+null, so the list itself isn't readable with the anon key), and the admin
+page manages codes through `admin-discounts`.
 
 **Delivery.** There's no email hosting set up on the domain yet, so `order-download`
 (called from `src/downloads.js`) is delivery: given a `reference` + matching
@@ -176,7 +193,10 @@ prunes rows older than a day, so the table doesn't grow forever.
 ### RLS — read this before changing any query
 
 - Anyone may `select` active products.
-- Anyone may `insert` an order, but only with `status = 'pending'`.
+- Anyone may `insert` an order, but only with `status = 'pending'` — and
+  `price_order()` re-prices it on the way in (see Data model above).
+- Nobody with the anon key can read `discount_codes` — only check one code
+  via `discount_percent()`.
 - **Nobody with the anon key can read, update or delete orders.** That is
   deliberate. Order reads/writes happen server-side with the service_role key
   inside an Edge Function (`paystack-webhook` for marking paid, `admin-orders`
@@ -216,8 +236,10 @@ email capture into Supabase, responsive down to 390px, keyboard focus states,
 reduced-motion support, Paystack checkout (`docs/paystack.md`), self-serve PDF
 delivery with no email required (`order-download`, see Data model above), and a
 password-gated admin page at `/admin.html` for viewing orders and managing
-notes including PDF upload (`docs/admin.md`), and a live visitor count on
-the admin page (`site_sessions`, see Data model above).
+notes including PDF upload (`docs/admin.md`), a live visitor count on
+the admin page (`site_sessions`, see Data model above), and % discount codes
+(entered at checkout, managed on the admin page's Discounts tab, applied by
+the database — see Data model above).
 
 Not done:
 1. **Delivery email** — email hosting on `pgdanotes.co.za` (or a verified

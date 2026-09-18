@@ -41,6 +41,7 @@ export function setTab(tab) {
   $("#dashOverview").hidden = tab !== "dashboard";
   $("#ordersView").hidden = tab !== "orders";
   $("#notesView").hidden = tab !== "notes";
+  $("#discountsView").hidden = tab !== "discounts";
 }
 
 /* ------------------------------------------------------------------
@@ -87,10 +88,50 @@ function orderRow(o) {
           </ul>
         </details>
       </td>
-      <td>${rands(o.total_cents)}</td>
+      <td>
+        <div>${rands(o.total_cents)}</div>
+        ${o.discount_code ? `<div class="meta">${esc(o.discount_code)} · ${esc(o.discount_percent)}% off</div>` : ""}
+      </td>
       <td><span class="status-badge status-${esc(o.status)}">${esc(STATUS_LABEL[o.status] || o.status)}</span></td>
       <td><div class="admin-row-actions"><button class="btn ghost" data-del-order="${esc(o.id)}">Delete</button></div></td>
     </tr>`;
+}
+
+/* ------------------------------------------------------------------
+   Discount codes — create/delete only. A code can't be edited: orders
+   snapshot the code and % they used, so changing a code in place would
+   make the list disagree with what past orders show. Delete and re-add.
+------------------------------------------------------------------ */
+export function renderDiscounts() {
+  const box = $("#discountsTable");
+  if (!adminState.discounts.length) {
+    box.innerHTML = `<div class="empty-state">No discount codes yet.</div>`;
+    return;
+  }
+
+  box.innerHTML = `
+    <div class="admin-table-wrap">
+      <table class="admin-table">
+        <thead><tr><th>Code</th><th>Discount</th><th>Created</th><th></th></tr></thead>
+        <tbody>
+          ${adminState.discounts
+            .map(
+              (d) => `
+            <tr>
+              <td><span class="discount-code">${esc(d.code)}</span></td>
+              <td>${esc(d.percent_off)}% off</td>
+              <td>${esc(new Date(d.created_at).toLocaleDateString("en-ZA", { day: "numeric", month: "short", year: "numeric" }))}</td>
+              <td><div class="admin-row-actions"><button class="btn ghost" data-del-discount="${esc(d.id)}">Delete</button></div></td>
+            </tr>`
+            )
+            .join("")}
+        </tbody>
+      </table>
+    </div>`;
+}
+
+export function discountFormError(message) {
+  $("#discountFormError").innerHTML = message ? `<div class="err">${esc(message)}</div>` : "";
 }
 
 /* ------------------------------------------------------------------

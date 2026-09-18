@@ -5,12 +5,12 @@
  * Unlike paystack-webhook (server-to-server, called by Paystack — no
  * browser involved, so no CORS needed), every admin-* function is called
  * directly from admin.html running on the Render site's origin, so each one
- * needs OPTIONS + CORS handling — that lives here once instead of four times.
+ * needs OPTIONS + CORS handling — that lives here once instead of in each.
  *
  * Auth is a single shared password (ADMIN_PASSWORD, checked in
  * admin-login), not per-user accounts — this is a one-person shop. A
  * successful login gets a short-lived, stateless, HMAC-signed token
- * (ADMIN_SESSION_SECRET) that the other three functions verify. No session
+ * (ADMIN_SESSION_SECRET) that the other admin-* functions verify. No session
  * table: the signature and the embedded expiry are the whole check.
  */
 

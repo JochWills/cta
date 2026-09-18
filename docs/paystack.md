@@ -33,6 +33,12 @@ Browser                   paystack-initiate         Paystack        paystack-web
    │◄──────── redirect to callback_url ───────────────┤
 ```
 
+The order's `total_cents` isn't the browser's either: `price_order()` (a
+trigger in `supabase/schema.sql`, section 8) overwrites it on insert, from the
+live `products` prices and a server-side check of any discount code. So
+`amount` below, and the webhook's amount check, are against a server-computed
+figure.
+
 The browser is never trusted. The order only becomes `paid` when the webhook
 fires and its signature checks out — **not** when the browser lands back on
 `callback_url`. Paystack sends the buyer back there whether the payment

@@ -12,7 +12,9 @@ export const adminState = {
   orders: [],
   /** All products, including inactive ones, once loaded. */
   products: [],
-  /** Which dashboard tab is showing: "dashboard" | "orders" | "notes". */
+  /** Discount codes, newest first, once loaded. */
+  discounts: [],
+  /** Which dashboard tab is showing: "dashboard" | "orders" | "notes" | "discounts". */
   tab: "dashboard",
   /** Product row being edited in the modal, or null when adding a new one. */
   editing: null,

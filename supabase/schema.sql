@@ -234,3 +234,97 @@ $$;
 
 grant execute on function public.heartbeat(text) to anon, authenticated;
 grant execute on function public.active_visitor_count() to anon, authenticated;
+
+
+-- ------------------------------------------------------------
+-- 8. DISCOUNT CODES + SERVER-SIDE ORDER PRICING
+--    The browser can't be trusted with an order's total: before this,
+--    checkout.js wrote total_cents itself, paystack-initiate charged
+--    exactly that, and the webhook only checked Paystack's amount against
+--    it — so anyone could insert "every note, total R1", pay R1 and
+--    download the lot. price_order() below now overwrites items and
+--    total_cents on every insert from the live products table and the
+--    discount code (if any), whatever the browser sent. That's also what
+--    makes a discount code safe to accept at all: the % comes from here,
+--    never from the client.
+--
+--    discount_codes has RLS on and no policies — anon can't list codes.
+--    The shop checks one at a time via discount_percent() (a code in,
+--    its % or null out); the admin page manages them through the
+--    admin-discounts Edge Function (service_role).
+--
+--    percent_off stops at 99: a 100% order would be R0, and Paystack
+--    can't take a zero-amount payment, so it would never get marked paid.
+-- ------------------------------------------------------------
+create table if not exists public.discount_codes (
+  id           uuid primary key default gen_random_uuid(),
+  code         text not null unique check (code ~ '^[A-Z0-9_-]{3,32}$'),
+  percent_off  int  not null check (percent_off between 1 and 99),
+  created_at   timestamptz not null default now()
+);
+
+alter table public.discount_codes enable row level security;
+-- deliberately no policies on discount_codes (see above)
+
+-- Snapshotted on the order, like items: deleting or re-creating a code
+-- later doesn't rewrite what an old order was actually charged.
+alter table public.orders add column if not exists discount_code    text;
+alter table public.orders add column if not exists discount_percent int;
+
+create or replace function public.discount_percent(p_code text) returns int
+language sql stable security definer set search_path = public as $$
+  select percent_off from public.discount_codes where code = upper(trim(p_code));
+$$;
+
+grant execute on function public.discount_percent(text) to anon, authenticated;
+
+create or replace function public.price_order() returns trigger
+language plpgsql security definer set search_path = public as $$
+declare
+  v_item     jsonb;
+  v_product  record;
+  v_items    jsonb := '[]'::jsonb;
+  v_subtotal int := 0;
+  v_pct      int;
+begin
+  if jsonb_typeof(new.items) is distinct from 'array' or jsonb_array_length(new.items) = 0 then
+    raise exception 'Order has no items';
+  end if;
+
+  for v_item in select value from jsonb_array_elements(new.items) loop
+    select id, code, title, price_cents into v_product
+      from public.products
+     where id = (v_item->>'product_id')::uuid and is_active;
+    if not found then
+      raise exception 'A note in this order is no longer available';
+    end if;
+    v_items := v_items || jsonb_build_object(
+      'product_id', v_product.id, 'code', v_product.code,
+      'title', v_product.title, 'price_cents', v_product.price_cents);
+    v_subtotal := v_subtotal + v_product.price_cents;
+  end loop;
+
+  new.discount_percent := null;
+  if nullif(trim(new.discount_code), '') is null then
+    new.discount_code := null;
+  else
+    new.discount_code := upper(trim(new.discount_code));
+    select percent_off into v_pct from public.discount_codes where code = new.discount_code;
+    if v_pct is null then
+      raise exception 'Invalid discount code';
+    end if;
+    new.discount_percent := v_pct;
+  end if;
+
+  new.items := v_items;
+  -- Same rounding as discountCents() in src/render.js, so the total the
+  -- buyer sees is the total Paystack charges.
+  new.total_cents := v_subtotal - round(v_subtotal * coalesce(v_pct, 0) / 100.0)::int;
+  return new;
+end;
+$$;
+
+drop trigger if exists orders_price on public.orders;
+create trigger orders_price
+  before insert on public.orders
+  for each row execute function public.price_order();
