@@ -194,14 +194,19 @@ h1,h2,h3{font-family:'Playfair Display',Georgia,serif;font-weight:400;letter-spa
 }
 .card:hover{transform:translateY(-3px);box-shadow:var(--shadow-lift);border-color:#E4D8D2;}
 .card[data-preview]{cursor:pointer;}
-.card-top-row{display:flex;align-items:center;gap:8px;}
+.card{position:relative;}
 .tag{
   align-self:flex-start;white-space:nowrap;font-size:9.5px;letter-spacing:.11em;text-transform:uppercase;
   padding:5px 9px;border-radius:5px;font-weight:600;
 }
+/* Straddles the card's top edge, centred — a call-out badge, not a label,
+   so it sits apart from .tag's plain top-left placement on purpose. */
 .new-badge{
-  align-self:flex-start;white-space:nowrap;font-size:9.5px;letter-spacing:.11em;text-transform:uppercase;
-  padding:5px 9px;border-radius:5px;font-weight:600;background:var(--accent);color:#fff;
+  position:absolute;top:0;left:50%;transform:translate(-50%,-50%);z-index:2;
+  white-space:nowrap;font-size:12px;font-weight:700;letter-spacing:.02em;
+  padding:8px 18px;border-radius:999px;color:#fff;
+  background:linear-gradient(135deg,var(--accent) 0%,var(--accent-deep) 100%);
+  box-shadow:0 0 0 4px var(--paper),0 10px 22px -6px rgba(156,95,88,.65);
 }
 .card h3{font-size:18px;line-height:1.3;margin:14px 0 0;}
 .card p{margin:10px 0 0;font-size:13px;color:var(--ink-soft);line-height:1.55;}
