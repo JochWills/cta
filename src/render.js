@@ -76,7 +76,7 @@ export function renderProducts() {
         <span class="tag" style="background:${m.tint};color:${m.ink}">${esc(m.tag)}</span>
         ${
           isNew
-            ? `<span class="new-badge"><svg viewBox="0 0 24 24"><path d="M12 3l1.7 5.3L19 10l-5.3 1.7L12 17l-1.7-5.3L5 10l5.3-1.7L12 3z"/></svg>New</span>`
+            ? `<span class="new-badge"><svg viewBox="0 0 24 24"><path d="M12 1c.6 6 4.4 10.4 11 11-6.6.6-10.4 5-11 11-.6-6-4.4-10.4-11-11 6.6-.6 10.4-5 11-11z"/></svg>New</span>`
             : ""
         }
       </div>

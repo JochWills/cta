@@ -194,17 +194,17 @@ h1,h2,h3{font-family:'Playfair Display',Georgia,serif;font-weight:400;letter-spa
 }
 .card:hover{transform:translateY(-3px);box-shadow:var(--shadow-lift);border-color:#E4D8D2;}
 .card[data-preview]{cursor:pointer;}
-.card-top-row{display:flex;align-items:center;justify-content:space-between;gap:8px;}
-.tag{
-  align-self:flex-start;white-space:nowrap;font-size:9.5px;letter-spacing:.11em;text-transform:uppercase;
+/* Wraps rather than overflowing: a long module tag ("Financial Reporting")
+   plus the New badge is wider than a card at 5-across, so the badge drops
+   under the tag there instead of spilling past the card's right edge. */
+.card-top-row{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px 8px;}
+.tag,.new-badge{
+  white-space:nowrap;font-size:9.5px;line-height:1.6;letter-spacing:.11em;text-transform:uppercase;
   padding:5px 9px;border-radius:5px;font-weight:600;
 }
-.new-badge{
-  display:inline-flex;align-items:center;gap:5px;flex-shrink:0;white-space:nowrap;
-  font-size:12.5px;font-weight:600;padding:7px 14px;border-radius:999px;
-  background:#FBECC3;color:#8A6A14;
-}
-.new-badge svg{width:12px;height:12px;fill:currentColor;stroke:none;}
+.tag{align-self:flex-start;}
+.new-badge{display:inline-flex;align-items:center;gap:4px;background:#FBECC3;color:#8A6A14;}
+.new-badge svg{width:10px;height:10px;fill:currentColor;stroke:none;}
 .card h3{font-size:18px;line-height:1.3;margin:14px 0 0;}
 .card p{margin:10px 0 0;font-size:13px;color:var(--ink-soft);line-height:1.55;}
 .card-foot{display:flex;align-items:center;justify-content:space-between;margin-top:auto;padding-top:22px;}
