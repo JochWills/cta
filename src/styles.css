@@ -204,10 +204,13 @@ h1,h2,h3{font-family:'Playfair Display',Georgia,serif;font-weight:400;letter-spa
    long tag ("Financial Reporting") leaves no room for both on one line. */
 .new-badge{
   position:absolute;top:0;right:16px;transform:translateY(-50%);
-  display:inline-flex;align-items:center;gap:4px;background:#FBECC3;color:#8A6A14;
+  display:inline-flex;align-items:center;gap:4px;padding-top:3px;padding-bottom:3px;
+  /* Solid ink, not a pastel — every module tag is a pastel tint, so any
+     light colour here reads as just another module. */
+  background:var(--ink);color:#fff;
   box-shadow:0 0 0 3px var(--paper);
 }
-.new-badge svg{width:10px;height:10px;fill:currentColor;stroke:none;}
+.new-badge svg{width:10px;height:10px;fill:#E8C27A;stroke:none;}
 .card h3{font-size:18px;line-height:1.3;margin:14px 0 0;}
 .card p{margin:10px 0 0;font-size:13px;color:var(--ink-soft);line-height:1.55;}
 .card-foot{display:flex;align-items:center;justify-content:space-between;margin-top:auto;padding-top:22px;}
