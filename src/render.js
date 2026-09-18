@@ -74,7 +74,7 @@ export function renderProducts() {
     <article class="card" ${p.preview_pages > 0 ? `data-preview="${esc(p.id)}"` : ""}>
       ${
         isNew
-          ? `<span class="new-badge"><svg viewBox="0 0 24 24"><path d="M12 1c.6 6 4.4 10.4 11 11-6.6.6-10.4 5-11 11-.6-6-4.4-10.4-11-11 6.6-.6 10.4-5 11-11z"/></svg>New</span>`
+          ? `<span class="new-badge">New</span>`
           : ""
       }
       <span class="tag" style="background:${m.tint};color:${m.ink}">${esc(m.tag)}</span>
