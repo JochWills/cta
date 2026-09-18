@@ -105,6 +105,22 @@ async function loadOrders() {
   }
 }
 
+/** Manually re-pulls orders/products — the poll-free Dashboard tab otherwise
+ * only ever updates on tab switch or a page reload, so this is how Courts
+ * checks for a sale that just came in without either of those. */
+async function refreshDashboard() {
+  const btn = $("#dashRefreshBtn");
+  btn.disabled = true;
+  btn.classList.add("is-spinning");
+  try {
+    await Promise.all([loadOrders(), loadProducts()]);
+    toast("Dashboard refreshed");
+  } finally {
+    btn.disabled = false;
+    btn.classList.remove("is-spinning");
+  }
+}
+
 async function loadProducts() {
   try {
     adminState.products = await listProducts();
@@ -306,6 +322,7 @@ document.addEventListener("click", (e) => {
   if (delOrder) return doDeleteOrder(delOrder.dataset.delOrder);
 
   if (e.target.closest("#pf_view_pdf")) return viewCurrentPdf();
+  if (e.target.closest("#dashRefreshBtn")) return refreshDashboard();
 });
 
 document.addEventListener("keydown", (e) => {

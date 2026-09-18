@@ -63,7 +63,10 @@ next to `index.html` automatically; no separate Render service is needed.
 
 ## Using it
 
-Visit `/admin.html`, enter the password. It opens on **Dashboard** — revenue,
+Visit `/admin.html`, enter the password. The refresh button beside the date
+range re-pulls orders and notes on demand — nothing on this page polls for
+new sales on its own, so this is how Courts checks whether one has come in
+without switching tabs or reloading the page. It opens on **Dashboard** — revenue,
 paid/pending order counts and average order value for a chosen range (today,
 7/30/90 days or all time), each compared against the equal-length period
 right before it — today's own comparison is against yesterday, and the

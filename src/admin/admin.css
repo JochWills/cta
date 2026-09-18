@@ -204,6 +204,7 @@
    to build and maintain) styled to read as a pill-shaped dropdown — the
    chevron is a separate absolutely-positioned SVG, matching this file's
    existing icon convention, rather than a CSS background-image data URI. */
+.dash-header-actions{display:flex;align-items:center;gap:10px;}
 .dash-range-select{position:relative;}
 .dash-range-select select{
   appearance:none;-webkit-appearance:none;
@@ -216,6 +217,20 @@
   width:15px;height:15px;stroke:var(--ink-soft);stroke-width:1.8;fill:none;
   stroke-linecap:round;stroke-linejoin:round;pointer-events:none;
 }
+
+/* Matches .dash-range-select select's own height/border/radius so the pair
+   reads as one control cluster, not two unrelated widgets. */
+.dash-refresh-btn{
+  width:40px;height:40px;flex-shrink:0;border:1px solid var(--rule);border-radius:10px;
+  background:var(--paper);display:grid;place-items:center;cursor:pointer;
+  transition:border-color .15s ease;
+}
+.dash-refresh-btn:hover{border-color:var(--accent);}
+.dash-refresh-btn svg{width:17px;height:17px;stroke:var(--ink-soft);stroke-width:1.8;fill:none;stroke-linecap:round;stroke-linejoin:round;}
+.dash-refresh-btn:hover svg{stroke:var(--accent);}
+.dash-refresh-btn[disabled]{opacity:.5;pointer-events:none;}
+.dash-refresh-btn.is-spinning svg{animation:dash-spin .7s linear infinite;}
+@keyframes dash-spin{to{transform:rotate(360deg);}}
 
 .dash-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px;}
 .stat-tile{
