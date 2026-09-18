@@ -72,8 +72,14 @@ export function renderProducts() {
       const isNew = p.created_at && Date.now() - new Date(p.created_at).getTime() < 24 * 60 * 60 * 1000;
       return `
     <article class="card" ${p.preview_pages > 0 ? `data-preview="${esc(p.id)}"` : ""}>
-      ${isNew ? `<span class="new-badge">New</span>` : ""}
-      <span class="tag" style="background:${m.tint};color:${m.ink}">${esc(m.tag)}</span>
+      <div class="card-top-row">
+        <span class="tag" style="background:${m.tint};color:${m.ink}">${esc(m.tag)}</span>
+        ${
+          isNew
+            ? `<span class="new-badge"><svg viewBox="0 0 24 24"><path d="M12 3l1.7 5.3L19 10l-5.3 1.7L12 17l-1.7-5.3L5 10l5.3-1.7L12 3z"/></svg>New</span>`
+            : ""
+        }
+      </div>
       <h3>${esc(p.title)}</h3>
       <p>${esc(p.description || "")}</p>
       <div class="card-foot">
