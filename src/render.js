@@ -72,14 +72,12 @@ export function renderProducts() {
       const isNew = p.created_at && Date.now() - new Date(p.created_at).getTime() < 24 * 60 * 60 * 1000;
       return `
     <article class="card" ${p.preview_pages > 0 ? `data-preview="${esc(p.id)}"` : ""}>
-      <div class="card-top-row">
-        <span class="tag" style="background:${m.tint};color:${m.ink}">${esc(m.tag)}</span>
-        ${
-          isNew
-            ? `<span class="new-badge"><svg viewBox="0 0 24 24"><path d="M12 1c.6 6 4.4 10.4 11 11-6.6.6-10.4 5-11 11-.6-6-4.4-10.4-11-11 6.6-.6 10.4-5 11-11z"/></svg>New</span>`
-            : ""
-        }
-      </div>
+      ${
+        isNew
+          ? `<span class="new-badge"><svg viewBox="0 0 24 24"><path d="M12 1c.6 6 4.4 10.4 11 11-6.6.6-10.4 5-11 11-.6-6-4.4-10.4-11-11 6.6-.6 10.4-5 11-11z"/></svg>New</span>`
+          : ""
+      }
+      <span class="tag" style="background:${m.tint};color:${m.ink}">${esc(m.tag)}</span>
       <h3>${esc(p.title)}</h3>
       <p>${esc(p.description || "")}</p>
       <div class="card-foot">
