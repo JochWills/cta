@@ -450,7 +450,9 @@ details.faq p{margin:12px 0 0;color:var(--ink-soft);font-size:14px;max-width:66c
 
 .discount-row{display:flex;gap:8px;}
 .discount-row input{flex:1;min-width:0;text-transform:uppercase;}
-.discount-row .btn{padding:0 18px;flex-shrink:0;}
+/* .drawer prefix outranks .drawer .btn{width:100%} further down, which
+   otherwise stretches Apply across the row and crushes the input. */
+.drawer .discount-row .btn{width:auto;padding:0 18px;flex-shrink:0;}
 .discount-applied{
   display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:16px;
   padding:12px 14px;border:1px dashed var(--accent);border-radius:8px;background:var(--blush);font-size:13.5px;
