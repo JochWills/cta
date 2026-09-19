@@ -156,7 +156,11 @@ was used — a snapshot, so deleting the code later changes nothing here).
 **Orders are priced by the database, not the browser.** A `before insert`
 trigger, `price_order()` (`supabase/schema.sql` section 8), rebuilds
 `items` from the live `products` rows (by `product_id`, active only) and
-overwrites `total_cents` = subtotal minus the discount code's %. Whatever
+overwrites `total_cents` = subtotal minus one discount %: a bundle discount
+(5+ notes 10%, 10+ notes 15% — the cart mirrors these in `render.js`'s
+`BUNDLE_TIERS` for display) or a discount code's %, whichever is higher.
+They never stack; `discount_code` is only kept when the code won, so
+`discount_percent` set with `discount_code` null means a bundle. Whatever
 the browser sent for prices or the total is ignored — before this existed,
 anyone could insert an order for every note at R1 and pay R1. Don't move
 pricing back into `checkout.js`; its `total_cents` is a placeholder.
@@ -239,7 +243,8 @@ password-gated admin page at `/admin.html` for viewing orders and managing
 notes including PDF upload (`docs/admin.md`), a live visitor count on
 the admin page (`site_sessions`, see Data model above), and % discount codes
 (entered at checkout, managed on the admin page's Discounts tab, applied by
-the database — see Data model above).
+the database — see Data model above), plus automatic bundle discounts
+(5+ notes 10%, 10+ notes 15%, not stacked with a code).
 
 Not done:
 1. **Delivery email** — email hosting on `pgdanotes.co.za` (or a verified

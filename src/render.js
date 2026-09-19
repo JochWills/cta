@@ -102,11 +102,46 @@ export function renderProducts() {
 ------------------------------------------------------------------ */
 export const cartTotal = () => state.cart.reduce((sum, i) => sum + i.price_cents, 0);
 
-/** Same rounding as price_order() in supabase/schema.sql, so the total shown
- * here is the total Paystack charges. */
-export const discountCents = () =>
-  state.discount ? Math.round((cartTotal() * state.discount.percent) / 100) : 0;
+/** Mirrors price_order() in supabase/schema.sql — that's what actually
+ * charges these; the cart only shows them. Highest tier first. */
+const BUNDLE_TIERS = [
+  { min: 10, percent: 15 },
+  { min: 5, percent: 10 },
+];
+const bundlePercent = () => BUNDLE_TIERS.find((t) => state.cart.length >= t.min)?.percent || 0;
+
+/** The one discount that applies. A code and a bundle don't stack — the
+ * higher % wins, a code winning a tie — same rule as price_order(). */
+function appliedDiscount() {
+  const bundle = bundlePercent();
+  if (state.discount && state.discount.percent >= bundle) return { label: "Discount", percent: state.discount.percent, isCode: true };
+  if (bundle) return { label: "Bundle discount", percent: bundle, isCode: false };
+  return null;
+}
+
+/** Same rounding as price_order(), so the total shown is the total Paystack charges. */
+export const discountCents = () => {
+  const d = appliedDiscount();
+  return d ? Math.round((cartTotal() * d.percent) / 100) : 0;
+};
 export const totalDue = () => cartTotal() - discountCents();
+
+function totalsHtml(totalLabel) {
+  const d = appliedDiscount();
+  if (!d) return `<div class="totals"><span class="lbl">${totalLabel}</span><span class="val">${rands(cartTotal())}</span></div>`;
+  return `
+    <div class="totals totals-sub"><span class="lbl">Subtotal</span><span>${rands(cartTotal())}</span></div>
+    <div class="totals totals-sub"><span class="lbl">${d.label} (${d.percent}%)</span><span>−${rands(discountCents())}</span></div>
+    <div class="totals"><span class="lbl">${totalLabel}</span><span class="val">${rands(totalDue())}</span></div>`;
+}
+
+/** "Add 2 more notes for 10% off your cart" — nothing once the top tier is reached. */
+function bundleNudge() {
+  const next = [...BUNDLE_TIERS].reverse().find((t) => state.cart.length < t.min);
+  if (!next) return "";
+  const more = next.min - state.cart.length;
+  return `<p class="bundle-nudge">Add ${more} more note${more === 1 ? "" : "s"} for ${next.percent}% off your cart.</p>`;
+}
 
 export function renderDrawer() {
   const body = $("#drawerBody");
@@ -158,10 +193,8 @@ export function renderDrawer() {
     title.textContent = "Your cart";
     body.innerHTML = lines;
     foot.innerHTML = `
-      <div class="totals">
-        <span class="lbl">${state.cart.length} section${state.cart.length > 1 ? "s" : ""} · total</span>
-        <span class="val">${rands(cartTotal())}</span>
-      </div>
+      ${bundleNudge()}
+      ${totalsHtml(`${state.cart.length} section${state.cart.length > 1 ? "s" : ""} · total`)}
       <button class="btn" id="toDetails">Continue to checkout</button>
       <p class="note">Digital download. Nothing is shipped.</p>`;
     return;
@@ -204,11 +237,13 @@ export function renderDiscount() {
   const totals = $("#checkoutTotals");
   if (!box || !totals) return;
 
+  const d = appliedDiscount();
   box.innerHTML = state.discount
     ? `<div class="discount-applied">
          <span><strong>${esc(state.discount.code)}</strong> · ${state.discount.percent}% off</span>
          <button class="rm" id="removeDiscount" type="button">Remove</button>
-       </div>`
+       </div>
+       ${d && !d.isCode ? `<p class="note discount-note">Your ${d.percent}% bundle discount is higher, so that's used instead — they don't combine.</p>` : ""}`
     : `<div class="field">
          <span>Discount code</span>
          <div class="discount-row">
@@ -219,11 +254,7 @@ export function renderDiscount() {
        </div>
        <div id="discountError"></div>`;
 
-  totals.innerHTML = state.discount
-    ? `<div class="totals totals-sub"><span class="lbl">Subtotal</span><span>${rands(cartTotal())}</span></div>
-       <div class="totals totals-sub"><span class="lbl">Discount (${state.discount.percent}%)</span><span>−${rands(discountCents())}</span></div>
-       <div class="totals"><span class="lbl">Total due</span><span class="val">${rands(totalDue())}</span></div>`
-    : `<div class="totals"><span class="lbl">Total due</span><span class="val">${rands(cartTotal())}</span></div>`;
+  totals.innerHTML = totalsHtml("Total due");
 }
 
 export function openCart() {

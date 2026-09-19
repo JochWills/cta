@@ -237,7 +237,7 @@ grant execute on function public.active_visitor_count() to anon, authenticated;
 
 
 -- ------------------------------------------------------------
--- 8. DISCOUNT CODES + SERVER-SIDE ORDER PRICING
+-- 8. DISCOUNTS (CODES + BUNDLES) + SERVER-SIDE ORDER PRICING
 --    The browser can't be trusted with an order's total: before this,
 --    checkout.js wrote total_cents itself, paystack-initiate charged
 --    exactly that, and the webhook only checked Paystack's amount against
@@ -278,14 +278,21 @@ $$;
 
 grant execute on function public.discount_percent(text) to anon, authenticated;
 
+-- Bundle discount: 5+ notes is 10% off, 10+ is 15% — thresholds mirrored
+-- in bundlePercent() in src/render.js (display only). It doesn't stack
+-- with a code: whichever % is higher applies, and discount_code is only
+-- kept on the order when the code is what was actually used — so an order
+-- with discount_percent set and discount_code null was a bundle discount.
 create or replace function public.price_order() returns trigger
 language plpgsql security definer set search_path = public as $$
 declare
-  v_item     jsonb;
-  v_product  record;
-  v_items    jsonb := '[]'::jsonb;
-  v_subtotal int := 0;
-  v_pct      int;
+  v_item       jsonb;
+  v_product    record;
+  v_items      jsonb := '[]'::jsonb;
+  v_subtotal   int := 0;
+  v_count      int := 0;
+  v_code_pct   int;
+  v_bundle_pct int;
 begin
   if jsonb_typeof(new.items) is distinct from 'array' or jsonb_array_length(new.items) = 0 then
     raise exception 'Order has no items';
@@ -302,24 +309,32 @@ begin
       'product_id', v_product.id, 'code', v_product.code,
       'title', v_product.title, 'price_cents', v_product.price_cents);
     v_subtotal := v_subtotal + v_product.price_cents;
+    v_count := v_count + 1;
   end loop;
 
-  new.discount_percent := null;
+  v_bundle_pct := case when v_count >= 10 then 15 when v_count >= 5 then 10 else 0 end;
+
   if nullif(trim(new.discount_code), '') is null then
     new.discount_code := null;
   else
     new.discount_code := upper(trim(new.discount_code));
-    select percent_off into v_pct from public.discount_codes where code = new.discount_code;
-    if v_pct is null then
+    select percent_off into v_code_pct from public.discount_codes where code = new.discount_code;
+    if v_code_pct is null then
       raise exception 'Invalid discount code';
     end if;
-    new.discount_percent := v_pct;
+  end if;
+
+  if v_code_pct is not null and v_code_pct >= v_bundle_pct then
+    new.discount_percent := v_code_pct;
+  else
+    new.discount_code := null;
+    new.discount_percent := nullif(v_bundle_pct, 0);
   end if;
 
   new.items := v_items;
   -- Same rounding as discountCents() in src/render.js, so the total the
   -- buyer sees is the total Paystack charges.
-  new.total_cents := v_subtotal - round(v_subtotal * coalesce(v_pct, 0) / 100.0)::int;
+  new.total_cents := v_subtotal - round(v_subtotal * coalesce(new.discount_percent, 0) / 100.0)::int;
   return new;
 end;
 $$;

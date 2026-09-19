@@ -100,7 +100,16 @@ buyers) rather than linking to it directly.
 top — codes are stored upper-case, 3-32 letters/numbers/`-`/`_`, and a buyer
 can type them in any case. There's no edit: delete a code and add it again.
 Deleting one stops new orders using it; orders that already did keep their
-own copy of the code and % (the Orders tab shows it under the total). A
+own copy of the code and % (the Orders tab shows it under the total).
+
+Bundle discounts need no code and apply automatically — 5+ notes in a
+cart is 10% off, 10+ is 15%. They don't stack with a code: the buyer gets
+whichever % is higher. An order that got the bundle shows "Bundle · 10% off"
+under its total on the Orders tab. The tiers live in `price_order()` in
+`supabase/schema.sql` (what's charged) and `BUNDLE_TIERS` in `src/render.js`
+(what the cart shows) — change both together.
+
+A
 100% code isn't allowed — a R0 order has nothing for Paystack to charge, so
 it could never be marked paid. The % itself is only ever applied by the
 database when the order is saved (see section 8 of `supabase/schema.sql`),

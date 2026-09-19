@@ -90,7 +90,11 @@ function orderRow(o) {
       </td>
       <td>
         <div>${rands(o.total_cents)}</div>
-        ${o.discount_code ? `<div class="meta">${esc(o.discount_code)} · ${esc(o.discount_percent)}% off</div>` : ""}
+        ${
+          o.discount_percent
+            ? `<div class="meta">${o.discount_code ? esc(o.discount_code) : "Bundle"} · ${esc(o.discount_percent)}% off</div>`
+            : ""
+        }
       </td>
       <td><span class="status-badge status-${esc(o.status)}">${esc(STATUS_LABEL[o.status] || o.status)}</span></td>
       <td><div class="admin-row-actions"><button class="btn ghost" data-del-order="${esc(o.id)}">Delete</button></div></td>
