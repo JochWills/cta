@@ -27,7 +27,7 @@
 }
 
 *,*::before,*::after{box-sizing:border-box;}
-html{scroll-behavior:smooth;scroll-padding-top:96px;}
+html{scroll-behavior:smooth;scroll-padding-top:81px;} /* .header-inner's 80px height + its 1px border-bottom */
 body{
   margin:0;
   background:var(--paper);
