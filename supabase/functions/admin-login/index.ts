@@ -17,12 +17,12 @@ Deno.serve(async (req) => {
   if (preflight) return preflight;
 
   try {
-    const { password } = await req.json();
+    const { password, remember } = await req.json();
     if (typeof password !== "string" || !timingSafeEqual(password, ADMIN_PASSWORD)) {
       return json({ error: "Wrong password" }, 401);
     }
 
-    const { token, expires_at } = await signToken();
+    const { token, expires_at } = await signToken(remember === true);
     return json({ token, expires_at });
   } catch (err) {
     console.error(err);

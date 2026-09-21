@@ -52,8 +52,9 @@ async function doLogin() {
   btn.textContent = "Checking…";
   loginError("");
   try {
-    const { token, expires_at } = await login(password);
-    saveSession(token, expires_at);
+    const remember = $("#rememberInput").checked;
+    const { token, expires_at } = await login(password, remember);
+    saveSession(token, expires_at, remember);
     await enterDashboard();
   } catch (err) {
     loginError(err.message);

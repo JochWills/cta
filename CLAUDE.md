@@ -119,8 +119,9 @@ public/                     favicon, hero.png (the hero photo)
   key `cta_cart`) so a refresh doesn't lose it. This used to be deliberately
   in-memory-only; that changed. `loadCart()` runs once at startup in
   `main.js`, before the first render. The admin page's session token uses
-  `sessionStorage` instead, on purpose — see its own comment in
-  `src/admin/state.js` for why that one stays separate.
+  `sessionStorage` instead, on purpose, unless the login form's "Keep me
+  signed in" box is ticked (then `localStorage`, 30-day token) — see its own
+  comment in `src/admin/state.js`.
 - CSS custom properties at the top of `styles.css` are the single source of
   colour and spacing truth. Module tints (`--fr-tint`, `--tax-ink`, …) are paired
   with the `MODULES` array in `catalogue.js` — change both together.

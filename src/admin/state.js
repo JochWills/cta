@@ -26,31 +26,40 @@ const TOKEN_KEY = "cta_admin_token";
 const EXPIRES_KEY = "cta_admin_expires";
 
 /**
- * The token lives in sessionStorage, not localStorage — unlike the shop
- * cart (src/cart.js), which persists to localStorage on purpose so a
- * refresh doesn't lose it. An admin auth token is a different kind of
- * thing: it shouldn't linger forever on a shared machine, so it's cleared
- * the moment the tab closes rather than persisted indefinitely.
+ * By default the token lives in sessionStorage, not localStorage — unlike
+ * the shop cart (src/cart.js), which persists to localStorage on purpose so
+ * a refresh doesn't lose it. An admin auth token is a different kind of
+ * thing: it shouldn't linger on a shared machine, so it's cleared the
+ * moment the tab closes.
+ *
+ * The one exception is the login form's "Keep me signed in on this device"
+ * box: ticked, the token (issued for 30 days instead of 12 hours — see
+ * admin-login) goes in localStorage so it survives closing the tab or the
+ * iPhone home-screen app. It's opt-in, per device, and Log out clears both.
  */
 export function loadSession() {
-  try {
-    const token = sessionStorage.getItem(TOKEN_KEY) || "";
-    const expiresAt = sessionStorage.getItem(EXPIRES_KEY) || "";
-    if (token && expiresAt && Date.now() < Date.parse(expiresAt)) {
-      adminState.token = token;
-      adminState.expiresAt = expiresAt;
+  for (const store of [sessionStorage, localStorage]) {
+    try {
+      const token = store.getItem(TOKEN_KEY) || "";
+      const expiresAt = store.getItem(EXPIRES_KEY) || "";
+      if (token && expiresAt && Date.now() < Date.parse(expiresAt)) {
+        adminState.token = token;
+        adminState.expiresAt = expiresAt;
+        return;
+      }
+    } catch {
+      // storage unavailable (e.g. private browsing) — try the other, else stay logged out.
     }
-  } catch {
-    // sessionStorage unavailable (e.g. private browsing) — just stay logged out.
   }
 }
 
-export function saveSession(token, expiresAt) {
+export function saveSession(token, expiresAt, remember = false) {
   adminState.token = token;
   adminState.expiresAt = expiresAt;
   try {
-    sessionStorage.setItem(TOKEN_KEY, token);
-    sessionStorage.setItem(EXPIRES_KEY, expiresAt);
+    const store = remember ? localStorage : sessionStorage;
+    store.setItem(TOKEN_KEY, token);
+    store.setItem(EXPIRES_KEY, expiresAt);
   } catch {
     // ignore — worst case the admin has to log in again after a reload
   }
@@ -59,10 +68,12 @@ export function saveSession(token, expiresAt) {
 export function clearSession() {
   adminState.token = "";
   adminState.expiresAt = "";
-  try {
-    sessionStorage.removeItem(TOKEN_KEY);
-    sessionStorage.removeItem(EXPIRES_KEY);
-  } catch {
-    // ignore
+  for (const store of [sessionStorage, localStorage]) {
+    try {
+      store.removeItem(TOKEN_KEY);
+      store.removeItem(EXPIRES_KEY);
+    } catch {
+      // ignore
+    }
   }
 }

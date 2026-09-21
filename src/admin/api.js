@@ -37,7 +37,7 @@ async function call(name, { body, isForm = false } = {}) {
   return res.json();
 }
 
-export const login = (password) => call("admin-login", { body: { password } });
+export const login = (password, remember) => call("admin-login", { body: { password, remember } });
 
 export const fetchOrders = () => call("admin-orders");
 export const deleteOrder = (id) => call("admin-orders", { body: { action: "delete", id } });

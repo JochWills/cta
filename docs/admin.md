@@ -25,9 +25,17 @@ shop. `admin-login` checks it against the `ADMIN_PASSWORD` secret and, on a
 match, issues a signed token good for 12 hours. The admin page sends that
 token back as `X-Admin-Token` on every call to `admin-orders`,
 `admin-products`, `admin-upload` and `admin-discounts`, which each verify it before touching
-the database. The token lives in `sessionStorage` in the browser — cleared
-when the tab closes, never `localStorage` — so it doesn't linger on a shared
-computer.
+the database. By default the token lives in `sessionStorage` in the browser
+and is good for 12 hours — cleared when the tab closes, so it doesn't linger
+on a shared computer.
+
+The login form has a **Keep me signed in on this device** box. Ticked, the
+server issues a 30-day token and the browser keeps it in `localStorage`, so
+it survives closing the tab or the iPhone home-screen app. It's opt-in and
+per device, and **Log out** clears it. Tokens are stateless (there's no
+session table), so a lost phone can't be signed out individually — change
+`ADMIN_SESSION_SECRET` to sign out every
+device at once.
 
 ## One-time setup
 

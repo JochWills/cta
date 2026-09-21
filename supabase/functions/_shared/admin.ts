@@ -17,6 +17,10 @@
 const SESSION_SECRET = Deno.env.get("ADMIN_SESSION_SECRET")!;
 const SITE_URL = Deno.env.get("SITE_URL") ?? "*";
 const TOKEN_TTL_MS = 12 * 60 * 60 * 1000; // 12 hours
+// "Keep me signed in on this device" on the login form. Tokens are stateless
+// (no session table to revoke from), so the only ways to end one early are
+// its expiry or rotating ADMIN_SESSION_SECRET, which signs out every device.
+const REMEMBER_TTL_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
 
 function toBase64Url(bytes: Uint8Array): string {
   return btoa(String.fromCharCode(...bytes)).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
@@ -37,9 +41,9 @@ async function hmacKey() {
   );
 }
 
-/** Issue a token good for 12 hours: base64url(payload) + "." + base64url(signature). */
-export async function signToken(): Promise<{ token: string; expires_at: string }> {
-  const exp = Date.now() + TOKEN_TTL_MS;
+/** Issue a token good for 12 hours (30 days if `remember`): base64url(payload) + "." + base64url(signature). */
+export async function signToken(remember = false): Promise<{ token: string; expires_at: string }> {
+  const exp = Date.now() + (remember ? REMEMBER_TTL_MS : TOKEN_TTL_MS);
   const payload = new TextEncoder().encode(JSON.stringify({ exp }));
   const key = await hmacKey();
   const sig = new Uint8Array(await crypto.subtle.sign("HMAC", key, payload));

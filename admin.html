@@ -41,14 +41,24 @@
 
   <!-- ══════════════ LOGIN ══════════════ -->
   <section id="loginView" class="admin-card login-card wrap">
+    <div class="login-mark" aria-hidden="true">
+      <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-linejoin="round" stroke-linecap="round">
+        <path d="M32 21c-3.6-3.4-8.4-5-14-5v25c5.6 0 10.4 1.6 14 5 3.6-3.4 8.4-5 14-5V16c-5.6 0-10.4 1.6-14 5z" stroke-width="3"/>
+        <path d="M32 21v25" stroke-width="3"/>
+      </svg>
+    </div>
     <h1>Admin</h1>
-    <p class="lede">Enter the admin password to manage orders and notes.</p>
+    <p class="lede">Enter the admin password to manage orders, notes and discount codes.</p>
     <form id="loginForm">
       <label class="field"><span>Password</span>
         <input type="password" id="passwordInput" autocomplete="current-password" required>
       </label>
+      <label class="remember-field">
+        <input type="checkbox" id="rememberInput">
+        <span>Keep me signed in on this device</span>
+      </label>
       <div id="loginError"></div>
-      <button class="btn" id="loginBtn" type="submit" style="margin-top:16px;">Log in</button>
+      <button class="btn" id="loginBtn" type="submit">Log in</button>
     </form>
   </section>
 
