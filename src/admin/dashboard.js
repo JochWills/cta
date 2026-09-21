@@ -219,11 +219,60 @@ function maskName(fullName) {
   return words.map((w, i) => (i === 0 ? `${w[0]}***` : `${w[0]}.`)).join(" ");
 }
 
+/* Greetings by time of day. No names in them — the admin password is
+ * shared, so this page doesn't know who's looking. */
+const GREETINGS = {
+  lateNight: [
+    "Burning the midnight oil?",
+    "Still up? The orders can wait",
+    "Night owl hours",
+    "Shouldn't you be asleep?",
+    "Quiet hours, good for a look at sales",
+  ],
+  morning: [
+    "Good morning",
+    "Morning, early bird",
+    "Coffee first, then sales",
+    "Rise and shine",
+    "Fresh day, fresh orders?",
+  ],
+  afternoon: [
+    "Good afternoon",
+    "Afternoon slump? Sales might help",
+    "Hope lunch was good",
+    "Back at the shop again",
+    "Let's see who's studying",
+  ],
+  evening: [
+    "Good evening",
+    "Somewhere, a student is highlighting",
+    "Tea and tallies?",
+    "Winding down, or just getting started?",
+    "Evening, let's check the shop",
+  ],
+  night: [
+    "Getting late",
+    "One last look at sales?",
+    "Nearly bedtime",
+    "Late one tonight",
+    "Still at it, I see",
+  ],
+};
+
+let pickedGreeting = { period: "", text: "" };
+
+/** One greeting per time-of-day period, kept until the period changes.
+ * renderDashboard() runs on every orders/products load, refresh and range
+ * change — picking fresh each call would shuffle the heading under the
+ * admin's eyes. */
 function greeting() {
   const h = new Date().getHours();
-  if (h < 12) return "Good morning!";
-  if (h < 18) return "Good afternoon!";
-  return "Good evening!";
+  const period = h < 5 ? "lateNight" : h < 12 ? "morning" : h < 18 ? "afternoon" : h < 22 ? "evening" : "night";
+  if (pickedGreeting.period !== period) {
+    const options = GREETINGS[period];
+    pickedGreeting = { period, text: options[Math.floor(Math.random() * options.length)] };
+  }
+  return pickedGreeting.text;
 }
 
 /** A small trailing sparkline — 12ish points is typical, but this just uses
