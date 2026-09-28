@@ -51,12 +51,18 @@ export function renderFilters() {
 /* ------------------------------------------------------------------
    Product grid
 ------------------------------------------------------------------ */
+const isNewProduct = (p) => p.created_at && Date.now() - new Date(p.created_at).getTime() < 24 * 60 * 60 * 1000;
+
 export function renderProducts() {
   const grid = $("#productGrid");
-  const list =
+  const base =
     state.activeFilter === "all"
       ? state.products
       : state.products.filter((p) => p.module_slug === state.activeFilter);
+  // New notes float to the top of the grid while their badge shows (24h).
+  // Array#sort is stable, so within "new" and within "not new" the existing
+  // sort_order is kept — this only moves the new/old boundary, nothing else.
+  const list = [...base].sort((a, b) => isNewProduct(b) - isNewProduct(a));
 
   if (!list.length) {
     grid.innerHTML = `<div class="empty-state">
@@ -69,7 +75,7 @@ export function renderProducts() {
     .map((p) => {
       const m = MOD[p.module_slug] || MODULES[0];
       const inCart = state.cart.some((c) => c.id === p.id);
-      const isNew = p.created_at && Date.now() - new Date(p.created_at).getTime() < 24 * 60 * 60 * 1000;
+      const isNew = isNewProduct(p);
       return `
     <article class="card" ${p.preview_pages > 0 ? `data-preview="${esc(p.id)}"` : ""}>
       ${
