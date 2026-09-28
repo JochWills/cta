@@ -189,11 +189,17 @@ comment for why it always responds `200 { ok, reason }` rather than
 `site_sessions` — one row per open browser tab, keyed by a random id made up
 client-side (`src/presence.js`), heartbeat-updated every ~20s. Backs the
 admin page's live visitor count. No RLS policies at all on the table itself
-— both reads and writes go through two `security definer` functions
-(`heartbeat`, `active_visitor_count` — see `supabase/schema.sql`'s "LIVE
-VISITOR COUNT" section) that anon can call directly, so the raw table (and
-its session ids/timestamps) is never itself queryable. `heartbeat` also
-prunes rows older than a day, so the table doesn't grow forever.
+— both reads and writes go through `security definer` functions (see below)
+that anon can call directly, so the raw table (and its session ids/
+timestamps) is never itself queryable. `heartbeat` also prunes rows older
+than a day, so the table doesn't grow forever.
+
+`daily_visits` — one row per session id per calendar day (not per
+heartbeat), written by the same `heartbeat` call as `site_sessions` above
+but never pruned, since `site_sessions` only ever holds roughly the last
+day. Backs the admin page's "Daily visitors" chart (`daily_visitor_counts()`
+— see `supabase/schema.sql`'s "LIVE VISITOR COUNT + DAILY VISITORS"
+section), which needs real history `site_sessions` can't provide.
 
 ### RLS — read this before changing any query
 

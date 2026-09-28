@@ -88,11 +88,14 @@ order's own item snapshot only knows a product's id, so this looks each one
 up in the Notes list currently loaded — a since-deleted note's sales land in
 "Other" rather than vanishing); a Recent Orders glance (customer names
 trimmed to initials — the full name is one click away on Orders, this is
-just a lighter-weight summary, not a real access restriction); and the
-best-selling notes in the chosen range. All of it is computed in the browser
-from the same order and product data the Orders/Notes tabs already load
-(`src/admin/dashboard.js`) — no separate endpoint or query, so it's never
-out of sync and adds no load on Supabase beyond what already happens today.
+just a lighter-weight summary, not a real access restriction); the
+best-selling notes in the chosen range; and a Daily visitors chart — unique
+browser sessions per day for the last 14 days, from a separate `daily_visits`
+table that (unlike `site_sessions`, below) keeps real history. Everything
+except that last chart is computed in the browser from the same order and
+product data the Orders/Notes tabs already load (`src/admin/dashboard.js`)
+— no separate endpoint or query, so it's never out of sync and adds no load
+on Supabase beyond what already happens today.
 
 **Orders** shows every order, newest first — expand a row to see which
 sections were bought. **Notes** lists every product, including inactive
@@ -132,8 +135,10 @@ the buyer or touch Paystack; the confirm text says so, since it's a real
 financial record disappearing, not just tidying up a stray row.
 
 The header shows a live count of browser tabs with the site open right now
-(polled every 15s) — see the "LIVE VISITOR COUNT" section of
-`supabase/schema.sql` and `src/presence.js` for how it's tracked.
+(polled every 15s) — see the "LIVE VISITOR COUNT + DAILY VISITORS" section of
+`supabase/schema.sql` and `src/presence.js` for how it's tracked. The
+Dashboard's Daily visitors chart comes from the same heartbeat, just counted
+per day instead of live.
 
 ## Not done here
 

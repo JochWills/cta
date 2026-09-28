@@ -14,6 +14,8 @@ export const adminState = {
   products: [],
   /** Discount codes, newest first, once loaded. */
   discounts: [],
+  /** { day, visitors }[] for the Dashboard's daily-visitors chart, oldest first, once loaded. */
+  dailyVisitors: [],
   /** Which dashboard tab is showing: "dashboard" | "orders" | "notes" | "discounts". */
   tab: "dashboard",
   /** Product row being edited in the modal, or null when adding a new one. */

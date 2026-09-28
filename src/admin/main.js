@@ -26,6 +26,7 @@ import {
   uploadFile,
   getSignedPdfUrl,
   fetchActiveVisitors,
+  fetchDailyVisitors,
   listDiscounts,
   createDiscount,
   deleteDiscount,
@@ -67,8 +68,19 @@ async function doLogin() {
 async function enterDashboard() {
   showLoggedIn();
   setTab(adminState.tab);
-  await Promise.all([loadOrders(), loadProducts(), loadDiscounts()]);
+  await Promise.all([loadOrders(), loadProducts(), loadDiscounts(), loadDailyVisitors()]);
   startVisitorPoll();
+}
+
+/** Not gated behind the admin token (same anon RPC as the live count) — a
+ * failure here just leaves the chart empty, not worth a toast over. */
+async function loadDailyVisitors() {
+  try {
+    adminState.dailyVisitors = await fetchDailyVisitors();
+    renderDashboard();
+  } catch {
+    // ignore — chart shows its own empty state
+  }
 }
 
 const VISITOR_POLL_MS = 15_000;
@@ -119,7 +131,7 @@ async function refreshDashboard() {
   btn.disabled = true;
   btn.classList.add("is-spinning");
   try {
-    await Promise.all([loadOrders(), loadProducts()]);
+    await Promise.all([loadOrders(), loadProducts(), loadDailyVisitors()]);
     toast("Dashboard refreshed");
   } finally {
     btn.disabled = false;

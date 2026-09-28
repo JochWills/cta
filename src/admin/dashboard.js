@@ -461,6 +461,106 @@ function renderCategoryChart(categories, totalCents) {
 }
 
 /* ------------------------------------------------------------------
+   Daily visitors — same plain-SVG bar chart look as Revenue (see its own
+   comment on why this codebase has no charting library), but its own
+   function rather than a shared/generalized one: Revenue's geometry is
+   entangled with rands-specific formatting and has its own hard-won
+   tooltip-position fixes (see showTooltip's comment) not worth the risk of
+   touching to generalize for this second, much simpler chart. The two only
+   share the CSS classes (.dash-chart, .bar-fill, etc., all unit-agnostic)
+   and the wireChartTooltip/showTooltip/hideTooltip functions above, which
+   already took hostId/tooltipId rather than a fixed element.
+------------------------------------------------------------------ */
+const VISITOR_DAYS = 14;
+
+const visitorsLabel = (v) => `${v} visitor${v === 1 ? "" : "s"}`;
+
+/**
+ * daily_visitor_counts() only returns days with at least one visit — this
+ * zero-fills the last VISITOR_DAYS calendar days so the chart still shows a
+ * bar (at height 0) for a quiet day instead of skipping it. Buckets by the
+ * browser's local calendar day, same as every other date in this file,
+ * while the "day" column itself comes from the database server's current_date
+ * (effectively UTC) — closer to South African local time than not, and
+ * this page has never tried to reconcile server vs. browser timezones for
+ * anything else either, so today's own bar is the only one that can ever
+ * land a day off from what the count actually reflects.
+ */
+function visitorSeries() {
+  const byDay = new Map(adminState.dailyVisitors.map((r) => [r.day, Number(r.visitors)]));
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const series = [];
+  for (let i = VISITOR_DAYS - 1; i >= 0; i--) {
+    const d = new Date(today);
+    d.setDate(d.getDate() - i);
+    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+    series.push({ label: d.toLocaleDateString("en-ZA", { day: "numeric", month: "short" }), value: byDay.get(key) || 0 });
+  }
+  return series;
+}
+
+function renderVisitorChart(series) {
+  const rawMax = Math.max(1, ...series.map((s) => s.value));
+  const step = niceStepRands(rawMax); // "nice round number for an axis maxing out around N" — the name predates this second use, the math isn't rand-specific
+  const tickCount = Math.max(1, Math.ceil(rawMax / step));
+  const niceMax = tickCount * step;
+
+  const axisRows = [];
+  for (let i = 0; i <= tickCount; i++) {
+    const y = CHART_H - (i / tickCount) * CHART_H;
+    axisRows.push(`<text x="40" y="${(y + 4).toFixed(1)}" class="axis-tick-label" text-anchor="end">${i * step}</text>`);
+  }
+  const axisSvg = `<svg class="dash-axis" width="44" height="${CHART_H + 24}">${axisRows.join("")}</svg>`;
+
+  const gridlines = [];
+  for (let i = 0; i <= tickCount; i++) {
+    const y = (CHART_H - (i / tickCount) * CHART_H).toFixed(1);
+    gridlines.push(`<line x1="0" y1="${y}" x2="${series.length * SLOT}" y2="${y}" class="bar-gridline"></line>`);
+  }
+
+  const step6 = Math.max(1, Math.ceil(series.length / 6));
+  const bars = series
+    .map((s, i) => {
+      const x = i * SLOT;
+      const h = s.value ? Math.max(2, Math.round((s.value / niceMax) * CHART_H)) : 0;
+      // The last bucket always shows its label (e.g. "today" is the one
+      // worth reading at a glance) — but when series.length doesn't divide
+      // evenly by step6, the nearest regular tick can land right next to
+      // it and the two collide (found by actually rendering 14 buckets:
+      // step6=3 puts a tick at index 12, one slot before the forced label
+      // at 13). Dropping a would-be tick at exactly length-2 avoids that
+      // without touching the regular spacing anywhere else.
+      const isLast = i === series.length - 1;
+      const showLabel = isLast || (i % step6 === 0 && i !== series.length - 2);
+      const fill = h
+        ? `<rect x="${x + GAP / 2}" y="${CHART_H - h - 4}" width="${BAR_W}" height="${h + 4}" rx="4" ry="4" class="bar-fill"></rect>`
+        : "";
+      return `
+        <g>
+          ${fill}
+          <rect x="${x}" y="0" width="${SLOT}" height="${CHART_H}" class="bar-hit" tabindex="0"
+                data-label="${esc(s.label)}" data-value="${esc(visitorsLabel(s.value))}"></rect>
+          ${showLabel ? `<text x="${x + SLOT / 2}" y="${CHART_H + 16}" class="bar-axis-label" text-anchor="middle">${esc(s.label)}</text>` : ""}
+        </g>`;
+    })
+    .join("");
+
+  const width = series.length * SLOT;
+  return `
+    <div class="dash-chart-row">
+      ${axisSvg}
+      <div class="dash-chart-scroll">
+        <svg class="dash-chart" viewBox="0 0 ${width} ${CHART_H + 24}" width="${width}" height="${CHART_H + 24}">
+          ${gridlines.join("")}
+          ${bars}
+        </svg>
+      </div>
+    </div>
+    <div class="dash-tooltip" id="dashVisitorsTooltip" hidden></div>`;
+}
+
+/* ------------------------------------------------------------------
    Recent Orders / Top Selling Notes
 ------------------------------------------------------------------ */
 function renderRecentOrders(orders) {
@@ -573,6 +673,14 @@ export function renderDashboard() {
   if (scroller) scroller.scrollLeft = scroller.scrollWidth;
 
   $("#dashCategoryChart").innerHTML = renderCategoryChart(data.categories, data.categoryTotal);
+
+  const vSeries = visitorSeries();
+  $("#dashVisitorsChart").innerHTML = vSeries.some((s) => s.value)
+    ? renderVisitorChart(vSeries)
+    : `<div class="empty-state">No visits recorded yet.</div>`;
+  const vScroller = document.querySelector("#dashVisitorsChart .dash-chart-scroll");
+  if (vScroller) vScroller.scrollLeft = vScroller.scrollWidth;
+
   $("#dashRecentOrders").innerHTML = renderRecentOrders(data.recentOrders);
   $("#dashTopNotes").innerHTML = renderTopNotesList(data.topNotes);
 }
@@ -582,9 +690,9 @@ export function renderDashboard() {
    that's only ever re-filled, never replaced, so one set of listeners here
    keeps working across every re-render triggered by renderDashboard()).
 ------------------------------------------------------------------ */
-function showTooltip(bar) {
-  const tip = $("#dashTooltip");
-  // #dashChartInner (.dash-chart-host) is the tooltip's actual position:
+function showTooltip(bar, tooltipId, hostId) {
+  const tip = $(`#${tooltipId}`);
+  // The chart's own host (.dash-chart-host) is the tooltip's actual position:
   // relative ancestor — NOT .dash-chart-scroll, which only wraps the bars
   // and starts partway in, after the fixed axis column. Positioning
   // against the scroll container's own edge (and separately re-adding its
@@ -593,7 +701,7 @@ function showTooltip(bar) {
   // chart was scrolled, the further right the tooltip drifted, eventually
   // landing on the card next to it. getBoundingClientRect() already gives
   // each element's true on-screen position; no scroll math needed at all.
-  const container = $("#dashChartInner");
+  const container = $(`#${hostId}`);
   if (!tip || !container || !bar) return;
   tip.innerHTML = `<strong>${esc(bar.dataset.value)}</strong><span>${esc(bar.dataset.label)}</span>`;
   tip.hidden = false;
@@ -618,16 +726,23 @@ function showTooltip(bar) {
   tip.style.top = `${top - containerBox.top}px`;
 }
 
-function hideTooltip() {
-  const tip = $("#dashTooltip");
+function hideTooltip(tooltipId) {
+  const tip = $(`#${tooltipId}`);
   if (tip) tip.hidden = true;
 }
 
-const chartHost = document.getElementById("dashChartInner");
-if (chartHost) {
-  chartHost.addEventListener("pointerover", (e) => showTooltip(e.target.closest(".bar-hit")));
-  chartHost.addEventListener("pointermove", (e) => showTooltip(e.target.closest(".bar-hit")));
-  chartHost.addEventListener("pointerout", (e) => e.target.closest(".bar-hit") && hideTooltip());
-  chartHost.addEventListener("focusin", (e) => showTooltip(e.target.closest(".bar-hit")));
-  chartHost.addEventListener("focusout", hideTooltip);
+/** Wires the same hover/focus tooltip behaviour to a chart host — used for
+ * both Revenue and Daily visitors, which each render their own tooltip div
+ * (with their own id) as part of their chart HTML (see renderRevenueChart/
+ * renderVisitorChart), so this only needs the two ids, not an element ref. */
+function wireChartTooltip(hostId, tooltipId) {
+  const host = document.getElementById(hostId);
+  if (!host) return;
+  host.addEventListener("pointerover", (e) => showTooltip(e.target.closest(".bar-hit"), tooltipId, hostId));
+  host.addEventListener("pointermove", (e) => showTooltip(e.target.closest(".bar-hit"), tooltipId, hostId));
+  host.addEventListener("pointerout", (e) => e.target.closest(".bar-hit") && hideTooltip(tooltipId));
+  host.addEventListener("focusin", (e) => showTooltip(e.target.closest(".bar-hit"), tooltipId, hostId));
+  host.addEventListener("focusout", () => hideTooltip(tooltipId));
 }
+wireChartTooltip("dashChartInner", "dashTooltip");
+wireChartTooltip("dashVisitorsChart", "dashVisitorsTooltip");

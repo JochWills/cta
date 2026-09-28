@@ -72,3 +72,7 @@ export function uploadFile(file, path, bucket = "notes") {
  * living here anyway keeps every admin-page data fetch behind one api.js.
  */
 export const fetchActiveVisitors = () => sbRpc("active_visitor_count");
+
+/** Same idea, but per-day history instead of a live count — see daily_visits
+ * in supabase/schema.sql. Days with zero visits come back absent, not zero. */
+export const fetchDailyVisitors = (days = 14) => sbRpc("daily_visitor_counts", { p_days: days });

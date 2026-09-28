@@ -190,7 +190,7 @@ on conflict (code) do nothing;
 
 
 -- ------------------------------------------------------------
--- 7. LIVE VISITOR COUNT (admin page)
+-- 7. LIVE VISITOR COUNT + DAILY VISITORS (admin page)
 --    One row per open tab, keyed by a random id the shop makes up client-
 --    side (src/presence.js) — not a cookie, not tied to a person, nothing
 --    else stored. A heartbeat every ~20s keeps last_seen current; the admin
@@ -198,30 +198,52 @@ on conflict (code) do nothing;
 --    policy on the raw table for anon — only the count is exposed, via
 --    active_visitor_count() below, so a visitor's session id/timestamp
 --    isn't itself something anyone holding the anon key can browse.
+--
+--    site_sessions only ever holds roughly the last day (heartbeat() prunes
+--    it below), so it can't answer "how many visitors on any past day" —
+--    daily_visits is a second, separate table just for that: one row per
+--    session id per calendar day (not per heartbeat), kept indefinitely
+--    since it's small, so the admin page's "Daily visitors" chart has real
+--    history to show. Same session id, same privacy shape as site_sessions.
 -- ------------------------------------------------------------
 create table if not exists public.site_sessions (
   session_id text primary key,
   last_seen  timestamptz not null default now()
 );
 
-alter table public.site_sessions enable row level security;
--- No policies at all for site_sessions itself — every access goes through
--- the two security definer functions below, which run as their owner
--- (bypassing RLS) rather than as the calling anon role. Supabase's linter
--- flags both of those functions being anon-executable, and the table
--- having RLS enabled with zero policies — that's this design working as
--- intended, not a gap: the table is meant to be reachable only through
--- them, never queried directly.
+create table if not exists public.daily_visits (
+  day        date not null,
+  session_id text not null,
+  primary key (day, session_id)
+);
 
--- Upsert this tab's heartbeat, and take the opportunity to prune rows
--- that are clearly gone for good — bounds the table's growth without
--- needing a separate scheduled job for something this low-stakes.
+alter table public.site_sessions enable row level security;
+alter table public.daily_visits  enable row level security;
+-- No policies at all for either table — every access goes through the
+-- security definer functions below, which run as their owner (bypassing
+-- RLS) rather than as the calling anon role. Supabase's linter flags both
+-- of those functions being anon-executable, and the tables having RLS
+-- enabled with zero policies — that's this design working as intended,
+-- not a gap: the tables are meant to be reachable only through them,
+-- never queried directly.
+
+-- Upsert this tab's heartbeat, record today's visit once for this session
+-- (on conflict do nothing — a heartbeat every ~20s from the same tab
+-- shouldn't multiply-count that tab on the same day), and take the
+-- opportunity to prune site_sessions rows that are clearly gone for good —
+-- bounds that table's growth without needing a separate scheduled job for
+-- something this low-stakes. daily_visits isn't pruned; it's one tiny row
+-- per session per day, meant to be kept.
 create or replace function public.heartbeat(p_session_id text) returns void
 language plpgsql security definer set search_path = public as $$
 begin
   insert into public.site_sessions (session_id, last_seen)
   values (p_session_id, now())
   on conflict (session_id) do update set last_seen = now();
+
+  insert into public.daily_visits (day, session_id)
+  values (current_date, p_session_id)
+  on conflict do nothing;
 
   delete from public.site_sessions where last_seen < now() - interval '1 day';
 end;
@@ -232,8 +254,22 @@ language sql security definer set search_path = public as $$
   select count(*) from public.site_sessions where last_seen > now() - interval '45 seconds';
 $$;
 
+-- One row per day with at least one visit, in [today - p_days, today] —
+-- days with zero visits are simply absent, not zero-filled; the admin page
+-- fills those gaps itself so the chart still shows a bar for every day.
+create or replace function public.daily_visitor_counts(p_days int default 30)
+returns table(day date, visitors bigint)
+language sql security definer set search_path = public as $$
+  select day, count(*) as visitors
+  from public.daily_visits
+  where day > current_date - p_days
+  group by day
+  order by day;
+$$;
+
 grant execute on function public.heartbeat(text) to anon, authenticated;
 grant execute on function public.active_visitor_count() to anon, authenticated;
+grant execute on function public.daily_visitor_counts(int) to anon, authenticated;
 
 
 -- ------------------------------------------------------------
