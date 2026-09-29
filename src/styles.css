@@ -265,13 +265,12 @@ h1,h2,h3{font-family:'Playfair Display',Georgia,serif;font-weight:400;letter-spa
 .step-note span{font-size:12.5px;line-height:1.6;}
 .step-note .num svg{width:22px;height:22px;stroke:var(--accent);stroke-width:1.5;fill:none;stroke-linecap:round;stroke-linejoin:round;}
 
-/* Reviews sit between About and FAQs, both of which already fill the width —
-   a top rule separates this one from About, which shares its white background. */
-.reviews{border-top:1px solid var(--rule);}
+/* Sections from About down alternate white / cream (.alt), so Reviews is on
+   cream and its cards are white to stand off it. */
 .review-grid{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-top:32px;}
 /* Column flex + the caption's margin-top:auto keeps names level across a row. */
 .review{
-  margin:0;background:var(--cream);border:1px solid var(--rule);border-radius:var(--radius);
+  margin:0;background:var(--paper);border:1px solid var(--rule);border-radius:var(--radius);
   padding:52px 32px 26px;position:relative;display:flex;flex-direction:column;align-items:flex-start;
 }
 .review::before{
@@ -284,7 +283,7 @@ h1,h2,h3{font-family:'Playfair Display',Georgia,serif;font-weight:400;letter-spa
 /* Fade the last clamped line into the card instead of cutting it mid-word. */
 .review.is-clamped .review-body::after{
   content:"";position:absolute;left:0;right:0;bottom:0;height:3.4em;
-  background:linear-gradient(rgba(253,250,248,0),var(--cream));pointer-events:none;
+  background:linear-gradient(rgba(255,255,255,0),var(--paper));pointer-events:none;
 }
 .review.is-open .review-body{max-height:none;}
 .review.is-open .review-body::after{display:none;}
