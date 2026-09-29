@@ -239,6 +239,23 @@
   </form>
 </div>
 
+<!-- ══════════════ DELETE CONFIRMATION ══════════════ -->
+<!-- Shared by every Delete button — see confirmDelete() in src/admin/render.js. -->
+<div id="confirmModal" class="admin-modal" hidden>
+  <div class="admin-modal-scrim" data-confirm="cancel"></div>
+  <div class="admin-modal-panel confirm-panel" role="alertdialog" aria-modal="true" aria-labelledby="confirmTitle" aria-describedby="confirmMessage">
+    <div class="confirm-icon" aria-hidden="true">
+      <svg viewBox="0 0 24 24"><path d="M4 7h16"/><path d="M9.5 7V4.8a.8.8 0 0 1 .8-.8h3.4a.8.8 0 0 1 .8.8V7"/><path d="M6.5 7l.8 12.2a1.5 1.5 0 0 0 1.5 1.3h6.4a1.5 1.5 0 0 0 1.5-1.3L17.5 7"/><path d="M10.2 11v5.5M13.8 11v5.5"/></svg>
+    </div>
+    <h2 id="confirmTitle"></h2>
+    <p id="confirmMessage"></p>
+    <div class="admin-modal-actions">
+      <button type="button" class="btn ghost" data-confirm="cancel">Cancel</button>
+      <button type="button" class="btn danger" data-confirm="ok" id="confirmOk">Delete</button>
+    </div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script type="module" src="/src/admin/main.js"></script>

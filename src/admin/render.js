@@ -265,6 +265,42 @@ export function closeProductForm() {
   adminState.editing = null;
 }
 
+/* ------------------------------------------------------------------
+   Delete confirmation — the site's own version of confirm(). Resolves
+   true on Delete, false on Cancel / Escape / clicking outside. Cancel
+   gets focus when it opens, so a stray Enter never deletes anything.
+------------------------------------------------------------------ */
+let resolveConfirm = null;
+let focusBeforeConfirm = null;
+
+export function confirmDelete({ title, message, confirmLabel = "Delete" }) {
+  resolveConfirm?.(false); // a second one opening cancels the first
+  $("#confirmTitle").textContent = title;
+  $("#confirmMessage").textContent = message;
+  $("#confirmOk").textContent = confirmLabel;
+  focusBeforeConfirm = document.activeElement;
+  $("#confirmModal").hidden = false;
+  $('#confirmModal .btn[data-confirm="cancel"]').focus();
+  return new Promise((resolve) => (resolveConfirm = resolve));
+}
+
+function closeConfirm(result) {
+  if (!resolveConfirm) return;
+  $("#confirmModal").hidden = true;
+  resolveConfirm(result);
+  resolveConfirm = null;
+  focusBeforeConfirm?.focus?.();
+}
+
+$("#confirmModal").addEventListener("click", (e) => {
+  const choice = e.target.closest("[data-confirm]")?.dataset.confirm;
+  if (choice) closeConfirm(choice === "ok");
+});
+
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape" && !$("#confirmModal").hidden) closeConfirm(false);
+});
+
 export function productFormError(message) {
   $("#productFormError").innerHTML = message ? `<div class="err">${esc(message)}</div>` : "";
 }

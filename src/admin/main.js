@@ -14,6 +14,7 @@ import {
   openProductForm,
   closeProductForm,
   productFormError,
+  confirmDelete,
 } from "./render.js";
 import {
   AuthError,
@@ -178,7 +179,11 @@ async function saveDiscountForm(e) {
 async function doDeleteDiscount(id) {
   const d = adminState.discounts.find((x) => x.id === id);
   if (!d) return;
-  if (!confirm(`Delete ${d.code}? Buyers won't be able to use it any more. Orders that already used it keep their discount.`)) return;
+  const ok = await confirmDelete({
+    title: `Delete ${d.code}?`,
+    message: "Buyers won't be able to use it any more. Orders that already used it keep their discount.",
+  });
+  if (!ok) return;
   try {
     await deleteDiscount(id);
     toast("Discount code deleted");
@@ -213,7 +218,11 @@ async function doPublishReview(id, publish) {
 async function doDeleteReview(id) {
   const r = adminState.reviews.find((x) => x.id === id);
   if (!r) return;
-  if (!confirm(`Delete this review from ${r.name || "Anonymous student"}? This can't be undone.`)) return;
+  const ok = await confirmDelete({
+    title: "Delete this review?",
+    message: `The review from ${r.name || "Anonymous student"} will be removed for good. To only take it off the homepage, use Unpublish instead.`,
+  });
+  if (!ok) return;
   try {
     await deleteReview(id);
     toast("Review deleted");
@@ -340,11 +349,15 @@ async function saveProductForm(e) {
 async function doDeleteOrder(id) {
   const order = adminState.orders.find((o) => o.id === id);
   if (!order) return;
-  const warning =
+  const ok = await confirmDelete(
     order.status === "paid"
-      ? `Delete this PAID order (${order.reference}, ${rands(order.total_cents)})? This does not refund the buyer — it only removes the record, permanently.`
-      : `Delete order ${order.reference}? This can't be undone.`;
-  if (!confirm(warning)) return;
+      ? {
+          title: "Delete a paid order?",
+          message: `${order.reference} · ${rands(order.total_cents)}. This does not refund the buyer — it only removes the record, permanently.`,
+        }
+      : { title: "Delete this order?", message: `Order ${order.reference} will be removed. This can't be undone.` }
+  );
+  if (!ok) return;
   try {
     await deleteOrder(id);
     toast("Order deleted");
@@ -358,7 +371,11 @@ async function doDeleteOrder(id) {
 async function doDelete(id) {
   const product = adminState.products.find((p) => p.id === id);
   if (!product) return;
-  if (!confirm(`Delete ${product.title}? This can't be undone.`)) return;
+  const ok = await confirmDelete({
+    title: "Delete this note?",
+    message: `${product.title} will be removed from the shop. This can't be undone.`,
+  });
+  if (!ok) return;
   try {
     await deleteProduct(id);
     toast("Note deleted");
@@ -452,7 +469,7 @@ document.addEventListener("click", (e) => {
 });
 
 document.addEventListener("keydown", (e) => {
-  if (e.key === "Escape" && !$("#productModal").hidden) closeProductForm();
+  if (e.key === "Escape" && !$("#productModal").hidden && $("#confirmModal").hidden) closeProductForm();
 });
 
 $("#reviewLinkUrl").textContent = reviewLink();
