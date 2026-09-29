@@ -91,4 +91,24 @@ export async function initReviews() {
   }
   $("#reviews .review-grid").innerHTML = rows.map(reviewCard).join("");
   wireReadMore();
+  setUpSeeMore();
+}
+
+/** Show the first PAGE reviews; "See more reviews" reveals PAGE more per click. */
+const PAGE = 2;
+
+function setUpSeeMore() {
+  const cards = [...document.querySelectorAll("#reviews .review")];
+  const btn = $("#moreReviews");
+  let shown = PAGE;
+  const update = () => {
+    cards.forEach((c, i) => (c.hidden = i >= shown));
+    btn.hidden = shown >= cards.length;
+    syncAll(); // cards that were hidden had no height to measure until now
+  };
+  btn.onclick = () => {
+    shown += PAGE;
+    update();
+  };
+  update();
 }

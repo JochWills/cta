@@ -295,6 +295,9 @@ h1,h2,h3{font-family:'Playfair Display',Georgia,serif;font-weight:400;letter-spa
   margin-top:auto;padding-top:18px;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-soft);
 }
 .review figcaption::before{content:"— ";}
+.review[hidden]{display:none;} /* .review's display:flex would otherwise beat [hidden] */
+.reviews-more{display:block;margin:28px auto 0;}
+.reviews-more[hidden]{display:none;}
 .review-stars{position:absolute;top:26px;right:28px;display:flex;gap:2px;}
 
 /* Stars, drawn from one mask so the same shape serves the homepage cards,

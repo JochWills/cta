@@ -42,6 +42,13 @@ services:
       - path: /admin.html
         name: Cache-Control
         value: no-store
+      # Same for the review form — reached as /review (rewrite below) or directly.
+      - path: /review
+        name: Cache-Control
+        value: no-store
+      - path: /review.html
+        name: Cache-Control
+        value: no-store
       - path: /*
         name: X-Content-Type-Options
         value: nosniff
