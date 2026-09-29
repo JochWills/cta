@@ -265,6 +265,38 @@ h1,h2,h3{font-family:'Playfair Display',Georgia,serif;font-weight:400;letter-spa
 .step-note span{font-size:12.5px;line-height:1.6;}
 .step-note .num svg{width:22px;height:22px;stroke:var(--accent);stroke-width:1.5;fill:none;stroke-linecap:round;stroke-linejoin:round;}
 
+/* Reviews sit between About and FAQs, both of which already fill the width —
+   a top rule separates this one from About, which shares its white background. */
+.reviews{border-top:1px solid var(--rule);}
+.review-grid{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-top:32px;}
+/* Column flex + the caption's margin-top:auto keeps names level across a row. */
+.review{
+  margin:0;background:var(--cream);border:1px solid var(--rule);border-radius:var(--radius);
+  padding:52px 32px 26px;position:relative;display:flex;flex-direction:column;align-items:flex-start;
+}
+.review::before{
+  content:"\201C";position:absolute;top:14px;left:28px;
+  font-family:'Playfair Display',serif;font-size:64px;line-height:1;color:var(--accent);opacity:.25;
+}
+.review-body{margin:0;position:relative;max-height:calc(1.7em * 6);overflow:hidden;}
+.review-body p{margin:0 0 12px;color:var(--ink);font-size:15px;line-height:1.7;}
+.review-body p:last-child{margin-bottom:0;}
+/* Fade the last clamped line into the card instead of cutting it mid-word. */
+.review.is-clamped .review-body::after{
+  content:"";position:absolute;left:0;right:0;bottom:0;height:3.4em;
+  background:linear-gradient(rgba(253,250,248,0),var(--cream));pointer-events:none;
+}
+.review.is-open .review-body{max-height:none;}
+.review.is-open .review-body::after{display:none;}
+.review-more{
+  margin-top:10px;padding:0;font-size:13px;font-weight:500;color:var(--accent-deep);
+  text-decoration:underline;text-underline-offset:3px;
+}
+.review figcaption{
+  margin-top:auto;padding-top:18px;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-soft);
+}
+.review figcaption::before{content:"— ";}
+
 details.faq{border-bottom:1px solid var(--rule);padding:20px 0;}
 details.faq summary{
   list-style:none;cursor:pointer;display:flex;justify-content:space-between;gap:20px;
@@ -521,6 +553,7 @@ details.faq p{margin:12px 0 0;color:var(--ink-soft);font-size:14px;max-width:66c
   .modules{margin-top:34px;}
   .trust-grid{grid-template-columns:repeat(2,1fr);gap:26px;}
   .two-col{grid-template-columns:1fr;gap:40px;}
+  .review-grid{grid-template-columns:1fr;}
   .footer-grid{grid-template-columns:1fr 1fr;gap:32px;}
 }
 @media (max-width:720px){

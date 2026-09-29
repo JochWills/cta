@@ -79,6 +79,8 @@ src/
   checkout.js               placeOrder — writes the order, then hands off to Paystack
   downloads.js               openDownloadModal/submitDownloadRequest — the "get your
                              notes" self-serve lookup, see Data model/Current state
+  reviews.js                "Read more" on the Reviews section's cards — reviews
+                             themselves are plain markup in index.html
   presence.js               startPresence — anonymous heartbeat behind the admin
                              page's live visitor count, see Data model below
   render.js                 All DOM rendering + toast/drawer/filter helpers

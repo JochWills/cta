@@ -14,6 +14,7 @@ import { loadProducts, loadCart, addToCart, removeFromCart } from "./cart.js";
 import { placeOrder, applyDiscount, removeDiscount } from "./checkout.js";
 import { openDownloadModal, closeDownloadModal, submitDownloadRequest } from "./downloads.js";
 import { initFaqAccordions } from "./faq.js";
+import { initReviews } from "./reviews.js";
 import { startPresence } from "./presence.js";
 
 /* ------------------------------------------------------------------
@@ -153,4 +154,5 @@ renderFilters();
 renderDrawer();
 loadProducts();
 initFaqAccordions();
+initReviews();
 startPresence();
