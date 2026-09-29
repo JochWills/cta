@@ -48,7 +48,7 @@
       </svg>
     </div>
     <h1>Admin</h1>
-    <p class="lede">Enter the admin password to manage orders, notes and discount codes.</p>
+    <p class="lede">Enter the admin password to manage orders, notes, discount codes and reviews.</p>
     <form id="loginForm">
       <label class="field"><span>Password</span>
         <input type="password" id="passwordInput" autocomplete="current-password" required>
@@ -84,6 +84,11 @@
       <button class="side-nav-item" data-tab="discounts">
         <svg viewBox="0 0 24 24"><path d="M12.3 3H5.5a2 2 0 0 0-2 2v6.8c0 .53.21 1.04.59 1.41l8.7 8.7a2 2 0 0 0 2.82 0l6.2-6.2a2 2 0 0 0 0-2.82l-8.7-8.7A2 2 0 0 0 12.3 3z"/><circle cx="8.3" cy="8.3" r="1.3"/></svg>
         <span>Discounts</span>
+      </button>
+      <button class="side-nav-item" data-tab="reviews">
+        <svg viewBox="0 0 24 24"><path d="M12 3.3l2.6 5.4 5.9.8-4.3 4.1 1 5.9L12 16.7l-5.2 2.8 1-5.9-4.3-4.1 5.9-.8z"/></svg>
+        <span>Reviews</span>
+        <span class="side-nav-count" id="reviewsPendingCount" hidden></span>
       </button>
     </nav>
 
@@ -184,6 +189,18 @@
           <div id="discountFormError"></div>
         </form>
         <div id="discountsTable"></div>
+      </div>
+
+      <div id="reviewsView" hidden>
+        <div class="review-link-bar">
+          <div>
+            <strong>Review link</strong>
+            <span>Send this to buyers. New reviews wait here until you publish them.</span>
+          </div>
+          <code id="reviewLinkUrl"></code>
+          <button type="button" class="btn ghost" id="copyReviewLink">Copy link</button>
+        </div>
+        <div id="reviewsTable"></div>
       </div>
     </div>
   </section>

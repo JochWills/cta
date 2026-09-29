@@ -63,3 +63,7 @@ services:
       - type: rewrite
         source: /privacy
         destination: /privacy.html
+      # The link sent to buyers to leave a review.
+      - type: rewrite
+        source: /review
+        destination: /review.html

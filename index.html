@@ -98,6 +98,7 @@
     <nav class="nav" id="nav">
       <a href="#shop" class="is-active">Shop</a>
       <a href="#about">About</a>
+      <a href="#reviews">Reviews</a>
       <a href="#faqs">FAQs</a>
       <a href="#contact">Contact</a>
     </nav>
@@ -216,9 +217,9 @@
 </section>
 
 <!-- ══════════════ REVIEWS ══════════════ -->
-<!-- Each .review-body is clamped to a fixed height; src/reviews.js adds the
-     "Read more" button only to the ones whose text actually overflows. To add
-     a review, copy a <figure> — nothing else needs to change. -->
+<!-- The cards below are only a fallback: src/reviews.js replaces them with the
+     published rows from the reviews table (added via /review, approved on the
+     admin page's Reviews tab). New reviews don't need adding here. -->
 <section class="section alt reviews" id="reviews">
   <div class="wrap">
     <p class="eyebrow">Reviews</p>
@@ -339,6 +340,7 @@
       <h4>Site</h4>
       <ul>
         <li><a href="#about">About</a></li>
+        <li><a href="#reviews">Reviews</a></li>
         <li><a href="#faqs">FAQs</a></li>
         <li><a href="#contact">Contact</a></li>
         <li><a href="#" id="openDownload">Already paid? Get your notes</a></li>

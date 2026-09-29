@@ -70,6 +70,8 @@ terms.html                  Terms and conditions — static content, no JS modul
                              (served at /terms — see render.yaml's rewrite routes)
 privacy.html                Privacy policy — same, linked from terms.html and the footer
                              (served at /privacy, same rewrite)
+review.html                 "Leave a review" form, a link Courts sends to buyers
+                             (served at /review) — script in src/review-page.js
 src/
   main.js                   Entry point: delegated event handlers, init
   state.js                  Shared state object + rands/esc/$/isEmail helpers
@@ -79,8 +81,9 @@ src/
   checkout.js               placeOrder — writes the order, then hands off to Paystack
   downloads.js               openDownloadModal/submitDownloadRequest — the "get your
                              notes" self-serve lookup, see Data model/Current state
-  reviews.js                "Read more" on the Reviews section's cards — reviews
-                             themselves are plain markup in index.html
+  reviews.js                Homepage Student feedback section: loads published
+                             reviews (the cards in index.html are only a fallback)
+                             and adds "Read more" to long ones
   presence.js               startPresence — anonymous heartbeat behind the admin
                              page's live visitor count, see Data model below
   render.js                 All DOM rendering + toast/drawer/filter helpers
@@ -96,12 +99,13 @@ src/
 supabase/
   schema.sql                Tables, RLS policies, both storage buckets, 28 seed rows
   functions/
-    _shared/admin.ts        Token auth + CORS shared by the five admin-* functions
+    _shared/admin.ts        Token auth + CORS shared by the six admin-* functions
     admin-login/             ┐
     admin-orders/             } deployed — see docs/admin.md
     admin-products/           │
     admin-upload/            │
-    admin-discounts/         ┘
+    admin-discounts/         │
+    admin-reviews/           ┘
     paystack-initiate/        ┐ deployed — see docs/paystack.md
     paystack-webhook/         ┘
     order-download/          deployed — self-serve download links, see Data model below
@@ -203,11 +207,21 @@ day. Backs the admin page's "Daily visitors" chart (`daily_visitor_counts()`
 — see `supabase/schema.sql`'s "LIVE VISITOR COUNT + DAILY VISITORS"
 section), which needs real history `site_sessions` can't provide.
 
+`reviews` — `name` (null = "Anonymous student"), `body`, `rating` (1-5;
+null only on the two seeded from before the form existed), `is_published`,
+`created_at`. Anyone with the `/review` link can submit — not checked
+against an order, by choice — but a submission always lands unpublished:
+the anon key's column grant only covers `name`/`body`/`rating`, and it can
+only read rows where `is_published` is true. Publishing, unpublishing and
+deleting go through `admin-reviews` (the admin page's Reviews tab).
+
 ### RLS — read this before changing any query
 
 - Anyone may `select` active products.
 - Anyone may `insert` an order, but only with `status = 'pending'` — and
   `price_order()` re-prices it on the way in (see Data model above).
+- Anyone may `insert` a review (name/body/rating only) and `select`
+  published ones — nothing else.
 - Nobody with the anon key can read `discount_codes` — only check one code
   via `discount_percent()`.
 - **Nobody with the anon key can read, update or delete orders.** That is
@@ -253,7 +267,9 @@ notes including PDF upload (`docs/admin.md`), a live visitor count on
 the admin page (`site_sessions`, see Data model above), and % discount codes
 (entered at checkout, managed on the admin page's Discounts tab, applied by
 the database — see Data model above), plus automatic bundle discounts
-(5+ notes 10%, 10+ notes 15%, not stacked with a code).
+(5+ notes 10%, 10+ notes 15%, not stacked with a code), and reviews
+(submitted at `/review`, published from the admin page's Reviews tab —
+see Data model above).
 
 Not done:
 1. **Delivery email** — email hosting on `pgdanotes.co.za` (or a verified

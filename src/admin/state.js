@@ -14,9 +14,11 @@ export const adminState = {
   products: [],
   /** Discount codes, newest first, once loaded. */
   discounts: [],
+  /** Every review, published or not, newest first, once loaded. */
+  reviews: [],
   /** { day, visitors }[] for the Dashboard's daily-visitors chart, oldest first, once loaded. */
   dailyVisitors: [],
-  /** Which dashboard tab is showing: "dashboard" | "orders" | "notes" | "discounts". */
+  /** Which dashboard tab is showing: "dashboard" | "orders" | "notes" | "discounts" | "reviews". */
   tab: "dashboard",
   /** Product row being edited in the modal, or null when adding a new one. */
   editing: null,

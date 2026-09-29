@@ -6,8 +6,8 @@ export default defineConfig({
   build: {
     outDir: "dist",
     sourcemap: true,
-    // Four pages: the shop, the admin dashboard, and the terms/privacy
-    // pages. Vite's default build only picks up index.html, so every other
+    // Five pages: the shop, the admin dashboard, the terms/privacy
+    // pages, and the /review form. Vite's default build only picks up index.html, so every other
     // page needs to be listed explicitly or it never makes it into dist/.
     rollupOptions: {
       input: {
@@ -15,6 +15,7 @@ export default defineConfig({
         admin: fileURLToPath(new URL("./admin.html", import.meta.url)),
         terms: fileURLToPath(new URL("./terms.html", import.meta.url)),
         privacy: fileURLToPath(new URL("./privacy.html", import.meta.url)),
+        review: fileURLToPath(new URL("./review.html", import.meta.url)),
       },
     },
   },

@@ -1,6 +1,7 @@
 import { MODULES, MOD } from "../catalogue.js";
 import { $, esc, rands } from "../state.js";
 import { adminState } from "./state.js";
+import { starsHtml } from "../reviews.js";
 
 /* ------------------------------------------------------------------
    Toast (same pattern as src/render.js — separate #toast element, own bundle)
@@ -42,6 +43,7 @@ export function setTab(tab) {
   $("#ordersView").hidden = tab !== "orders";
   $("#notesView").hidden = tab !== "notes";
   $("#discountsView").hidden = tab !== "discounts";
+  $("#reviewsView").hidden = tab !== "reviews";
 }
 
 /* ------------------------------------------------------------------
@@ -128,6 +130,55 @@ export function renderDiscounts() {
               <td><div class="admin-row-actions"><button class="btn ghost" data-del-discount="${esc(d.id)}">Delete</button></div></td>
             </tr>`
             )
+            .join("")}
+        </tbody>
+      </table>
+    </div>`;
+}
+
+/* ------------------------------------------------------------------
+   Reviews — waiting ones first, since those are the ones needing a
+   decision. Publishing is what puts a review on the homepage.
+------------------------------------------------------------------ */
+const REVIEW_EXCERPT = 180;
+
+export function renderReviews() {
+  const pending = adminState.reviews.filter((r) => !r.is_published).length;
+  const badge = $("#reviewsPendingCount");
+  badge.textContent = pending;
+  badge.hidden = !pending;
+
+  const box = $("#reviewsTable");
+  if (!adminState.reviews.length) {
+    box.innerHTML = `<div class="empty-state">No reviews yet. Send the link above to someone who's bought notes.</div>`;
+    return;
+  }
+
+  const rows = [...adminState.reviews].sort((a, b) => a.is_published - b.is_published);
+  box.innerHTML = `
+    <div class="admin-table-wrap">
+      <table class="admin-table">
+        <thead><tr><th>Rating</th><th>Review</th><th>Name</th><th>Sent</th><th>Status</th><th></th></tr></thead>
+        <tbody>
+          ${rows
+            .map((r) => {
+              const text =
+                r.body.length > REVIEW_EXCERPT
+                  ? `<details><summary><span class="when-closed">${esc(r.body.slice(0, REVIEW_EXCERPT).trimEnd())}… <span class="review-expand">Read all</span></span><span class="when-open review-expand">Show less</span></summary><div class="review-full">${esc(r.body)}</div></details>`
+                  : `<div class="review-full">${esc(r.body)}</div>`;
+              return `
+            <tr>
+              <td>${r.rating ? starsHtml(r.rating, "admin-stars") : `<span class="meta">—</span>`}</td>
+              <td class="review-cell">${text}</td>
+              <td>${esc(r.name || "Anonymous student")}</td>
+              <td>${esc(new Date(r.created_at).toLocaleDateString("en-ZA", { day: "numeric", month: "short", year: "numeric" }))}</td>
+              <td><span class="status-badge ${r.is_published ? "status-paid" : "status-pending"}">${r.is_published ? "Published" : "Waiting"}</span></td>
+              <td><div class="admin-row-actions">
+                <button class="btn${r.is_published ? " ghost" : ""}" data-publish-review="${esc(r.id)}" data-publish="${r.is_published ? "false" : "true"}">${r.is_published ? "Unpublish" : "Publish"}</button>
+                <button class="btn ghost" data-del-review="${esc(r.id)}">Delete</button>
+              </div></td>
+            </tr>`;
+            })
             .join("")}
         </tbody>
       </table>

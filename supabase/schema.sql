@@ -379,3 +379,54 @@ drop trigger if exists orders_price on public.orders;
 create trigger orders_price
   before insert on public.orders
   for each row execute function public.price_order();
+
+
+-- ------------------------------------------------------------
+-- 9. REVIEWS  (submitted on /review, approved on the admin page)
+--    Anyone can submit — the link is shared openly, not checked against
+--    an order — but a new review is always unpublished: it only reaches
+--    the homepage once it's published from the admin page's Reviews tab
+--    (admin-reviews, service_role). The anon key can read published
+--    reviews and nothing else, and can only ever write name/body/rating —
+--    is_published, id and created_at aren't in its column grant, so a
+--    submission can't publish itself or backdate itself.
+--    name null = shown as "Anonymous student". rating is null only for
+--    the two reviews that came in before this form existed (seeded below).
+-- ------------------------------------------------------------
+create table if not exists public.reviews (
+  id           uuid primary key default gen_random_uuid(),
+  name         text check (name is null or char_length(name) between 1 and 60),
+  body         text not null check (char_length(body) between 10 and 3000),
+  rating       int  check (rating between 1 and 5),
+  is_published boolean not null default false,
+  created_at   timestamptz not null default now()
+);
+
+alter table public.reviews enable row level security;
+
+revoke insert, update, delete on public.reviews from anon, authenticated;
+grant insert (name, body, rating) on public.reviews to anon, authenticated;
+
+drop policy if exists "anyone can submit a review" on public.reviews;
+create policy "anyone can submit a review"
+  on public.reviews for insert
+  to anon, authenticated
+  with check (is_published = false and rating is not null);
+
+drop policy if exists "published reviews are public" on public.reviews;
+create policy "published reviews are public"
+  on public.reviews for select
+  to anon, authenticated
+  using (is_published = true);
+
+-- The two reviews that were on the homepage before this table existed.
+insert into public.reviews (name, body, rating, is_published, created_at)
+select * from (values
+  ('Raquel P.',
+   'I loved these PGDA notes! They broke down the content into bite-sized, easy to understand sections and included practical examples that made applying the theory much easier. I especially found the Auditing notes helpful when the class material felt a bit disorientated. Everything was explained so simply, which helped me feel confident that I had mastered the content and made a big difference when attempting past test questions.',
+   null::int, true, '2026-09-29 10:01:00+02'::timestamptz),
+  (null,
+   E'Hey Courts! I really like your notes, especially because of how practical they are. They don’t just teach the principles — they also focus on exam technique and, importantly, how to structure an answer, using simple practical examples to make the concepts easier to apply.\n\nI also really like how I feel after working through them. I feel more confident and have a much better mindset going into practice questions because I feel like I’m not only learning the content, but also preparing myself for how I’m actually going to answer the questions in the exam.\n\nAnother thing I appreciate is that you really focus on what’s important. Sometimes lectures can go off on different tangents and you end up wondering what you actually need to take from it. Your notes cut through that and keep me focused on the key principles and what I need to know.\n\nOverall, they’ve been really helpful for me, particularly because they bridge the gap between understanding the content and actually being able to apply it in a question.',
+   null::int, true, '2026-09-29 10:00:00+02'::timestamptz)
+) as v(name, body, rating, is_published, created_at)
+where not exists (select 1 from public.reviews);

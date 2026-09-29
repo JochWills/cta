@@ -52,6 +52,11 @@ export const createDiscount = (code, percent_off) =>
   call("admin-discounts", { body: { action: "create", code, percent_off } });
 export const deleteDiscount = (id) => call("admin-discounts", { body: { action: "delete", id } });
 
+export const listReviews = () => call("admin-reviews", { body: { action: "list" } });
+export const publishReview = (id, is_published) =>
+  call("admin-reviews", { body: { action: "publish", id, is_published } });
+export const deleteReview = (id) => call("admin-reviews", { body: { action: "delete", id } });
+
 /** Short-lived signed URL for a note's current PDF, from the private "notes" bucket. */
 export const getSignedPdfUrl = (filePath) =>
   call("admin-products", { body: { action: "signed_url", file_path: filePath } });

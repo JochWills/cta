@@ -9,6 +9,7 @@ import {
   renderOrders,
   renderProducts,
   renderDiscounts,
+  renderReviews,
   discountFormError,
   openProductForm,
   closeProductForm,
@@ -30,6 +31,9 @@ import {
   listDiscounts,
   createDiscount,
   deleteDiscount,
+  listReviews,
+  publishReview,
+  deleteReview,
 } from "./api.js";
 import { renderPreviewPages } from "./pdfPreview.js";
 import { renderDashboard } from "./dashboard.js";
@@ -68,7 +72,7 @@ async function doLogin() {
 async function enterDashboard() {
   showLoggedIn();
   setTab(adminState.tab);
-  await Promise.all([loadOrders(), loadProducts(), loadDiscounts(), loadDailyVisitors()]);
+  await Promise.all([loadOrders(), loadProducts(), loadDiscounts(), loadReviews(), loadDailyVisitors()]);
   startVisitorPoll();
 }
 
@@ -131,7 +135,7 @@ async function refreshDashboard() {
   btn.disabled = true;
   btn.classList.add("is-spinning");
   try {
-    await Promise.all([loadOrders(), loadProducts(), loadDailyVisitors()]);
+    await Promise.all([loadOrders(), loadProducts(), loadReviews(), loadDailyVisitors()]);
     toast("Dashboard refreshed");
   } finally {
     btn.disabled = false;
@@ -182,6 +186,52 @@ async function doDeleteDiscount(id) {
   } catch (err) {
     if (err instanceof AuthError) return handleAuthError();
     toast(err.message);
+  }
+}
+
+async function loadReviews() {
+  try {
+    adminState.reviews = await listReviews();
+    renderReviews();
+  } catch (err) {
+    if (err instanceof AuthError) return handleAuthError();
+    toast(err.message);
+  }
+}
+
+async function doPublishReview(id, publish) {
+  try {
+    await publishReview(id, publish);
+    toast(publish ? "Review published — it's on the homepage now" : "Review hidden from the homepage");
+    await loadReviews();
+  } catch (err) {
+    if (err instanceof AuthError) return handleAuthError();
+    toast(err.message);
+  }
+}
+
+async function doDeleteReview(id) {
+  const r = adminState.reviews.find((x) => x.id === id);
+  if (!r) return;
+  if (!confirm(`Delete this review from ${r.name || "Anonymous student"}? This can't be undone.`)) return;
+  try {
+    await deleteReview(id);
+    toast("Review deleted");
+    await loadReviews();
+  } catch (err) {
+    if (err instanceof AuthError) return handleAuthError();
+    toast(err.message);
+  }
+}
+
+const reviewLink = () => `${location.origin}/review`;
+
+async function copyReviewLink() {
+  try {
+    await navigator.clipboard.writeText(reviewLink());
+    toast("Review link copied");
+  } catch {
+    toast(`Copy this link: ${reviewLink()}`);
   }
 }
 
@@ -389,6 +439,14 @@ document.addEventListener("click", (e) => {
   const delDiscount = e.target.closest("[data-del-discount]");
   if (delDiscount) return doDeleteDiscount(delDiscount.dataset.delDiscount);
 
+  const pub = e.target.closest("[data-publish-review]");
+  if (pub) return doPublishReview(pub.dataset.publishReview, pub.dataset.publish === "true");
+
+  const delReview = e.target.closest("[data-del-review]");
+  if (delReview) return doDeleteReview(delReview.dataset.delReview);
+
+  if (e.target.closest("#copyReviewLink")) return copyReviewLink();
+
   if (e.target.closest("#pf_view_pdf")) return viewCurrentPdf();
   if (e.target.closest("#dashRefreshBtn")) return refreshDashboard();
 });
@@ -396,5 +454,7 @@ document.addEventListener("click", (e) => {
 document.addEventListener("keydown", (e) => {
   if (e.key === "Escape" && !$("#productModal").hidden) closeProductForm();
 });
+
+$("#reviewLinkUrl").textContent = reviewLink();
 
 boot();

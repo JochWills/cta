@@ -11,10 +11,12 @@ Courts:
   the private `notes` storage bucket.
 - **Create and delete discount codes** — a code plus a % off (1-99) that
   buyers can enter at checkout.
+- **Publish reviews** — approve (or hide, or delete) reviews submitted on
+  `/review` before they show on the homepage.
 
 It exists because the anon key the shop ships to browsers deliberately
 cannot do any of that (see `supabase/schema.sql` and the RLS section of
-`CLAUDE.md`), so the admin page talks to five small Supabase Edge Functions
+`CLAUDE.md`), so the admin page talks to six small Supabase Edge Functions
 that use the `service_role` key on the server instead. `admin.html` itself
 never sees that key.
 
@@ -24,7 +26,7 @@ There's one shared password, not a per-user account — this is a one-person
 shop. `admin-login` checks it against the `ADMIN_PASSWORD` secret and, on a
 match, issues a signed token good for 12 hours. The admin page sends that
 token back as `X-Admin-Token` on every call to `admin-orders`,
-`admin-products`, `admin-upload` and `admin-discounts`, which each verify it before touching
+`admin-products`, `admin-upload`, `admin-discounts` and `admin-reviews`, which each verify it before touching
 the database. By default the token lives in `sessionStorage` in the browser
 and is good for 12 hours — cleared when the tab closes, so it doesn't linger
 on a shared computer.
@@ -56,7 +58,7 @@ isn't set yet:
 supabase secrets set SITE_URL=https://pgdanotes.co.za
 ```
 
-**2. Deploy the five functions:**
+**2. Deploy the six functions:**
 
 ```bash
 supabase functions deploy admin-login
@@ -64,6 +66,7 @@ supabase functions deploy admin-orders
 supabase functions deploy admin-products
 supabase functions deploy admin-upload
 supabase functions deploy admin-discounts
+supabase functions deploy admin-reviews
 ```
 
 (`_shared/admin.ts` isn't deployed on its own — the CLI bundles it into
@@ -112,6 +115,16 @@ top — codes are stored upper-case, 3-32 letters/numbers/`-`/`_`, and a buyer
 can type them in any case. There's no edit: delete a code and add it again.
 Deleting one stops new orders using it; orders that already did keep their
 own copy of the code and % (the Orders tab shows it under the total).
+
+**Reviews** starts with the link to send buyers (`/review`, with a Copy
+link button). Anyone with that link can leave a star rating, a review and
+an optional name — it isn't tied to an order. Every submission waits here
+as **Waiting** (the sidebar shows how many) and only appears in the
+homepage's Student feedback section once you press **Publish**.
+**Unpublish** takes it back off the homepage without deleting it; **Delete**
+removes it for good. Reviews can't be edited — if one needs a typo fixed,
+do it in the Supabase table editor. The refresh button on the Dashboard
+also re-pulls reviews.
 
 Bundle discounts need no code and apply automatically — 5+ notes in a
 cart is 10% off, 10+ is 15%. They don't stack with a code: the buyer gets

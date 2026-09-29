@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en-ZA">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Leave a review — PGDA Notes by Courts</title>
+<!-- Shared by link with buyers, not meant to turn up in search. -->
+<meta name="robots" content="noindex, nofollow" />
+<link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/src/styles.css">
+</head>
+<body>
+
+<header class="site-header">
+  <div class="wrap header-inner">
+    <a href="/" class="logo" aria-label="PGDA Notes by Courts, home">
+      <span class="mark">PGDA</span>
+      <span class="stack">
+        <span class="word">NOTES</span>
+        <span class="by">BY COURTS</span>
+      </span>
+    </a>
+  </div>
+</header>
+
+<main class="review-page">
+  <p class="eyebrow">Reviews</p>
+  <h1>How were the notes?</h1>
+  <p class="lede">If you've used my notes, I'd really appreciate a few lines on how they went for you. Reviews are checked before they go up on the site.</p>
+
+  <div class="review-form-card" id="reviewCard">
+    <form id="reviewForm" novalidate>
+      <fieldset class="star-input">
+        <legend>Your rating</legend>
+        <!-- Reverse DOM order (5 → 1) so plain CSS sibling selectors can
+             light up every star up to the hovered/checked one — see styles.css. -->
+        <div class="star-input-row">
+          <input type="radio" name="rating" id="r5" value="5"><label for="r5" title="5 stars"><span class="sr-only">5 stars</span></label>
+          <input type="radio" name="rating" id="r4" value="4"><label for="r4" title="4 stars"><span class="sr-only">4 stars</span></label>
+          <input type="radio" name="rating" id="r3" value="3"><label for="r3" title="3 stars"><span class="sr-only">3 stars</span></label>
+          <input type="radio" name="rating" id="r2" value="2"><label for="r2" title="2 stars"><span class="sr-only">2 stars</span></label>
+          <input type="radio" name="rating" id="r1" value="1"><label for="r1" title="1 star"><span class="sr-only">1 star</span></label>
+        </div>
+      </fieldset>
+
+      <label class="field"><span>Your review</span>
+        <textarea id="reviewBody" maxlength="3000" rows="7" placeholder="What helped, which sections you used, how you felt going into tests…"></textarea>
+      </label>
+
+      <label class="field"><span>Name to show (optional)</span>
+        <input type="text" id="reviewName" maxlength="60" autocomplete="name" placeholder="e.g. Raquel P.">
+      </label>
+      <p class="field-hint">Leave this blank to post as "Anonymous student". A first name and initial works well.</p>
+
+      <!-- Spam trap: hidden from people, but bots filling in every field fill this too. -->
+      <div class="hp-field" aria-hidden="true">
+        <label>Website <input type="text" id="reviewWebsite" tabindex="-1" autocomplete="off"></label>
+      </div>
+
+      <div id="reviewError"></div>
+      <button class="btn" id="reviewSubmit" type="submit">Send review</button>
+    </form>
+  </div>
+</main>
+
+<footer class="legal-footer">
+  <div class="wrap">
+    <a href="/">← Back to the shop</a>
+    <span>© <span id="yr"></span> PGDA Notes by Courts · <a href="/privacy">Privacy policy</a></span>
+  </div>
+</footer>
+
+<script type="module" src="/src/review-page.js"></script>
+</body>
+</html>
