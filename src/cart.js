@@ -1,7 +1,7 @@
 import { state } from "./state.js";
 import { SEED } from "./catalogue.js";
 import { hasDB, sbGet } from "./supabase.js";
-import { syncCart, toast, openCart, renderModules } from "./render.js";
+import { syncCart, toast, openCart, renderModules, productsFor } from "./render.js";
 
 const PRODUCT_COLUMNS = "id,code,title,description,module_slug,price_cents,sort_order,preview_pages,created_at";
 
@@ -75,6 +75,20 @@ export function addToCart(id) {
   saveCart();
   syncCart();
   toast(`${product.title} added to cart`);
+}
+
+/** The "Select" menu — every note in a module (or "all") that isn't already in the cart. */
+export function addAllToCart(slug) {
+  const missing = productsFor(slug).filter((p) => !state.cart.some((c) => c.id === p.id));
+  if (!missing.length) return;
+  missing.forEach((p) =>
+    state.cart.push({ id: p.id, code: p.code, title: p.title, module_slug: p.module_slug, price_cents: p.price_cents })
+  );
+  state.checkoutStep = "cart";
+  saveCart();
+  syncCart();
+  toast(`${missing.length} note${missing.length === 1 ? "" : "s"} added to cart`);
+  openCart();
 }
 
 export function removeFromCart(id) {

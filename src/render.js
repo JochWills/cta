@@ -53,12 +53,64 @@ export function renderFilters() {
 ------------------------------------------------------------------ */
 const isNewProduct = (p) => p.created_at && Date.now() - new Date(p.created_at).getTime() < 24 * 60 * 60 * 1000;
 
+/* ------------------------------------------------------------------
+   "Select" menu — add a whole module, or everything, to the cart.
+   Each option only counts what isn't in the cart yet.
+------------------------------------------------------------------ */
+export const productsFor = (slug) =>
+  slug === "all" ? state.products : state.products.filter((p) => p.module_slug === slug);
+
+const ALL_ICON =
+  '<rect x="3.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="13.5" width="7" height="7" rx="1.5"/>';
+const CHECK_ICON = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
+
+function renderSelectMenu() {
+  const options = [{ slug: "all", name: "All notes", tint: "var(--blush)", ink: "var(--accent)", icon: ALL_ICON }, ...MODULES]
+    .map((m) => ({ ...m, list: productsFor(m.slug) }))
+    .filter((m) => m.list.length);
+  $("#selectMenu").hidden = state.products.length < 2;
+
+  const rows = options.map((m) => {
+    const missing = m.list.filter((p) => !state.cart.some((c) => c.id === p.id));
+    const total = missing.reduce((sum, p) => sum + p.price_cents, 0);
+    // The bundle tier the cart would reach with these added, same rounding as price_order().
+    const percent = bundlePercent(state.cart.length + missing.length);
+    const count = missing.length < m.list.length ? `${missing.length} of ${m.list.length} notes` : `${m.list.length} notes`;
+    const price = !missing.length
+      ? `<span class="select-done">${CHECK_ICON}In your cart</span>`
+      : `${percent ? `<s>${rands(total)}</s>` : ""}<strong>${rands(total - Math.round((total * percent) / 100))}</strong>`;
+    return `
+    <button type="button" class="select-item${m.slug === "all" ? " is-all" : ""}" role="menuitem"
+            data-select="${m.slug}" ${missing.length ? "" : "disabled"}>
+      <span class="select-swatch" style="background:${m.tint}">
+        <svg viewBox="0 0 24 24" style="stroke:${m.ink}">${m.icon}</svg>
+      </span>
+      <span class="select-name">
+        ${esc(m.name)}
+        <span class="select-count">${missing.length ? count : `${m.list.length} notes`}${
+          missing.length && percent ? `<span class="select-save">${percent}% off</span>` : ""
+        }</span>
+      </span>
+      <span class="select-price">${price}</span>
+    </button>`;
+  });
+
+  $("#selectList").innerHTML = `
+    <p class="select-head">Add a whole module</p>
+    ${rows.join("")}
+    <p class="select-foot">Bundle discount: 5+ notes 10% off, 10+ notes 15% off</p>`;
+}
+
+export function toggleSelectMenu(open = $("#selectList").hidden) {
+  $("#selectList").hidden = !open;
+  $("#selectToggle").setAttribute("aria-expanded", String(open));
+  if (open) $("#selectList .select-item:not([disabled])")?.focus();
+}
+
 export function renderProducts() {
+  renderSelectMenu();
   const grid = $("#productGrid");
-  const base =
-    state.activeFilter === "all"
-      ? state.products
-      : state.products.filter((p) => p.module_slug === state.activeFilter);
+  const base = productsFor(state.activeFilter);
   // New notes float to the top of the grid while their badge shows (24h).
   // Array#sort is stable, so within "new" and within "not new" the existing
   // sort_order is kept — this only moves the new/old boundary, nothing else.
@@ -114,7 +166,7 @@ const BUNDLE_TIERS = [
   { min: 10, percent: 15 },
   { min: 5, percent: 10 },
 ];
-const bundlePercent = () => BUNDLE_TIERS.find((t) => state.cart.length >= t.min)?.percent || 0;
+const bundlePercent = (count = state.cart.length) => BUNDLE_TIERS.find((t) => count >= t.min)?.percent || 0;
 
 /** The one discount that applies. A code and a bundle don't stack — the
  * higher % wins, a code winning a tie — same rule as price_order(). */

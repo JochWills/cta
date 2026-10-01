@@ -161,7 +161,17 @@
       </div>
     </div>
 
-    <div class="filters" id="filters"></div>
+    <div class="shop-bar">
+      <div class="filters" id="filters"></div>
+      <div class="select-menu" id="selectMenu" hidden>
+        <button type="button" class="select-toggle" id="selectToggle" aria-haspopup="menu" aria-expanded="false" aria-controls="selectList">
+          <svg class="select-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.5"/><path d="M14 17l2.2 2.2L20.5 15"/></svg>
+          Select
+          <svg class="select-chevron" viewBox="0 0 12 8" aria-hidden="true"><path d="M1 1.5l5 5 5-5"/></svg>
+        </button>
+        <div class="select-list" id="selectList" role="menu" aria-label="Add a whole module to your cart" hidden></div>
+      </div>
+    </div>
     <div class="product-grid" id="productGrid">
       <div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div>
       <div class="skeleton"></div><div class="skeleton"></div>

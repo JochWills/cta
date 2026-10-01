@@ -9,8 +9,9 @@ import {
   setFilter,
   openPreview,
   closePreview,
+  toggleSelectMenu,
 } from "./render.js";
-import { loadProducts, loadCart, addToCart, removeFromCart } from "./cart.js";
+import { loadProducts, loadCart, addToCart, addAllToCart, removeFromCart } from "./cart.js";
 import { placeOrder, applyDiscount, removeDiscount } from "./checkout.js";
 import { openDownloadModal, closeDownloadModal, submitDownloadRequest } from "./downloads.js";
 import { initFaqAccordions } from "./faq.js";
@@ -28,6 +29,15 @@ document.addEventListener("click", (e) => {
     if (add.closest("#previewModal")) closePreview();
     return;
   }
+
+  if (e.target.closest("#selectToggle")) return toggleSelectMenu();
+  const select = e.target.closest("[data-select]");
+  if (select) {
+    toggleSelectMenu(false);
+    return addAllToCart(select.dataset.select);
+  }
+  // Any other click closes the menu, then carries on as normal.
+  if (!$("#selectList").hidden && !e.target.closest("#selectMenu")) toggleSelectMenu(false);
 
   const remove = e.target.closest("[data-rm]");
   if (remove) return removeFromCart(remove.dataset.rm);
@@ -95,6 +105,10 @@ document.addEventListener("keydown", (e) => {
   // No <form> around the details step, so Enter wouldn't do anything here otherwise.
   if (e.key === "Enter" && e.target.id === "discountInput") return applyDiscount();
   if (e.key !== "Escape") return;
+  if (!$("#selectList").hidden) {
+    toggleSelectMenu(false);
+    return $("#selectToggle").focus();
+  }
   if (!$("#previewModal").hidden) return closePreview();
   if (!$("#downloadModal").hidden) return closeDownloadModal();
   closeCart();
