@@ -36,6 +36,11 @@ services:
       # what happened here — a real deploy sat behind a stale cached
       # admin.html for several minutes even past its own max-age. no-store
       # forbids storing the response anywhere, full stop.
+      # "/" is a path of its own — the homepage is almost always reached
+      # this way, and the /index.html rule doesn't cover it.
+      - path: /
+        name: Cache-Control
+        value: no-store
       - path: /index.html
         name: Cache-Control
         value: no-store
