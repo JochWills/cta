@@ -36,7 +36,7 @@ import {
   publishReview,
   deleteReview,
 } from "./api.js";
-import { renderPreviewPages } from "./pdfPreview.js";
+import { renderPreviewPages, countPdfPages } from "./pdfPreview.js";
 import { renderDashboard } from "./dashboard.js";
 
 const PREVIEW_MAX_PAGES = 3;
@@ -249,9 +249,38 @@ async function loadProducts() {
     adminState.products = await listProducts();
     renderProducts();
     renderDashboard(); // the "sales by module" chart needs products to map an order item back to its module
+    backfillPageCounts();
   } catch (err) {
     if (err instanceof AuthError) return handleAuthError();
     toast(err.message);
+  }
+}
+
+/**
+ * Notes uploaded before page_count existed have it null — read each one's
+ * PDF once, quietly in the background, and save the count. One at a time
+ * so it never competes much with the rest of the page. Self-healing: a
+ * failure just leaves that row null for the next time the admin page loads.
+ */
+let backfilling = false;
+async function backfillPageCounts() {
+  if (backfilling) return;
+  backfilling = true;
+  try {
+    for (const p of adminState.products.filter((x) => x.file_path && !x.page_count)) {
+      try {
+        const { url } = await getSignedPdfUrl(p.file_path);
+        const page_count = await countPdfPages(url);
+        await updateProduct(p.id, { page_count });
+        p.page_count = page_count;
+        renderProducts();
+      } catch (err) {
+        if (err instanceof AuthError) return;
+        console.warn(`Couldn't count pages for ${p.title}:`, err.message);
+      }
+    }
+  } finally {
+    backfilling = false;
   }
 }
 
@@ -317,14 +346,14 @@ async function saveProductForm(e) {
       const { path } = await uploadFile(file, slugPath(saved.module_slug, saved.code, "pdf"), "notes");
 
       btn.textContent = "Generating preview…";
-      const pages = await renderPreviewPages(file, PREVIEW_MAX_PAGES);
+      const { pages, pageCount } = await renderPreviewPages(file, PREVIEW_MAX_PAGES);
       await Promise.all(
         pages.map((png, i) =>
           uploadFile(png, previewPagePath(saved.module_slug, saved.code, i + 1), "note-previews")
         )
       );
 
-      await updateProduct(saved.id, { file_path: path, preview_pages: pages.length });
+      await updateProduct(saved.id, { file_path: path, preview_pages: pages.length, page_count: pageCount });
     }
 
     closeProductForm();

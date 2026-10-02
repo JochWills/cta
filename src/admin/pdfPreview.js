@@ -28,7 +28,8 @@ function canvasToPng(canvas) {
 /**
  * @param {File} file A PDF file.
  * @param {number} maxPages Preview at most this many pages (fewer if the PDF is shorter).
- * @returns {Promise<Blob[]>} One PNG per rendered page, in order.
+ * @returns {Promise<{ pages: Blob[], pageCount: number }>} One PNG per
+ *   rendered page, in order, plus the PDF's total page count (shown on the shop).
  */
 export async function renderPreviewPages(file, maxPages = 3) {
   const rawData = new Uint8Array(await file.arrayBuffer());
@@ -44,10 +45,8 @@ export async function renderPreviewPages(file, maxPages = 3) {
   // @font-face/text-shaping — deterministic across engines, and harmless
   // here since this only ever runs offscreen, once, to export a PNG.
   const pdf = await pdfjsLib.getDocument({ data, disableFontFace: true }).promise;
-  const pageCount = Math.min(pdf.numPages, maxPages);
-
   const pages = [];
-  for (let i = 1; i <= pageCount; i++) {
+  for (let i = 1; i <= Math.min(pdf.numPages, maxPages); i++) {
     const page = await pdf.getPage(i);
     const viewport = page.getViewport({ scale: 1.6 }); // wide enough to stay legible in the preview modal
     const canvas = document.createElement("canvas");
@@ -56,5 +55,19 @@ export async function renderPreviewPages(file, maxPages = 3) {
     await page.render({ canvasContext: canvas.getContext("2d"), viewport }).promise;
     pages.push(await canvasToPng(canvas));
   }
-  return pages;
+  return { pages, pageCount: pdf.numPages };
+}
+
+/**
+ * Just the page count of a PDF at a URL — for notes uploaded before
+ * page_count existed (see backfillPageCounts in main.js). Nothing is
+ * rendered, so no font fix needed.
+ */
+export async function countPdfPages(url) {
+  const task = pdfjsLib.getDocument({ url });
+  try {
+    return (await task.promise).numPages;
+  } finally {
+    task.destroy();
+  }
 }

@@ -260,6 +260,8 @@ h1,h2,h3{font-family:'Playfair Display',Georgia,serif;font-weight:400;letter-spa
 .card p{margin:10px 0 0;font-size:13px;color:var(--ink-soft);line-height:1.55;}
 .card-foot{display:flex;align-items:center;justify-content:space-between;margin-top:auto;padding-top:22px;}
 .price{font-family:'Playfair Display',serif;font-size:21px;}
+.price-block{display:flex;flex-direction:column;gap:2px;}
+.page-count{font-size:12px;color:var(--ink-faint);}
 .add-btn{
   width:42px;height:42px;border-radius:10px;display:grid;place-items:center;
   transition:transform .2s ease,filter .2s ease;
@@ -551,6 +553,7 @@ details.faq p{margin:12px 0 0;color:var(--ink-soft);font-size:14px;max-width:66c
 }
 .preview-info{padding:22px 26px 26px;text-align:center;}
 .preview-info h3{font-size:19px;margin:10px 0 0;}
+.preview-pages{margin:6px 0 0;font-size:13px;color:var(--ink-soft);}
 .preview-info .btn{width:100%;margin-top:16px;}
 .preview-info .note{margin-top:10px;}
 

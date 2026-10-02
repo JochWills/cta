@@ -203,7 +203,7 @@ export function renderProducts() {
     <div class="admin-table-wrap">
       <table class="admin-table">
         <thead><tr>
-          <th>Title</th><th>Module</th><th>Price</th><th>Active</th><th>PDF</th><th></th>
+          <th>Title</th><th>Module</th><th>Price</th><th>Pages</th><th>Active</th><th>PDF</th><th></th>
         </tr></thead>
         <tbody>
           ${adminState.products.map(productRow).join("")}
@@ -219,6 +219,7 @@ function productRow(p) {
       <td>${esc(p.title)}</td>
       <td><span class="tag" style="background:${m.tint};color:${m.ink}">${esc(m.short)}</span></td>
       <td>${rands(p.price_cents)}</td>
+      <td>${p.page_count ? esc(p.page_count) : `<span class="meta">—</span>`}</td>
       <td>${p.is_active ? "Yes" : "No"}</td>
       <td>${p.file_path ? "Yes" : "—"}</td>
       <td>

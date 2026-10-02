@@ -3,7 +3,7 @@ import { SEED } from "./catalogue.js";
 import { hasDB, sbGet } from "./supabase.js";
 import { syncCart, toast, openCart, renderModules, productsFor } from "./render.js";
 
-const PRODUCT_COLUMNS = "id,code,title,description,module_slug,price_cents,sort_order,preview_pages,created_at";
+const PRODUCT_COLUMNS = "id,code,title,description,module_slug,price_cents,sort_order,preview_pages,page_count,created_at";
 
 const CART_KEY = "cta_cart";
 

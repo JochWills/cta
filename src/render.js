@@ -51,6 +51,8 @@ export function renderFilters() {
 /* ------------------------------------------------------------------
    Product grid
 ------------------------------------------------------------------ */
+const pagesLabel = (n) => `${n} page${n === 1 ? "" : "s"}`;
+
 const isNewProduct = (p) => p.created_at && Date.now() - new Date(p.created_at).getTime() < 24 * 60 * 60 * 1000;
 
 /* ------------------------------------------------------------------
@@ -139,7 +141,10 @@ export function renderProducts() {
       <h3>${esc(p.title)}</h3>
       <p>${esc(p.description || "")}</p>
       <div class="card-foot">
-        <span class="price">${rands(p.price_cents)}</span>
+        <span class="price-block">
+          <span class="price">${rands(p.price_cents)}</span>
+          ${p.page_count ? `<span class="page-count">${pagesLabel(p.page_count)}</span>` : ""}
+        </span>
         <button class="add-btn" style="background:${m.tint};color:${m.ink}"
                 data-add="${esc(p.id)}"
                 aria-label="${inCart ? "Already in cart" : "Add " + esc(p.title) + " to cart"}">
@@ -371,6 +376,7 @@ export function openPreview(id) {
   $("#previewTag").style.background = m.tint;
   $("#previewTag").style.color = m.ink;
   $("#previewTitle").textContent = p.title;
+  $("#previewPages").textContent = p.page_count ? `PDF · ${pagesLabel(p.page_count)}` : "PDF";
   $("#previewAddBtn").dataset.add = p.id;
   $("#previewAddBtn").textContent = state.cart.some((c) => c.id === p.id)
     ? "Already in cart"

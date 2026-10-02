@@ -25,6 +25,7 @@ const EDITABLE_FIELDS = [
   "price_cents",
   "file_path",
   "preview_pages",
+  "page_count",
   "is_active",
   "sort_order",
 ] as const;

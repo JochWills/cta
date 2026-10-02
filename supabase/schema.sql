@@ -44,6 +44,7 @@ create table if not exists public.products (
   price_cents    int  not null default 2500,        -- R25.00
   file_path      text,                              -- storage path to the PDF, in `notes` (private)
   preview_pages  smallint not null default 0,       -- how many *-p1.png.. exist in `note-previews` (public)
+  page_count     smallint check (page_count is null or page_count > 0), -- pages in the PDF, shown on the shop; read by the admin page at upload
   is_active      boolean not null default true,
   sort_order     int not null default 0,
   created_at     timestamptz not null default now()
@@ -55,6 +56,9 @@ create table if not exists public.products (
 -- page to up to three.
 alter table public.products drop column if exists preview_path;
 alter table public.products add column if not exists preview_pages smallint not null default 0;
+-- page_count: null until the admin page has read the PDF (it fills in any
+-- missing ones in the background when it loads — see src/admin/main.js).
+alter table public.products add column if not exists page_count smallint check (page_count is null or page_count > 0);
 
 create index if not exists products_module_idx on public.products (module_slug, sort_order);
 
