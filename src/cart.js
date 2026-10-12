@@ -37,6 +37,7 @@ export function saveCart() {
  * Without it (or if the request fails): the local SEED list, so the site still works.
  */
 export async function loadProducts() {
+  let live = true;
   if (hasDB) {
     try {
       state.products = await sbGet(
@@ -45,12 +46,38 @@ export async function loadProducts() {
     } catch (err) {
       console.warn("Supabase unavailable, using local catalogue:", err.message);
       state.products = SEED;
+      live = false; // a brief outage shouldn't wipe a real cart — leave it as saved
     }
   } else {
     state.products = SEED;
   }
+  if (live) refreshCart();
   renderModules(); // now that state.products is populated, the per-module section counts are real
   syncCart();
+}
+
+/**
+ * Bring a restored cart in line with the catalogue that just loaded. Cart
+ * lines are snapshots from whenever they were added, so a note may since
+ * have been removed or repriced — and the database charges the live price
+ * (price_order()), so the cart has to show that one too. Also drops SEED
+ * rows ("seed-…" ids) added while Supabase was unreachable.
+ */
+function refreshCart() {
+  const byId = new Map(state.products.map((p) => [p.id, p]));
+  const before = state.cart.length;
+  state.cart = state.cart
+    .filter((c) => byId.has(c.id))
+    .map((c) => {
+      const p = byId.get(c.id);
+      return { id: p.id, code: p.code, title: p.title, module_slug: p.module_slug, price_cents: p.price_cents };
+    });
+  const removed = before - state.cart.length;
+  if (!state.cart.length) state.checkoutStep = "cart";
+  saveCart();
+  if (removed) {
+    toast(`${removed} note${removed === 1 ? " in your cart is" : "s in your cart are"} no longer available, so ${removed === 1 ? "it's" : "they've"} been removed`);
+  }
 }
 
 /** Add a section. One of each — buying the same PDF twice makes no sense. */

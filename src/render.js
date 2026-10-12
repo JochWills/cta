@@ -285,8 +285,7 @@ export function renderDrawer() {
   foot.innerHTML = `
     <div id="checkoutTotals"></div>
     <button class="btn" id="placeOrder">Place order</button>
-    <button class="btn ghost" id="backToCart" style="margin-top:10px;">Back to cart</button>
-    <p class="note">Card, instant EFT and more via Paystack — connecting next.</p>`;
+    <button class="btn ghost" id="backToCart" style="margin-top:10px;">Back to cart</button>`;
   renderDiscount();
 }
 

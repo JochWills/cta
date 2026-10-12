@@ -71,13 +71,6 @@ export async function placeOrder() {
     if (hasDB) {
       await sbInsert("orders", order);
 
-      // The order is placed at this point regardless of what happens next —
-      // clear the cart (and its saved copy) now rather than leaving stale
-      // items sitting there if the buyer comes back after Paystack.
-      state.cart = [];
-      state.discount = null;
-      saveCart();
-
       // So the download modal can prefill and auto-check on return from
       // Paystack (see main.js's ?paid=1 handling) without asking the buyer
       // to retype the email they just gave us. Stays on their device only —
@@ -90,6 +83,16 @@ export async function placeOrder() {
 
       button.textContent = "Redirecting to payment…";
       const { authorization_url } = await sbFunction("paystack-initiate", { reference });
+
+      // Only cleared once Paystack has actually given us a payment page —
+      // if paystack-initiate fails, the buyer still has their cart to retry
+      // with (a retry writes a fresh pending order; the old one just stays
+      // pending). Cleared before leaving rather than on return, so stale
+      // items aren't sitting there when they come back from Paystack.
+      state.cart = [];
+      state.discount = null;
+      saveCart();
+
       window.location.href = authorization_url; // leaving the page — Paystack takes it from here
       return;
     }

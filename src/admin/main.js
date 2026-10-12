@@ -337,10 +337,19 @@ async function saveProductForm(e) {
   btn.disabled = true;
   btn.textContent = "Saving…";
 
-  try {
-    const saved = id ? await updateProduct(id, fields) : await createProduct(fields);
+  const file = $("#pf_file").files[0];
+  // A note getting its first PDF stays hidden until that upload has
+  // finished, so a failed upload never leaves a buyable note with nothing
+  // to download. Switched to what the checkbox says in the final update.
+  const holdBack = Boolean(file) && !adminState.editing?.file_path;
 
-    const file = $("#pf_file").files[0];
+  try {
+    const first = holdBack ? { ...fields, is_active: false } : fields;
+    const saved = id ? await updateProduct(id, first) : await createProduct(first);
+    // If the upload below fails, saving again should finish this note, not add a second one.
+    $("#pf_id").value = saved.id;
+    adminState.editing = saved;
+
     if (file) {
       btn.textContent = "Uploading PDF…";
       const { path } = await uploadFile(file, slugPath(saved.module_slug, saved.code, "pdf"), "notes");
@@ -353,7 +362,12 @@ async function saveProductForm(e) {
         )
       );
 
-      await updateProduct(saved.id, { file_path: path, preview_pages: pages.length, page_count: pageCount });
+      await updateProduct(saved.id, {
+        file_path: path,
+        preview_pages: pages.length,
+        page_count: pageCount,
+        is_active: fields.is_active,
+      });
     }
 
     closeProductForm();
@@ -400,6 +414,38 @@ async function doDeleteOrder(id) {
 async function doDelete(id) {
   const product = adminState.products.find((p) => p.id === id);
   if (!product) return;
+
+  // order-download finds each bought note's PDF through its products row,
+  // so deleting one that's been sold breaks every past buyer's download.
+  // Hiding it (is_active false) stops new sales and keeps those working.
+  // Pending orders count too — they can still turn paid.
+  const buyers = adminState.orders.filter(
+    (o) => (o.status === "paid" || o.status === "pending") && (o.items || []).some((i) => i.product_id === id)
+  ).length;
+  if (buyers) {
+    if (!product.is_active) {
+      toast("This note has been bought, so it can't be deleted — it's already hidden from the shop");
+      return;
+    }
+    const hide = await confirmDelete({
+      title: "This note has been bought",
+      message: `${product.title} is in ${buyers} order${buyers === 1 ? "" : "s"}. Deleting it would break ${
+        buyers === 1 ? "that buyer's" : "those buyers'"
+      } download links, so it can only be hidden from the shop instead.`,
+      confirmLabel: "Hide from shop",
+    });
+    if (!hide) return;
+    try {
+      await updateProduct(id, { is_active: false });
+      toast("Note hidden from the shop");
+      await loadProducts();
+    } catch (err) {
+      if (err instanceof AuthError) return handleAuthError();
+      toast(err.message);
+    }
+    return;
+  }
+
   const ok = await confirmDelete({
     title: "Delete this note?",
     message: `${product.title} will be removed from the shop. This can't be undone.`,
