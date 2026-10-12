@@ -673,6 +673,14 @@ details.faq p{margin:12px 0 0;color:var(--ink-soft);font-size:14px;max-width:66c
   .header-inner{gap:12px;}
   .logo .mark{font-size:28px;}
 }
+/* iOS zooms the page in on any text field under 16px when it's tapped, and
+   doesn't zoom back out. 16px on touch screens stops that without turning
+   off pinch-zoom for the whole page (maximum-scale would). The :not()s are
+   also what lift this above .field input / .discount-row input and the
+   admin page's own select rules, without needing !important. */
+@media (pointer:coarse){
+  :is(input,textarea,select):not([type="checkbox"]):not([type="radio"]){font-size:16px;}
+}
 @media (prefers-reduced-motion:reduce){
   *{animation-duration:.01ms !important;transition-duration:.01ms !important;}
   html{scroll-behavior:auto;}
