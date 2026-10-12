@@ -12,7 +12,7 @@ import {
   toggleSelectMenu,
 } from "./render.js";
 import { loadProducts, loadCart, addToCart, addAllToCart, removeFromCart } from "./cart.js";
-import { placeOrder, applyDiscount, removeDiscount } from "./checkout.js";
+import { placeOrder, applyDiscount, removeDiscount, loadPaystack } from "./checkout.js";
 import { openDownloadModal, closeDownloadModal, submitDownloadRequest } from "./downloads.js";
 import { initFaqAccordions } from "./faq.js";
 import { initReviews } from "./reviews.js";
@@ -72,6 +72,7 @@ document.addEventListener("click", (e) => {
   if (e.target.closest("#toDetails")) {
     state.checkoutStep = "details";
     renderDrawer();
+    loadPaystack().catch(() => {}); // warm it up so the popup opens straight away; placeOrder retries or falls back
     setTimeout(() => $("#buyerEmail")?.focus(), 60);
     return;
   }
@@ -150,6 +151,11 @@ if (returnParams.get("paid") === "1") {
   let email = "";
   try {
     email = localStorage.getItem("cta_last_email") || "";
+    // Back from a payment for the order this cart became — clear the saved
+    // cart before loadCart() below reads it. Normally paymentDone() in
+    // checkout.js has already done this (popup flow); this covers the
+    // full-page fallback, and Paystack redirecting here instead of calling back.
+    if (reference && reference === localStorage.getItem("cta_last_ref")) localStorage.removeItem("cta_cart");
   } catch {
     // localStorage unavailable — the download modal still opens, just without a prefilled email
   }

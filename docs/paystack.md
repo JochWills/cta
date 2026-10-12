@@ -22,15 +22,15 @@ Browser                   paystack-initiate         Paystack        paystack-web
    ├─ POST { reference } ────►│
    │                          ├─ look up the pending order
    │                          ├─ POST /transaction/initialize ───────►│
-   │                          │◄──────── { authorization_url } ───────┤
-   │◄── { authorization_url } ┤
-   ├─ redirect the browser there ───────────────────►│
+   │                          │◄─ { authorization_url, access_code } ─┤
+   │◄── { …, access_code } ───┤
+   ├─ open Paystack popup (access_code) ─────────────►│
    │                                                  ├── buyer pays ──┤
    │                                                  ├── charge.success webhook ──►│
    │                                                  │                              ├─ verify signature
    │                                                  │                              ├─ check amount/currency
    │                                                  │                              └─ status = paid
-   │◄──────── redirect to callback_url ───────────────┤
+   │◄──────── popup onSuccess → download modal ───────┤
 ```
 
 The order's `total_cents` isn't the browser's either: `price_order()` (a
@@ -94,8 +94,13 @@ endpoint:
 | `reference` | the order's `reference` (so the webhook can look the order back up directly) |
 | `callback_url` | `${SITE_URL}/?paid=1&ref=<reference>` |
 
-Returns `{ authorization_url }`; `checkout.js` sends the browser there with
-`window.location.href = authorization_url`.
+Returns `{ authorization_url, access_code }`. `checkout.js` opens Paystack's
+popup on the shop's own page with `access_code` (InlineJS,
+`https://js.paystack.co/v2/inline.js`, loaded when the buyer reaches the
+details step), so the buyer never leaves the site. On success it opens the
+download modal, which checks the real status while the webhook catches up.
+If the script can't load, it falls back to sending the browser to
+`authorization_url`, and `callback_url` brings them back as before.
 
 ## 4. paystack-webhook
 

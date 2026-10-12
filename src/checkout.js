@@ -1,7 +1,8 @@
 import { state, $, isEmail } from "./state.js";
 import { hasDB, sbInsert, sbFunction, sbRpc } from "./supabase.js";
-import { totalDue, syncCart, renderDiscount } from "./render.js";
+import { totalDue, syncCart, renderDiscount, closeCart } from "./render.js";
 import { saveCart } from "./cart.js";
+import { openDownloadModal } from "./downloads.js";
 
 /** Human-readable order reference, e.g. CTA-M4K2P9. Also used as the Paystack transaction reference. */
 function makeReference() {
@@ -9,11 +10,52 @@ function makeReference() {
 }
 
 /**
+ * Paystack's InlineJS, loaded on first use (when the buyer reaches the
+ * details step — see main.js) rather than on every page view. A script tag,
+ * not an npm package: Paystack only ships it from their own CDN. Resolves to
+ * the PaystackPop class; a failed load resets so the next try starts fresh.
+ */
+let paystackScript = null;
+export function loadPaystack() {
+  if (window.PaystackPop) return Promise.resolve(window.PaystackPop);
+  paystackScript ??= new Promise((resolve, reject) => {
+    const s = document.createElement("script");
+    s.src = "https://js.paystack.co/v2/inline.js";
+    s.async = true;
+    s.onload = () => (window.PaystackPop ? resolve(window.PaystackPop) : reject(new Error("PaystackPop missing")));
+    s.onerror = () => {
+      s.remove();
+      paystackScript = null;
+      reject(new Error("Paystack script failed to load"));
+    };
+    document.head.append(s);
+  });
+  return paystackScript;
+}
+
+/**
+ * The popup said the payment went through. That's the browser's word, so it
+ * isn't what marks the order paid (paystack-webhook does) — it just empties
+ * the cart and opens the download modal, which checks the real status and
+ * quietly retries while the webhook catches up.
+ */
+function paymentDone(reference, email) {
+  state.cart = [];
+  state.discount = null;
+  state.checkoutStep = "cart";
+  saveCart();
+  syncCart();
+  closeCart();
+  openDownloadModal({ reference, email, auto: true });
+}
+
+/**
  * Save the order, then hand off to Paystack.
  *
  * The order is written with status "pending" first, then paystack-initiate
- * looks it up and starts a Paystack transaction, and the browser is sent to
- * Paystack's hosted payment page. Nothing here marks the order paid — that
+ * looks it up and starts a Paystack transaction, which opens in Paystack's
+ * popup on this page (falling back to their hosted page if the popup script
+ * can't load). Nothing here marks the order paid — that
  * only happens when Paystack calls the paystack-webhook Edge Function,
  * which is the only thing allowed to flip the status (see its comment for
  * why: the browser is never trusted with that).
@@ -77,23 +119,46 @@ export async function placeOrder() {
       // same as the cart (see privacy.html).
       try {
         localStorage.setItem("cta_last_email", email);
+        localStorage.setItem("cta_last_ref", reference);
       } catch {
         // ignore — worst case the download modal just isn't prefilled
       }
 
-      button.textContent = "Redirecting to payment…";
-      const { authorization_url } = await sbFunction("paystack-initiate", { reference });
+      button.textContent = "Opening payment…";
+      const [{ authorization_url, access_code }, PaystackPop] = await Promise.all([
+        sbFunction("paystack-initiate", { reference }),
+        loadPaystack().catch(() => null),
+      ]);
 
-      // Only cleared once Paystack has actually given us a payment page —
-      // if paystack-initiate fails, the buyer still has their cart to retry
-      // with (a retry writes a fresh pending order; the old one just stays
-      // pending). Cleared before leaving rather than on return, so stale
-      // items aren't sitting there when they come back from Paystack.
+      if (access_code && PaystackPop) {
+        // Paystack's own popup, over this page — the buyer never leaves the site.
+        new PaystackPop().resumeTransaction(access_code, {
+          onSuccess: () => paymentDone(reference, email),
+          onCancel: () => {
+            // The pending order just stays pending; trying again writes a new one.
+            errorBox.innerHTML = `<p class="note" style="text-align:left;">Payment cancelled. Your cart is still here when you're ready.</p>`;
+            button.textContent = "Place order";
+            button.disabled = false;
+          },
+          onError: () => {
+            errorBox.innerHTML = `<div class="err">Payment couldn't be opened just now. Try again.</div>`;
+            button.textContent = "Place order";
+            button.disabled = false;
+          },
+        });
+        return;
+      }
+
+      // Fallback: Paystack's script didn't load (blocked or offline), or an
+      // older paystack-initiate that only returns the URL — send the buyer to
+      // the hosted page instead. Cart cleared now, since they're leaving; it's
+      // only cleared once Paystack has given us a page, so a failed
+      // paystack-initiate above still leaves the cart there to retry with.
+      button.textContent = "Redirecting to payment…";
       state.cart = [];
       state.discount = null;
       saveCart();
-
-      window.location.href = authorization_url; // leaving the page — Paystack takes it from here
+      window.location.href = authorization_url; // main.js's ?paid=1 handling picks up from here
       return;
     }
 

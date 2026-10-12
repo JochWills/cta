@@ -1,7 +1,7 @@
 /**
  * paystack-initiate — looks up a pending order and asks Paystack to start a
- * transaction for it, returning the hosted payment page URL to send the
- * browser to.
+ * transaction for it, returning the access code the shop opens Paystack's
+ * popup with (plus the hosted payment page URL, as a fallback).
  *
  * The secret key can only be used server-side — it can look up and refund
  * transactions, so if it shipped to the browser anyone with DevTools open
@@ -70,7 +70,9 @@ Deno.serve(async (req) => {
       return json({ error: body.message || "Could not start payment" }, 502);
     }
 
-    return json({ authorization_url: body.data.authorization_url });
+    // access_code opens Paystack's popup on the shop's own page (checkout.js);
+    // authorization_url is the full-page fallback if that script can't load.
+    return json({ authorization_url: body.data.authorization_url, access_code: body.data.access_code });
   } catch (err) {
     console.error(err);
     return json({ error: "Server error" }, 500);
