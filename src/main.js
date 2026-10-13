@@ -17,6 +17,7 @@ import { openDownloadModal, closeDownloadModal, submitDownloadRequest } from "./
 import { initFaqAccordions } from "./faq.js";
 import { initReviews } from "./reviews.js";
 import { startPresence } from "./presence.js";
+import { hasDB, sbRpc } from "./supabase.js";
 
 /* ------------------------------------------------------------------
    Delegated click handling — the grid and drawer are re-rendered often,
@@ -164,6 +165,24 @@ if (returnParams.get("paid") === "1") {
 }
 
 /* ------------------------------------------------------------------
+   "143 notes sold" in the hero — from notes_sold() in supabase/schema.sql,
+   which returns only the number. Stays hidden below SOLD_MIN, since a small
+   count reads worse than none, and on any error.
+------------------------------------------------------------------ */
+const SOLD_MIN = 25;
+async function showNotesSold() {
+  if (!hasDB) return;
+  try {
+    const sold = Number(await sbRpc("notes_sold"));
+    if (sold < SOLD_MIN) return;
+    $("#notesSold").textContent = `${sold.toLocaleString("en-ZA")} notes sold`;
+    document.querySelectorAll("[data-sold]").forEach((el) => (el.hidden = false));
+  } catch {
+    // not worth surfacing — the line just stays as it was
+  }
+}
+
+/* ------------------------------------------------------------------
    Init
 ------------------------------------------------------------------ */
 $("#yr").textContent = new Date().getFullYear();
@@ -176,3 +195,4 @@ loadProducts();
 initFaqAccordions();
 initReviews();
 startPresence();
+showNotesSold();

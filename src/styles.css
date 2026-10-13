@@ -131,7 +131,7 @@ h1,h2,h3{font-family:'Playfair Display',Georgia,serif;font-weight:400;letter-spa
 }
 .btn.ghost:hover{background:var(--accent);color:#fff;}
 .btn[disabled]{opacity:.45;pointer-events:none;}
-.hero-assure{display:flex;align-items:center;gap:10px;font-size:14px;color:var(--ink);}
+.hero-assure{display:flex;align-items:center;flex-wrap:wrap;gap:6px 10px;font-size:14px;color:var(--ink);}
 .hero-assure svg{width:19px;height:19px;stroke:var(--accent);stroke-width:1.4;fill:none;}
 .hero-assure .dot{color:var(--ink-faint);}
 
@@ -665,6 +665,9 @@ details.faq p{margin:12px 0 0;color:var(--ink-soft);font-size:14px;max-width:66c
   .select-toggle{width:100%;justify-content:center;padding:11px 16px;}
   .select-list{left:0;width:auto;transform-origin:top center;}
   .hero h1{font-size:40px;}
+  /* Too long for one line here — own line, lined up under the text, not the tick */
+  .hero-assure .dot[data-sold]{display:none;}
+  #notesSold{flex-basis:100%;padding-left:29px;}
   .footer-grid{grid-template-columns:1fr;}
   .trust-grid{grid-template-columns:1fr;}
 }

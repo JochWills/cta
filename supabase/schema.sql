@@ -385,6 +385,17 @@ create trigger orders_price
   for each row execute function public.price_order();
 
 
+-- Notes sold, for the homepage's hero line (src/main.js). Orders stay
+-- unreadable to anon (section 4) — this only ever hands back one number:
+-- every item in every paid order, so a 3-note order counts as 3.
+create or replace function public.notes_sold() returns bigint
+language sql stable security definer set search_path = public as $$
+  select coalesce(sum(jsonb_array_length(items)), 0) from public.orders where status = 'paid';
+$$;
+
+grant execute on function public.notes_sold() to anon, authenticated;
+
+
 -- ------------------------------------------------------------
 -- 9. REVIEWS  (submitted on /review, approved on the admin page)
 --    Anyone can submit — the link is shared openly, not checked against
