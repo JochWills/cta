@@ -134,6 +134,32 @@ h1,h2,h3{font-family:'Playfair Display',Georgia,serif;font-weight:400;letter-spa
 .hero-assure{display:flex;align-items:center;flex-wrap:wrap;gap:6px 10px;font-size:14px;color:var(--ink);}
 .hero-assure svg{width:19px;height:19px;stroke:var(--accent);stroke-width:1.4;fill:none;}
 .hero-assure .dot{color:var(--ink-faint);}
+.hero-cta .btn + .hero-assure{padding-left:26px;border-left:1px solid rgba(43,37,35,.14);}
+
+/* "1 000+ notes sold" — see showNotesSold() in src/main.js */
+.hero-stat{
+  display:flex;align-items:center;gap:16px;margin-top:30px;padding-top:26px;
+  border-top:1px solid rgba(43,37,35,.1);max-width:420px;
+  animation:stat-in .6s ease both;
+}
+.hero-stat[hidden]{display:none;}
+@keyframes stat-in{from{opacity:0;transform:translateY(6px);}}
+.hero-stat-icon{
+  flex-shrink:0;display:grid;place-items:center;width:48px;height:48px;border-radius:50%;
+  background:rgba(255,255,255,.7);border:1px solid rgba(180,117,109,.22);
+}
+.hero-stat-icon svg{width:24px;height:24px;stroke:var(--accent);stroke-width:1.5;fill:none;stroke-linecap:round;}
+.hero-stat-text{display:flex;align-items:center;gap:14px;margin:0;}
+.hero-stat-num{
+  font-family:'Playfair Display',serif;font-size:38px;line-height:1;color:var(--ink);
+  font-variant-numeric:lining-nums tabular-nums;
+}
+.hero-stat-num i{font-style:normal;color:var(--accent);margin-left:1px;}
+.hero-stat-label{
+  display:flex;flex-direction:column;gap:3px;
+  font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--ink);font-weight:500;
+}
+.hero-stat-label small{font-size:12.5px;letter-spacing:0;text-transform:none;color:var(--ink-soft);font-weight:400;}
 
 /* ============================================================
    MODULE CARDS
@@ -665,9 +691,9 @@ details.faq p{margin:12px 0 0;color:var(--ink-soft);font-size:14px;max-width:66c
   .select-toggle{width:100%;justify-content:center;padding:11px 16px;}
   .select-list{left:0;width:auto;transform-origin:top center;}
   .hero h1{font-size:40px;}
-  /* Too long for one line here — own line, lined up under the text, not the tick */
-  .hero-assure .dot[data-sold]{display:none;}
-  #notesSold{flex-basis:100%;padding-left:29px;}
+  /* Button and assurance stack here, so the divider between them goes */
+  .hero-cta .btn + .hero-assure{padding-left:0;border-left:0;}
+  .hero-stat-num{font-size:32px;}
   .footer-grid{grid-template-columns:1fr;}
   .trust-grid{grid-template-columns:1fr;}
 }
@@ -685,6 +711,7 @@ details.faq p{margin:12px 0 0;color:var(--ink-soft);font-size:14px;max-width:66c
   :is(input,textarea,select):not([type="checkbox"]):not([type="radio"]){font-size:16px;}
 }
 @media (prefers-reduced-motion:reduce){
+  .hero-stat{animation:none;}
   *{animation-duration:.01ms !important;transition-duration:.01ms !important;}
   html{scroll-behavior:auto;}
 }

@@ -165,21 +165,47 @@ if (returnParams.get("paid") === "1") {
 }
 
 /* ------------------------------------------------------------------
-   "143 notes sold" in the hero — from notes_sold() in supabase/schema.sql,
-   which returns only the number. Stays hidden below SOLD_MIN, since a small
-   count reads worse than none, and on any error.
+   "1 000+ notes sold" under the hero button — from notes_sold() in
+   supabase/schema.sql, which returns only the number. Rounded down to a
+   round figure so it reads as a milestone and doesn't tick with every
+   sale. Stays hidden below SOLD_MIN, since a small count reads worse than
+   none, and on any error.
 ------------------------------------------------------------------ */
 const SOLD_MIN = 25;
+
+/** 37 -> 30, 640 -> 600, 1284 -> 1200, 12 840 -> 12 000 */
+function roundSold(n) {
+  const step = n < 100 ? 10 : n < 1000 ? 50 : n < 10000 ? 100 : 1000;
+  return Math.floor(n / step) * step;
+}
+
 async function showNotesSold() {
   if (!hasDB) return;
+  let sold;
   try {
-    const sold = Number(await sbRpc("notes_sold"));
-    if (sold < SOLD_MIN) return;
-    $("#notesSold").textContent = `${sold.toLocaleString("en-ZA")} notes sold`;
-    document.querySelectorAll("[data-sold]").forEach((el) => (el.hidden = false));
+    sold = Number(await sbRpc("notes_sold"));
   } catch {
-    // not worth surfacing — the line just stays as it was
+    return; // not worth surfacing — the hero just stays as it was
   }
+  if (!(sold >= SOLD_MIN)) return;
+
+  const target = roundSold(sold);
+  const num = $("#notesSold [data-count]");
+  const show = (n) => (num.innerHTML = `${n.toLocaleString("en-ZA")}<i>+</i>`);
+  $("#notesSold [data-sr]").textContent = `${target.toLocaleString("en-ZA")}+ notes sold`;
+  $("#notesSold").hidden = false;
+
+  // Count up from 0 when it appears, unless the visitor has asked for less motion.
+  if (matchMedia("(prefers-reduced-motion: reduce)").matches) return show(target);
+  const start = performance.now();
+  const DURATION = 1200;
+  const tick = (now) => {
+    const t = Math.min(1, (now - start) / DURATION);
+    const eased = 1 - Math.pow(1 - t, 3);
+    show(t < 1 ? Math.round((target * eased) / 10) * 10 : target);
+    if (t < 1) requestAnimationFrame(tick);
+  };
+  requestAnimationFrame(tick);
 }
 
 /* ------------------------------------------------------------------
