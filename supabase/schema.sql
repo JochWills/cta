@@ -17,7 +17,8 @@ insert into public.modules (slug, name, blurb, sort_order) values
   ('financial-reporting',            'Financial Reporting',              'Comprehensive notes for all FR sections.', 1),
   ('management-accounting-finance',  'Management Accounting & Finance',  'Detailed notes for all MA & F sections.',  2),
   ('taxation',                       'Taxation',                         'In-depth notes for all Tax sections.',     3),
-  ('corporate-governance-auditing',  'Corporate Governance & Auditing',  'Complete notes for all CG & A sections.',  4)
+  ('corporate-governance-auditing',  'Corporate Governance & Auditing',  'Complete notes for all CG & A sections.',  4),
+  ('freebies',                       'Freebies',                         'Free notes, no payment needed.',           5)
 on conflict (slug) do nothing;
 
 
@@ -80,8 +81,8 @@ create table if not exists public.orders (
   full_name           text,
   items               jsonb not null default '[]'::jsonb,
   total_cents         int not null,
-  status              text not null default 'pending'  -- pending | paid | failed | refunded
-                      check (status in ('pending','paid','failed','refunded')),
+  status              text not null default 'pending'  -- pending | paid | failed | refunded | free
+                      check (status in ('pending','paid','failed','refunded','free')),
   payment_ref         text,                            -- Paystack transaction id later
   paid_at             timestamptz,
   terms_accepted_at   timestamptz not null,
@@ -95,6 +96,12 @@ create table if not exists public.orders (
 alter table public.orders add column if not exists terms_accepted_at timestamptz;
 update public.orders set terms_accepted_at = created_at where terms_accepted_at is null;
 alter table public.orders alter column terms_accepted_at set not null;
+
+-- 'free' (a freebie download, see section 10) added after the table
+-- existed — safe to re-run.
+alter table public.orders drop constraint if exists orders_status_check;
+alter table public.orders add constraint orders_status_check
+  check (status in ('pending','paid','failed','refunded','free'));
 
 create index if not exists orders_email_idx  on public.orders (email);
 create index if not exists orders_status_idx on public.orders (status, created_at desc);
@@ -339,11 +346,16 @@ begin
   end if;
 
   for v_item in select value from jsonb_array_elements(new.items) loop
-    select id, code, title, price_cents into v_product
+    select id, code, title, price_cents, module_slug into v_product
       from public.products
      where id = (v_item->>'product_id')::uuid and is_active;
     if not found then
       raise exception 'A note in this order is no longer available';
+    end if;
+    -- A 'free' row (written only by free-download, see section 10) may
+    -- only hold freebies, and a freebie never goes through checkout.
+    if (v_product.module_slug = 'freebies') <> (new.status = 'free') then
+      raise exception 'Free notes are downloaded, not bought';
     end if;
     v_items := v_items || jsonb_build_object(
       'product_id', v_product.id, 'code', v_product.code,
@@ -445,3 +457,23 @@ select * from (values
    null::int, true, '2026-09-29 10:00:00+02'::timestamptz)
 ) as v(name, body, rating, is_published, created_at)
 where not exists (select 1 from public.reviews);
+
+
+-- ------------------------------------------------------------
+-- 10. FREEBIES
+--    Notes in the 'freebies' module are free, have no preview images and
+--    never go in the cart. The shop asks for a name and email, then the
+--    free-download Edge Function (service_role) writes an order row with
+--    status 'free' and total 0 and hands back a signed link to the PDF.
+--    So freebie downloads show in the admin page's Orders list next to
+--    sales, but every stat there (and notes_sold() above) only counts
+--    status 'paid', so they never inflate revenue or sales numbers.
+--    The anon key still can't write a 'free' row: its insert policy
+--    (section 4) only allows 'pending'.
+--
+--    A freebie is always R0 and nothing else ever is. 'not valid' so it
+--    only checks new and edited rows and can't fail on an old one.
+-- ------------------------------------------------------------
+alter table public.products drop constraint if exists products_free_price;
+alter table public.products add constraint products_free_price
+  check ((module_slug = 'freebies') = (price_cents = 0)) not valid;

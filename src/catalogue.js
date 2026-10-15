@@ -1,5 +1,5 @@
 /**
- * The four CTA modules and the fallback section catalogue.
+ * The four CTA modules (plus Freebies) and the fallback section catalogue.
  *
  * MODULES drives the module cards, filter chips, tag colours and cart swatches.
  * SEED is the same 28 rows that supabase/schema.sql inserts into `products`.
@@ -19,9 +19,16 @@ export const MODULES = [
     icon:'<path d="M6 3h9l4 4v14a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z"/><path d="M15 3v4h4"/><path d="M8.5 15.5l4.5-4.5M9 11.2h.01M12.5 15.3h.01"/>' },
   { slug:"corporate-governance-auditing", name:"Corporate Governance & Auditing", short:"CG & Auditing", tag:"CG & Auditing",
     tint:"var(--cga-tint)", ink:"var(--cga-ink)",
-    icon:'<path d="M12 2.8l7 2.9v5.6c0 4.3-2.9 8.1-7 9.9-4.1-1.8-7-5.6-7-9.9V5.7z"/><path d="M9 11.8l2.2 2.2 4.2-4.4"/>' }
+    icon:'<path d="M12 2.8l7 2.9v5.6c0 4.3-2.9 8.1-7 9.9-4.1-1.8-7-5.6-7-9.9V5.7z"/><path d="M9 11.8l2.2 2.2 4.2-4.4"/>' },
+  // Not a PGDA module: free notes, downloaded for a name and email instead
+  // of bought (src/freebies.js). Gets a filter chip, but no module card, no
+  // "Select" menu row, no cart and no preview — see isFreebie below.
+  { slug:"freebies", name:"Freebies", short:"Freebies", tag:"Free",
+    tint:"var(--free-tint)", ink:"var(--free-ink)", free:true,
+    icon:'<rect x="3.5" y="8" width="17" height="4" rx="1"/><path d="M5 12v8a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-8M12 8v13"/><path d="M12 8c-1.5-3.5-5.5-4-5.5-1.5S10 8 12 8zM12 8c1.5-3.5 5.5-4 5.5-1.5S14 8 12 8z"/>' }
 ];
 export const MOD = Object.fromEntries(MODULES.map(m => [m.slug, m]));
+export const isFreebie = (p) => p?.module_slug === "freebies";
 
 export const PRICE = 2500; // cents → R25
 export const SEED = [

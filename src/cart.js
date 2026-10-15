@@ -1,7 +1,7 @@
 import { state } from "./state.js";
-import { SEED } from "./catalogue.js";
+import { SEED, isFreebie } from "./catalogue.js";
 import { hasDB, sbGet } from "./supabase.js";
-import { syncCart, toast, openCart, renderModules, productsFor } from "./render.js";
+import { syncCart, toast, openCart, renderModules, buyableFor } from "./render.js";
 
 const PRODUCT_COLUMNS = "id,code,title,description,module_slug,price_cents,sort_order,preview_pages,page_count,created_at";
 
@@ -61,10 +61,11 @@ export async function loadProducts() {
  * lines are snapshots from whenever they were added, so a note may since
  * have been removed or repriced — and the database charges the live price
  * (price_order()), so the cart has to show that one too. Also drops SEED
- * rows ("seed-…" ids) added while Supabase was unreachable.
+ * rows ("seed-…" ids) added while Supabase was unreachable, and any note
+ * since moved to Freebies (price_order() would refuse it).
  */
 function refreshCart() {
-  const byId = new Map(state.products.map((p) => [p.id, p]));
+  const byId = new Map(state.products.filter((p) => !isFreebie(p)).map((p) => [p.id, p]));
   const before = state.cart.length;
   state.cart = state.cart
     .filter((c) => byId.has(c.id))
@@ -83,7 +84,7 @@ function refreshCart() {
 /** Add a section. One of each — buying the same PDF twice makes no sense. */
 export function addToCart(id) {
   const product = state.products.find((p) => p.id === id);
-  if (!product) return;
+  if (!product || isFreebie(product)) return;
 
   if (state.cart.some((c) => c.id === id)) {
     toast("Already in your cart");
@@ -106,7 +107,7 @@ export function addToCart(id) {
 
 /** The "Select" menu — every note in a module (or "all") that isn't already in the cart. */
 export function addAllToCart(slug) {
-  const missing = productsFor(slug).filter((p) => !state.cart.some((c) => c.id === p.id));
+  const missing = buyableFor(slug).filter((p) => !state.cart.some((c) => c.id === p.id));
   if (!missing.length) return;
   missing.forEach((p) =>
     state.cart.push({ id: p.id, code: p.code, title: p.title, module_slug: p.module_slug, price_cents: p.price_cents })

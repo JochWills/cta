@@ -79,6 +79,8 @@ src/
   supabase.js               Env config, sbGet/sbInsert/sbFunction/sbRpc
   cart.js                   loadProducts, addToCart, removeFromCart
   checkout.js               placeOrder — writes the order, then hands off to Paystack
+  freebies.js               The free-download modal (name + email -> PDF) for
+                             notes in the Freebies module, see Data model
   downloads.js               openDownloadModal/submitDownloadRequest — the "get your
                              notes" self-serve lookup, see Data model/Current state
   reviews.js                Homepage Student feedback section: loads published
@@ -109,6 +111,7 @@ supabase/
     paystack-initiate/        ┐ deployed — see docs/paystack.md
     paystack-webhook/         ┘
     order-download/          deployed — self-serve download links, see Data model below
+    free-download/           freebie PDFs for a name + email, see Data model below
 render.yaml                 Render Blueprint — build settings, cache headers, URL rewrites
 public/                     favicon, hero.png (the hero photo)
 ```
@@ -156,7 +159,7 @@ page at upload; any still missing are filled in by `backfillPageCounts` in
 reference), `email`, `full_name`, `items` (jsonb snapshot of the cart at
 purchase time — `product_id`/`code`/`title`/`price_cents`, no `file_path`;
 `order-download` looks that up live from `products` by `product_id`),
-`total_cents`, `status` (`pending` | `paid` | `failed` | `refunded`),
+`total_cents`, `status` (`pending` | `paid` | `failed` | `refunded` | `free`),
 `payment_ref` (Paystack's transaction id), `paid_at`, `terms_accepted_at`
 (not null — checkout won't submit without the "this purchase is final"
 checkbox ticked, and the column backs that with an actual record, not just
@@ -174,6 +177,16 @@ They never stack; `discount_code` is only kept when the code won, so
 the browser sent for prices or the total is ignored — before this existed,
 anyone could insert an order for every note at R1 and pay R1. Don't move
 pricing back into `checkout.js`; its `total_cents` is a placeholder.
+
+**Freebies.** A fifth `modules` row, `freebies`, not a PGDA module: always
+R0 (`products_free_price` check), no preview images, never in the cart
+(`isFreebie` in `catalogue.js`). The shop's download button asks for a
+name + email and calls `free-download`, which writes an order with status
+`free` (total 0, reference `FREE-XXXXXX`) and returns a signed link. Those
+rows show on the admin Orders list, but every dashboard stat and
+`notes_sold()` count `paid` only, so they never inflate sales. Only the
+service_role can write a `free` row, and `price_order()` won't let one
+hold a paid note, or a paid order hold a freebie.
 
 `discount_codes` — `code` (upper-case, 3-32 of A-Z/0-9/`-`/`_`, unique),
 `percent_off` (1-99 — a 100% order would be R0, which Paystack can't

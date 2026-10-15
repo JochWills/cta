@@ -578,7 +578,7 @@ function renderRecentOrders(orders) {
           <td>${esc(new Date(o.created_at).toLocaleDateString("en-ZA", { day: "numeric", month: "short" }))}</td>
           <td>${esc(maskName(o.full_name))}</td>
           <td>${esc(itemsLabel)}</td>
-          <td>${rands(o.total_cents)}</td>
+          <td>${o.status === "free" ? "—" : rands(o.total_cents)}</td>
           <td><span class="status-badge status-${esc(o.status)}">${esc(STATUS_LABEL[o.status] || o.status)}</span></td>
         </tr>`;
     })

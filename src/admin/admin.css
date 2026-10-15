@@ -193,6 +193,7 @@
 .status-paid{background:var(--tax-tint);color:var(--tax-ink);}
 .status-failed{background:#FBEDEC;color:#A6403A;}
 .status-refunded{background:var(--cga-tint);color:var(--cga-ink);}
+.status-free{background:var(--free-tint);color:var(--free-ink);}
 
 /* ── discounts tab ─────────────────────────────────────────── */
 .discount-form{

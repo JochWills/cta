@@ -1,4 +1,4 @@
-import { MODULES, MOD } from "../catalogue.js";
+import { MODULES, MOD, isFreebie } from "../catalogue.js";
 import { $, esc, rands } from "../state.js";
 import { adminState } from "./state.js";
 import { starsHtml } from "../reviews.js";
@@ -50,7 +50,8 @@ export function setTab(tab) {
    Orders — status is still read-only (see admin-orders' own comment for
    why), but a row can be deleted.
 ------------------------------------------------------------------ */
-export const STATUS_LABEL = { pending: "Pending", paid: "Paid", failed: "Failed", refunded: "Refunded" };
+// "free" is a freebie download (free-download) — listed with orders, counted in no stat.
+export const STATUS_LABEL = { pending: "Pending", paid: "Paid", failed: "Failed", refunded: "Refunded", free: "Free" };
 
 export function renderOrders() {
   const box = $("#ordersTable");
@@ -86,12 +87,12 @@ function orderRow(o) {
         <details>
           <summary>${items.length} section${items.length === 1 ? "" : "s"}</summary>
           <ul class="order-items">
-            ${items.map((i) => `<li>${esc(i.title)} (${rands(i.price_cents)})</li>`).join("")}
+            ${items.map((i) => `<li>${esc(i.title)}${o.status === "free" ? "" : ` (${rands(i.price_cents)})`}</li>`).join("")}
           </ul>
         </details>
       </td>
       <td>
-        <div>${rands(o.total_cents)}</div>
+        <div>${o.status === "free" ? "—" : rands(o.total_cents)}</div>
         ${
           o.discount_percent
             ? `<div class="meta">${o.discount_code ? esc(o.discount_code) : "Bundle"} · ${esc(o.discount_percent)}% off</div>`
@@ -218,7 +219,7 @@ function productRow(p) {
     <tr>
       <td>${esc(p.title)}</td>
       <td><span class="tag" style="background:${m.tint};color:${m.ink}">${esc(m.short)}</span></td>
-      <td>${rands(p.price_cents)}</td>
+      <td>${isFreebie(p) ? "Free" : rands(p.price_cents)}</td>
       <td>${p.page_count ? esc(p.page_count) : `<span class="meta">—</span>`}</td>
       <td>${p.is_active ? "Yes" : "No"}</td>
       <td>${p.file_path ? "Yes" : "—"}</td>
@@ -235,6 +236,20 @@ function moduleOptions(selected) {
   return MODULES.map((m) => `<option value="${m.slug}" ${m.slug === selected ? "selected" : ""}>${esc(m.name)}</option>`).join("");
 }
 
+/**
+ * A freebie is always R0 with no preview (products_free_price in
+ * supabase/schema.sql backs the price up), so picking Freebies locks the
+ * price and says why; picking a paid module again puts back a real price.
+ */
+export function syncFreebieFields() {
+  const free = $("#pf_module").value === "freebies";
+  const price = $("#pf_price");
+  if (free) price.value = "0.00";
+  else if (!(parseFloat(price.value) > 0)) price.value = "25.00";
+  price.disabled = free;
+  $("#pf_free_hint").hidden = !free;
+}
+
 export function openProductForm(product) {
   adminState.editing = product || null;
   $("#productFormTitle").textContent = product ? `Edit ${product.title}` : "Add note";
@@ -242,9 +257,11 @@ export function openProductForm(product) {
   $("#pf_module").innerHTML = moduleOptions(product?.module_slug || MODULES[0].slug);
   $("#pf_title").value = product?.title || "";
   $("#pf_description").value = product?.description || "";
+  $("#pf_price").disabled = false;
   $("#pf_price").value = product ? (product.price_cents / 100).toFixed(2) : "25.00";
   $("#pf_sort").value = product?.sort_order ?? 0;
   $("#pf_active").checked = product ? Boolean(product.is_active) : true;
+  syncFreebieFields();
   $("#pf_file").value = "";
   // Required unless this note already has a PDF — editing an existing
   // note's title/price shouldn't force a re-upload, but a new one (or an

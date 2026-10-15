@@ -14,6 +14,7 @@ import {
 import { loadProducts, loadCart, addToCart, addAllToCart, removeFromCart } from "./cart.js";
 import { placeOrder, applyDiscount, removeDiscount, loadPaystack } from "./checkout.js";
 import { openDownloadModal, closeDownloadModal, submitDownloadRequest } from "./downloads.js";
+import { openFreebie, closeFreebie, submitFreebie } from "./freebies.js";
 import { initFaqAccordions } from "./faq.js";
 import { initReviews } from "./reviews.js";
 import { startPresence } from "./presence.js";
@@ -30,6 +31,10 @@ document.addEventListener("click", (e) => {
     if (add.closest("#previewModal")) closePreview();
     return;
   }
+
+  const freebie = e.target.closest("[data-freebie]");
+  if (freebie) return openFreebie(freebie.dataset.freebie);
+  if (e.target.closest("#closeFreebie") || e.target.closest("#freebieScrim")) return closeFreebie();
 
   if (e.target.closest("#selectToggle")) return toggleSelectMenu();
   const select = e.target.closest("[data-select]");
@@ -97,6 +102,10 @@ document.addEventListener("click", (e) => {
 // Any [data-download-form] — the modal's and the Contact section's are the
 // same markup shape, both handled by src/downloads.js.
 document.addEventListener("submit", (e) => {
+  if (e.target.id === "freebieForm") {
+    e.preventDefault();
+    return submitFreebie();
+  }
   const form = e.target.closest("[data-download-form]");
   if (!form) return;
   e.preventDefault();
@@ -113,6 +122,7 @@ document.addEventListener("keydown", (e) => {
   }
   if (!$("#previewModal").hidden) return closePreview();
   if (!$("#downloadModal").hidden) return closeDownloadModal();
+  if (!$("#freebieModal").hidden) return closeFreebie();
   closeCart();
 });
 

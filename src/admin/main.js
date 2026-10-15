@@ -13,6 +13,7 @@ import {
   discountFormError,
   openProductForm,
   closeProductForm,
+  syncFreebieFields,
   productFormError,
   confirmDelete,
 } from "./render.js";
@@ -313,6 +314,15 @@ function previewPagePath(module_slug, code, page) {
   return `${module_slug}/${slugifyCode(code)}-p${page}.png`;
 }
 
+async function pageCountOf(file) {
+  const url = URL.createObjectURL(file);
+  try {
+    return await countPdfPages(url);
+  } finally {
+    URL.revokeObjectURL(url);
+  }
+}
+
 async function saveProductForm(e) {
   e.preventDefault();
   const btn = $("#saveProduct");
@@ -320,17 +330,23 @@ async function saveProductForm(e) {
 
   const id = $("#pf_id").value || null;
   const priceRands = parseFloat($("#pf_price").value);
+  const free = $("#pf_module").value === "freebies";
   const fields = {
     title: $("#pf_title").value.trim(),
     description: $("#pf_description").value.trim() || null,
     module_slug: $("#pf_module").value,
-    price_cents: Math.round(priceRands * 100),
+    price_cents: free ? 0 : Math.round(priceRands * 100),
     sort_order: parseInt($("#pf_sort").value, 10) || 0,
     is_active: $("#pf_active").checked,
   };
+  // Freebies have no preview — and a paid note moved to Freebies stops
+  // showing the one it had.
+  if (free) fields.preview_pages = 0;
 
-  if (!fields.title || Number.isNaN(fields.price_cents)) {
-    productFormError("Title and a valid price are required.");
+  // R0 is only for freebies: Paystack can't charge it, so a paid note at
+  // R0 could never be bought (products_free_price in schema.sql agrees).
+  if (!fields.title || !(free || fields.price_cents > 0)) {
+    productFormError("Title and a price above R0 are required.");
     return;
   }
 
@@ -354,8 +370,10 @@ async function saveProductForm(e) {
       btn.textContent = "Uploading PDF…";
       const { path } = await uploadFile(file, slugPath(saved.module_slug, saved.code, "pdf"), "notes");
 
-      btn.textContent = "Generating preview…";
-      const { pages, pageCount } = await renderPreviewPages(file, PREVIEW_MAX_PAGES);
+      btn.textContent = free ? "Reading PDF…" : "Generating preview…";
+      const { pages, pageCount } = free
+        ? { pages: [], pageCount: await pageCountOf(file) } // no preview for a freebie, just its page count
+        : await renderPreviewPages(file, PREVIEW_MAX_PAGES);
       await Promise.all(
         pages.map((png, i) =>
           uploadFile(png, previewPagePath(saved.module_slug, saved.code, i + 1), "note-previews")
@@ -503,6 +521,7 @@ $("#loginForm").addEventListener("submit", (e) => {
 });
 
 $("#productForm").addEventListener("submit", saveProductForm);
+$("#pf_module").addEventListener("change", syncFreebieFields);
 $("#discountForm").addEventListener("submit", saveDiscountForm);
 
 $("#dashRange").addEventListener("change", (e) => {

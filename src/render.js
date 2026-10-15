@@ -1,4 +1,4 @@
-import { MODULES, MOD } from "./catalogue.js";
+import { MODULES, MOD, isFreebie } from "./catalogue.js";
 import { state, rands, esc, $, slugifyCode } from "./state.js";
 import { publicStorageUrl } from "./supabase.js";
 
@@ -15,7 +15,7 @@ function previewPageUrl(module_slug, code, page) {
    Module cards
 ------------------------------------------------------------------ */
 export function renderModules() {
-  $("#moduleGrid").innerHTML = MODULES.map((m) => {
+  $("#moduleGrid").innerHTML = MODULES.filter((m) => !m.free).map((m) => {
     const count = state.products.filter((p) => p.module_slug === m.slug).length;
     return `
     <button class="module-card" data-jump="${m.slug}">
@@ -62,15 +62,19 @@ const isNewProduct = (p) => p.created_at && Date.now() - new Date(p.created_at).
 export const productsFor = (slug) =>
   slug === "all" ? state.products : state.products.filter((p) => p.module_slug === slug);
 
+/** productsFor, minus freebies — they're downloaded, never added to the cart. */
+export const buyableFor = (slug) => productsFor(slug).filter((p) => !isFreebie(p));
+
 const ALL_ICON =
   '<rect x="3.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="13.5" width="7" height="7" rx="1.5"/>';
 const CHECK_ICON = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
 
 function renderSelectMenu() {
   const options = [{ slug: "all", name: "All notes", tint: "var(--blush)", ink: "var(--accent)", icon: ALL_ICON }, ...MODULES]
-    .map((m) => ({ ...m, list: productsFor(m.slug) }))
+    .filter((m) => !m.free)
+    .map((m) => ({ ...m, list: buyableFor(m.slug) }))
     .filter((m) => m.list.length);
-  $("#selectMenu").hidden = state.products.length < 2;
+  $("#selectMenu").hidden = buyableFor("all").length < 2;
 
   const rows = options.map((m) => {
     const missing = m.list.filter((p) => !state.cart.some((c) => c.id === p.id));
@@ -130,6 +134,7 @@ export function renderProducts() {
       const m = MOD[p.module_slug] || MODULES[0];
       const inCart = state.cart.some((c) => c.id === p.id);
       const isNew = isNewProduct(p);
+      const free = isFreebie(p);
       return `
     <article class="card" ${p.preview_pages > 0 ? `data-preview="${esc(p.id)}"` : ""}>
       ${
@@ -142,10 +147,16 @@ export function renderProducts() {
       <p>${esc(p.description || "")}</p>
       <div class="card-foot">
         <span class="price-block">
-          <span class="price">${rands(p.price_cents)}</span>
+          <span class="price">${free ? "Free" : rands(p.price_cents)}</span>
           ${p.page_count ? `<span class="page-count">${pagesLabel(p.page_count)}</span>` : ""}
         </span>
-        <button class="add-btn" style="background:${m.tint};color:${m.ink}"
+        ${
+          free
+            ? `<button class="add-btn" style="background:${m.tint};color:${m.ink}"
+                data-freebie="${esc(p.id)}" aria-label="Download ${esc(p.title)} for free">
+                <svg viewBox="0 0 24 24" style="stroke:currentColor"><path d="M12 4v11M7 10.5l5 5 5-5M5 19.5h14"/></svg>
+              </button>`
+            : `<button class="add-btn" style="background:${m.tint};color:${m.ink}"
                 data-add="${esc(p.id)}"
                 aria-label="${inCart ? "Already in cart" : "Add " + esc(p.title) + " to cart"}">
           ${
@@ -153,7 +164,8 @@ export function renderProducts() {
               ? '<svg viewBox="0 0 24 24" style="stroke:currentColor"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>'
               : '<svg viewBox="0 0 24 24" style="stroke:currentColor"><path d="M3 4h2l2.2 10.4a1.8 1.8 0 0 0 1.8 1.4h7.3a1.8 1.8 0 0 0 1.8-1.4L19.5 8H6"/><circle cx="10" cy="19.5" r="1.2"/><circle cx="17" cy="19.5" r="1.2"/></svg>'
           }
-        </button>
+        </button>`
+        }
       </div>
     </article>`;
     })

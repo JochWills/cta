@@ -443,6 +443,29 @@
   </div>
 </div>
 
+<div class="modal" id="freebieModal" hidden role="dialog" aria-modal="true" aria-labelledby="freebieTitle">
+  <div class="modal-scrim" id="freebieScrim"></div>
+  <div class="modal-panel">
+    <button class="icon-btn modal-close" id="closeFreebie" aria-label="Close">
+      <svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg>
+    </button>
+    <div class="download-body">
+      <span class="tag" style="background:var(--free-tint);color:var(--free-ink)">Free download</span>
+      <h3 id="freebieTitle" style="margin-top:12px;"></h3>
+      <p class="note" style="margin:8px 0 0;text-align:left;">Enter your name and email and the PDF downloads straight away.</p>
+      <form id="freebieForm" novalidate>
+        <label class="field"><span>Name</span>
+          <input type="text" id="freebieName" autocomplete="name" maxlength="80"></label>
+        <label class="field"><span>Email</span>
+          <input type="email" id="freebieEmail" placeholder="you@example.com" autocomplete="email"></label>
+        <button class="btn" id="freebieSubmit" type="submit" style="width:100%;margin-top:16px;">Download</button>
+        <p class="note" style="text-align:left;">By downloading you agree to the <a href="/terms">terms</a> and <a href="/privacy">privacy policy</a>.</p>
+        <div id="freebieResult"></div>
+      </form>
+    </div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script type="module" src="/src/main.js"></script>
