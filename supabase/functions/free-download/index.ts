@@ -13,6 +13,12 @@
  * row rather than adding another, so the list stays one row per person per
  * freebie.
  *
+ * { action: "preview", product_id } skips the name/email and the order row
+ * and just returns a signed link for viewing (no download filename) plus
+ * the file's kind, for the shop's preview modal — Excel files open in
+ * Microsoft's online viewer there, PDFs in the browser's own. Courts chose
+ * the exact Excel look knowing that viewer has its own download button.
+ *
  * Always responds 200 with { ok, reason } on a bad request, same as
  * order-download, so src/freebies.js has one shape to handle.
  *
@@ -51,8 +57,9 @@ Deno.serve(async (req) => {
     const productId = typeof body.product_id === "string" ? body.product_id : "";
     const name = typeof body.name === "string" ? body.name.trim() : "";
     const email = typeof body.email === "string" ? body.email.trim().toLowerCase() : "";
+    const preview = body.action === "preview";
 
-    if (!name || name.length > 80 || !isEmail(email)) return json({ ok: false, reason: "invalid" });
+    if (!preview && (!name || name.length > 80 || !isEmail(email))) return json({ ok: false, reason: "invalid" });
     if (!/^[0-9a-f-]{36}$/i.test(productId)) return json({ ok: false, reason: "not_found" });
 
     const supabase = createClient(SUPABASE_URL, SERVICE_ROLE);
@@ -64,6 +71,13 @@ Deno.serve(async (req) => {
       .eq("is_active", true)
       .maybeSingle();
     if (!product?.file_path) return json({ ok: false, reason: "not_found" });
+    const ext = product.file_path.split(".").pop()!.toLowerCase();
+
+    if (preview) {
+      const { data: signed, error } = await supabase.storage.from("notes").createSignedUrl(product.file_path, SIGNED_URL_TTL);
+      if (error) throw error;
+      return json({ ok: true, url: signed.signedUrl, kind: ext === "pdf" ? "pdf" : "excel" });
+    }
 
     const { data: existing } = await supabase
       .from("orders")
@@ -88,7 +102,6 @@ Deno.serve(async (req) => {
       if (error) throw error;
     }
 
-    const ext = product.file_path.split(".").pop()!.toLowerCase();
     const filename = `${product.title.replace(/[^\w\s&.-]+/g, "").trim() || "Notes"}.${ext}`;
     const { data: signed, error: signError } = await supabase.storage
       .from("notes")

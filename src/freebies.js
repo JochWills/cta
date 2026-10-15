@@ -12,6 +12,42 @@ import { hasDB, sbFunction } from "./supabase.js";
  */
 
 let current = null; // the freebie the modal is open for
+let previewing = null; // the freebie the preview modal last asked about, so a slow reply for another is ignored
+
+/**
+ * Fill the preview modal with the whole freebie. The file is private, so
+ * free-download hands back a short-lived link first. Excel opens in
+ * Microsoft's free online viewer (the exact Excel look, which Courts chose
+ * knowing it has its own download button); a PDF in the browser's own.
+ */
+export async function loadFreebiePreview(p) {
+  const frame = $("#previewFrame");
+  previewing = p.id;
+  frame.innerHTML = `<div class="empty-state">Loading preview…</div>`;
+  if (!hasDB) {
+    frame.innerHTML = `<div class="empty-state">Previews only load on the live shop.</div>`;
+    return;
+  }
+  let res;
+  try {
+    res = await sbFunction("free-download", { action: "preview", product_id: p.id });
+  } catch (err) {
+    console.error(err);
+    res = { ok: false };
+  }
+  if (previewing !== p.id || $("#previewModal").hidden) return;
+  if (!res.ok) {
+    frame.innerHTML = `<div class="empty-state">Couldn't load the preview just now. You can still download it.</div>`;
+    return;
+  }
+  $("#previewPages").textContent =
+    res.kind === "excel" ? "Excel spreadsheet" : p.page_count ? `PDF · ${p.page_count} page${p.page_count === 1 ? "" : "s"}` : "PDF";
+  const src =
+    res.kind === "excel"
+      ? `https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(res.url)}`
+      : res.url;
+  frame.innerHTML = `<iframe class="preview-doc" src="${esc(src)}" title="${esc(p.title)}"></iframe>`;
+}
 
 function remembered(key) {
   try {

@@ -33,7 +33,10 @@ document.addEventListener("click", (e) => {
   }
 
   const freebie = e.target.closest("[data-freebie]");
-  if (freebie) return openFreebie(freebie.dataset.freebie);
+  if (freebie) {
+    if (freebie.closest("#previewModal")) closePreview();
+    return openFreebie(freebie.dataset.freebie);
+  }
   if (e.target.closest("#closeFreebie") || e.target.closest("#freebieScrim")) return closeFreebie();
 
   if (e.target.closest("#selectToggle")) return toggleSelectMenu();

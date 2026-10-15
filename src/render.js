@@ -1,6 +1,7 @@
 import { MODULES, MOD, isFreebie } from "./catalogue.js";
 import { state, rands, esc, $, slugifyCode } from "./state.js";
 import { publicStorageUrl } from "./supabase.js";
+import { loadFreebiePreview } from "./freebies.js";
 
 /**
  * e.g. ("taxation", "tax3-a1b2", 2) -> full URL for page 2's preview image.
@@ -136,7 +137,7 @@ export function renderProducts() {
       const isNew = isNewProduct(p);
       const free = isFreebie(p);
       return `
-    <article class="card" ${p.preview_pages > 0 ? `data-preview="${esc(p.id)}"` : ""}>
+    <article class="card" ${p.preview_pages > 0 || free ? `data-preview="${esc(p.id)}"` : ""}>
       ${
         isNew
           ? `<span class="new-badge">New</span>`
@@ -367,8 +368,12 @@ export function openPreview(id) {
   const p = state.products.find((x) => x.id === id);
   if (!p) return;
   const m = MOD[p.module_slug] || MODULES[0];
+  const free = isFreebie(p);
+  $("#previewModal").classList.toggle("is-wide", free);
 
-  if (p.preview_pages > 0) {
+  if (free) {
+    loadFreebiePreview(p); // the whole file, fetched on open — see freebies.js
+  } else if (p.preview_pages > 0) {
     $("#previewFrame").innerHTML = Array.from({ length: p.preview_pages }, (_, i) => {
       const page = i + 1;
       const isLast = page === p.preview_pages;
@@ -387,11 +392,21 @@ export function openPreview(id) {
   $("#previewTag").style.background = m.tint;
   $("#previewTag").style.color = m.ink;
   $("#previewTitle").textContent = p.title;
-  $("#previewPages").textContent = p.page_count ? `PDF · ${pagesLabel(p.page_count)}` : "PDF";
-  $("#previewAddBtn").dataset.add = p.id;
-  $("#previewAddBtn").textContent = state.cart.some((c) => c.id === p.id)
-    ? "Already in cart"
-    : `Add to cart — ${rands(p.price_cents)}`;
+  // A freebie may be a spreadsheet — freebies.js fills this in once it knows.
+  $("#previewPages").textContent = free ? "" : p.page_count ? `PDF · ${pagesLabel(p.page_count)}` : "PDF";
+  const btn = $("#previewAddBtn");
+  delete btn.dataset.add;
+  delete btn.dataset.freebie;
+  if (free) {
+    btn.dataset.freebie = p.id;
+    btn.textContent = "Download for free";
+  } else {
+    btn.dataset.add = p.id;
+    btn.textContent = state.cart.some((c) => c.id === p.id) ? "Already in cart" : `Add to cart — ${rands(p.price_cents)}`;
+  }
+  $("#previewNote").textContent = free
+    ? "Free — just your name and email to download."
+    : "Preview only — the rest unlocks once you buy it.";
 
   $("#previewModal").hidden = false;
   document.body.style.overflow = "hidden";
@@ -399,6 +414,7 @@ export function openPreview(id) {
 
 export function closePreview() {
   $("#previewModal").hidden = true;
+  $("#previewFrame").innerHTML = ""; // stops a freebie's viewer loading on behind a closed modal
   document.body.style.overflow = "";
 }
 
