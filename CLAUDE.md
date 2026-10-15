@@ -180,7 +180,8 @@ pricing back into `checkout.js`; its `total_cents` is a placeholder.
 
 **Freebies.** A fifth `modules` row, `freebies`, not a PGDA module: always
 R0 (`products_free_price` check), no preview images, never in the cart
-(`isFreebie` in `catalogue.js`). The shop's download button asks for a
+(`isFreebie` in `catalogue.js`), and the file can be a PDF or an Excel
+sheet (`admin-upload` only takes Excel under `freebies/`). The shop's download button asks for a
 name + email and calls `free-download`, which writes an order with status
 `free` (total 0, reference `FREE-XXXXXX`) and returns a signed link. Those
 rows show on the admin Orders list, but every dashboard stat and

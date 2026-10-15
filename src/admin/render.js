@@ -248,6 +248,9 @@ export function syncFreebieFields() {
   else if (!(parseFloat(price.value) > 0)) price.value = "25.00";
   price.disabled = free;
   $("#pf_free_hint").hidden = !free;
+  // Freebies can be a spreadsheet too (admin-upload only accepts one under freebies/).
+  $("#pf_file").accept = free ? "application/pdf,.xlsx,.xls" : "application/pdf";
+  $("#pf_file_label").textContent = free ? "PDF or Excel file" : "PDF";
 }
 
 export function openProductForm(product) {
@@ -267,13 +270,13 @@ export function openProductForm(product) {
   // note's title/price shouldn't force a re-upload, but a new one (or an
   // old row saved before this was enforced) must get one now.
   $("#pf_file").required = !product?.file_path;
-  $("#pf_file_hint").textContent = product?.file_path ? "Leave blank to keep the current PDF." : "Required.";
+  $("#pf_file_hint").textContent = product?.file_path ? "Leave blank to keep the current file." : "Required.";
   // The signed URL is fetched on click (see main.js), not here — no point
   // asking Supabase for one on every open when most edits never need it.
   const viewBtn = $("#pf_view_pdf");
   viewBtn.hidden = !product?.file_path;
   viewBtn.disabled = false;
-  viewBtn.textContent = "View current PDF ↗";
+  viewBtn.textContent = "View current file ↗";
   productFormError("");
   $("#productModal").hidden = false;
 }

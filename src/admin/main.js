@@ -268,7 +268,7 @@ async function backfillPageCounts() {
   if (backfilling) return;
   backfilling = true;
   try {
-    for (const p of adminState.products.filter((x) => x.file_path && !x.page_count)) {
+    for (const p of adminState.products.filter((x) => x.file_path && !x.page_count && !isExcel(x.file_path))) {
       try {
         const { url } = await getSignedPdfUrl(p.file_path);
         const page_count = await countPdfPages(url);
@@ -314,6 +314,9 @@ function previewPagePath(module_slug, code, page) {
   return `${module_slug}/${slugifyCode(code)}-p${page}.png`;
 }
 
+/** A freebie's spreadsheet — no pages, no preview, nothing for pdf.js to read. */
+const isExcel = (name) => /\.xlsx?$/i.test(name);
+
 async function pageCountOf(file) {
   const url = URL.createObjectURL(file);
   try {
@@ -350,10 +353,16 @@ async function saveProductForm(e) {
     return;
   }
 
+  const file = $("#pf_file").files[0];
+  const excel = Boolean(file) && isExcel(file.name);
+  if (excel && !free) {
+    productFormError("Excel files are only for freebies. Paid notes need a PDF.");
+    return;
+  }
+
   btn.disabled = true;
   btn.textContent = "Saving…";
 
-  const file = $("#pf_file").files[0];
   // A note getting its first PDF stays hidden until that upload has
   // finished, so a failed upload never leaves a buyable note with nothing
   // to download. Switched to what the checkbox says in the final update.
@@ -367,13 +376,16 @@ async function saveProductForm(e) {
     adminState.editing = saved;
 
     if (file) {
-      btn.textContent = "Uploading PDF…";
-      const { path } = await uploadFile(file, slugPath(saved.module_slug, saved.code, "pdf"), "notes");
+      btn.textContent = excel ? "Uploading file…" : "Uploading PDF…";
+      const ext = excel ? file.name.split(".").pop().toLowerCase() : "pdf";
+      const { path } = await uploadFile(file, slugPath(saved.module_slug, saved.code, ext), "notes");
 
-      btn.textContent = free ? "Reading PDF…" : "Generating preview…";
-      const { pages, pageCount } = free
-        ? { pages: [], pageCount: await pageCountOf(file) } // no preview for a freebie, just its page count
-        : await renderPreviewPages(file, PREVIEW_MAX_PAGES);
+      btn.textContent = free ? "Reading file…" : "Generating preview…";
+      const { pages, pageCount } = excel
+        ? { pages: [], pageCount: null } // a spreadsheet has no pages
+        : free
+          ? { pages: [], pageCount: await pageCountOf(file) } // no preview for a freebie, just its page count
+          : await renderPreviewPages(file, PREVIEW_MAX_PAGES);
       await Promise.all(
         pages.map((png, i) =>
           uploadFile(png, previewPagePath(saved.module_slug, saved.code, i + 1), "note-previews")
@@ -508,7 +520,7 @@ async function viewCurrentPdf() {
     toast(err.message);
   } finally {
     btn.disabled = false;
-    btn.textContent = "View current PDF ↗";
+    btn.textContent = "View current file ↗";
   }
 }
 

@@ -1,5 +1,6 @@
 /**
- * free-download — a freebie's PDF for a name and email, no payment.
+ * free-download — a freebie's file (a PDF or an Excel sheet) for a name
+ * and email, no payment.
  *
  * Records the download as an order with status "free" and total 0, so it
  * shows on the admin page's Orders list next to sales (the dashboard's
@@ -87,7 +88,8 @@ Deno.serve(async (req) => {
       if (error) throw error;
     }
 
-    const filename = `${product.title.replace(/[^\w\s&.-]+/g, "").trim() || "Notes"}.pdf`;
+    const ext = product.file_path.split(".").pop()!.toLowerCase();
+    const filename = `${product.title.replace(/[^\w\s&.-]+/g, "").trim() || "Notes"}.${ext}`;
     const { data: signed, error: signError } = await supabase.storage
       .from("notes")
       .createSignedUrl(product.file_path, SIGNED_URL_TTL, { download: filename });

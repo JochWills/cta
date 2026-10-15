@@ -3,7 +3,8 @@
  * admin page's behalf, since neither is writable by the anon key (see
  * supabase/schema.sql, section 5):
  *
- *   "notes"          private — the real PDF a customer pays for.
+ *   "notes"          private — the real PDF a customer pays for. A freebie
+ *                     (path under "freebies/") may be an Excel file instead.
  *   "note-previews"  public  — a PNG of just its first page, rendered
  *                     client-side in the admin page (src/admin/pdfPreview.js)
  *                     and shown as a blurred preview in the shop. Public on
@@ -29,6 +30,13 @@ const BUCKETS: Record<string, string> = {
   "note-previews": "image/png",
 };
 
+// Freebies only. Keyed by extension, since browsers don't always send a
+// type for spreadsheets; the stored file gets the type from here either way.
+const EXCEL_TYPES: Record<string, string> = {
+  xlsx: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  xls: "application/vnd.ms-excel",
+};
+
 Deno.serve(async (req) => {
   const preflight = handlePreflight(req);
   if (preflight) return preflight;
@@ -44,9 +52,11 @@ Deno.serve(async (req) => {
     if (!(file instanceof File) || typeof path !== "string" || !path) {
       return json({ error: "file and path are required" }, 400);
     }
-    const expectedType = BUCKETS[bucket];
+    const ext = path.split(".").pop()!.toLowerCase();
+    const excelType = bucket === "notes" && path.startsWith("freebies/") ? EXCEL_TYPES[ext] : undefined;
+    const expectedType = excelType || BUCKETS[bucket];
     if (!expectedType) return json({ error: "Unknown bucket" }, 400);
-    if (file.type !== expectedType) {
+    if (!excelType && file.type !== expectedType) {
       return json({ error: `Expected ${expectedType} for the ${bucket} bucket` }, 400);
     }
     if (file.size > MAX_BYTES) return json({ error: "File is larger than 25MB" }, 400);
