@@ -61,6 +61,7 @@ document.addEventListener("click", (e) => {
   const jump = e.target.closest("[data-jump]");
   if (jump) {
     e.preventDefault();
+    $("#nav").classList.remove("is-open"); // the header's "Free" link is one of these
     return setFilter(jump.dataset.jump);
   }
 
@@ -133,7 +134,8 @@ const observer = new IntersectionObserver(
   (entries) => {
     entries.forEach((entry) => {
       if (!entry.isIntersecting) return;
-      document.querySelectorAll(".nav a").forEach((a) => {
+      // Not "Free" — it also points at #shop, and Shop is the one to underline there.
+      document.querySelectorAll(".nav a:not([data-jump])").forEach((a) => {
         a.classList.toggle("is-active", a.getAttribute("href") === `#${entry.target.id}`);
       });
     });
