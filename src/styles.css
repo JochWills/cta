@@ -113,6 +113,43 @@ h1,h2,h3{font-family:'Playfair Display',Georgia,serif;font-weight:400;letter-spa
   display:flex;align-items:center;
 }
 .hero-copy{padding:80px 40px;max-width:600px;}
+/* EasyNotes promo — a small card fixed to the right edge of the page,
+   below the header and under the cart drawer and modals. On hover it
+   slides out a little further and an arrow appears. A plain strip under
+   the hero on phones (see the 720px block). */
+.side-promo{
+  position:fixed;z-index:50;right:0;top:50%;
+  transform:translate(6px,-50%);
+  width:108px;padding:18px 18px 16px 12px;border-radius:14px 0 0 14px;
+  display:flex;flex-direction:column;align-items:center;text-align:center;
+  background:linear-gradient(160deg,var(--accent) 0%,var(--accent-deep) 100%);
+  color:#fff;text-decoration:none;
+  box-shadow:inset 1px 1px 0 rgba(255,255,255,.18),-6px 10px 28px rgba(156,95,88,.28);
+  transition:transform .3s cubic-bezier(.2,.8,.2,1),box-shadow .3s ease;
+}
+.side-promo-icon{
+  width:38px;height:38px;border-radius:50%;display:grid;place-items:center;
+  background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.22);
+  transition:background .3s ease,transform .3s cubic-bezier(.2,.8,.2,1);
+}
+.side-promo-icon svg{width:19px;height:19px;stroke:currentColor;stroke-width:1.5;fill:none;stroke-linejoin:round;}
+.side-promo-text{display:flex;flex-direction:column;align-items:center;}
+.side-promo strong{font-size:12.5px;font-weight:600;line-height:1.3;margin-top:11px;letter-spacing:.01em;}
+.side-promo small{
+  font-size:10.5px;line-height:1.4;margin-top:9px;padding-top:9px;
+  border-top:1px solid rgba(255,255,255,.3);color:rgba(255,255,255,.85);
+}
+.side-promo-arrow{
+  width:15px;height:15px;stroke:currentColor;stroke-width:1.8;fill:none;
+  margin-top:10px;opacity:.55;transition:opacity .3s ease,transform .3s cubic-bezier(.2,.8,.2,1);
+}
+.side-promo:hover{
+  transform:translate(0,-50%);
+  box-shadow:inset 1px 1px 0 rgba(255,255,255,.2),-10px 16px 36px rgba(156,95,88,.38);
+}
+.side-promo:hover .side-promo-icon{background:rgba(255,255,255,.26);transform:translateY(-2px) rotate(-6deg);}
+.side-promo:hover .side-promo-arrow{opacity:1;transform:translateX(3px);}
+.side-promo:focus-visible{outline:2px solid var(--ink);outline-offset:3px;}
 .hero h1{font-size:clamp(38px,4.1vw,60px);line-height:1.08;margin:18px 0 0;}
 .hero h1 .line2{display:block;font-size:.75em;margin-top:10px;letter-spacing:0;}
 .hero h1 em{font-style:italic;color:var(--accent);}
@@ -702,6 +739,20 @@ details.faq p{margin:12px 0 0;color:var(--ink-soft);font-size:14px;max-width:66c
   .hero-stat-num{font-size:32px;}
   .footer-grid{grid-template-columns:1fr;}
   .trust-grid{grid-template-columns:1fr;}
+}
+@media (max-width:720px){
+  /* A strip under the hero instead of a fixed card, so it never covers anything */
+  .side-promo{
+    position:static;transform:none;width:auto;border-radius:0;
+    flex-direction:row;gap:14px;text-align:left;padding:14px 26px;
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.15);
+  }
+  .side-promo:hover{transform:none;box-shadow:inset 0 1px 0 rgba(255,255,255,.15);}
+  .side-promo-icon{width:34px;height:34px;flex-shrink:0;}
+  .side-promo-text{align-items:flex-start;flex:1;}
+  .side-promo strong{margin-top:0;}
+  .side-promo small{margin-top:2px;padding-top:0;border-top:0;}
+  .side-promo-arrow{margin-top:0;opacity:1;}
 }
 @media (max-width:420px){
   .product-grid{grid-template-columns:1fr;}
