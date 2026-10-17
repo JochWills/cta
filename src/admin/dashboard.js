@@ -202,7 +202,7 @@ function computeDashboard(rangeKey) {
   // most recent orders regardless of which stats range is selected.
   const recentOrders = orders.slice(0, 5);
 
-  return { ...current, deltas, series, paidCountSeries, avgSeries, pendingSeries, topNotes, categories, categoryTotal, recentOrders };
+  return { ...current, rangeStart: cfg.rangeStart, deltas, series, paidCountSeries, avgSeries, pendingSeries, topNotes, categories, categoryTotal, recentOrders };
 }
 
 /* ------------------------------------------------------------------
@@ -610,9 +610,21 @@ function renderSources() {
     <p class="src-foot">"Direct" is anyone with no referring site: typed in, a bookmark, or a link opened from WhatsApp, which hides where it came from.</p>`;
 }
 
-function renderJourney(paidCount) {
+/** Paid orders in the range, but only since source tracking began — older
+ * sales had no tracked visit behind them, so counting them here would make
+ * "Paid" look bigger than the steps above it. Freebies are status "free",
+ * so they're never counted. */
+function trackedPaidCount(rangeStart) {
+  const since = Date.parse(adminState.visitorInsights.find((r) => r.kind === "since")?.label || "");
+  if (Number.isNaN(since)) return 0;
+  const from = Math.max(since, rangeStart.getTime());
+  return adminState.orders.filter((o) => o.status === "paid" && orderDate(o).getTime() >= from).length;
+}
+
+function renderJourney(rangeStart) {
   const total = insightsTotal();
   if (!total) return `<div class="empty-state">No visits recorded in this range yet.</div>`;
+  const paidCount = trackedPaidCount(rangeStart);
   const events = Object.fromEntries(insightRows("event").map((e) => [e.label, e.count]));
   const steps = [
     ["Visited", total],
@@ -747,7 +759,7 @@ export function renderDashboard() {
 
   $("#dashSourcesSub").textContent = `Unique visitors, ${RANGE_LABELS[range]}`;
   $("#dashSources").innerHTML = renderSources();
-  $("#dashJourney").innerHTML = renderJourney(data.paidCount);
+  $("#dashJourney").innerHTML = renderJourney(data.rangeStart);
 
   $("#dashRecentOrders").innerHTML = renderRecentOrders(data.recentOrders);
   $("#dashTopNotes").innerHTML = renderTopNotesList(data.topNotes);

@@ -496,9 +496,14 @@ alter table public.products add constraint products_free_price
 --
 --    Rows from before this existed have a null source and are left out
 --    of visitor_insights(), so the funnel only compares like with like.
+--    created_at (filled with the time this column was added on older
+--    rows, but those have no source so it's never read for them) gives
+--    the moment tracking began, so the funnel's "Paid" step can count
+--    only orders paid since then.
 -- ------------------------------------------------------------
 alter table public.daily_visits add column if not exists source text;
 alter table public.daily_visits add column if not exists device text;
+alter table public.daily_visits add column if not exists created_at timestamptz not null default now();
 
 create table if not exists public.site_events (
   day        date not null,
@@ -549,6 +554,7 @@ $$;
 --   'source' / 'Google'…   sessions per source
 --   'device' / 'mobile'…   sessions per device
 --   'event'  / 'preview'…  sessions that reached each step
+--   'since'  / ISO time    when source tracking began (all time, not just p_days; null before the first visit)
 create or replace function public.visitor_insights(p_days int default 30)
 returns table(kind text, label text, visitors bigint)
 language sql security definer set search_path = public as $$
@@ -565,7 +571,10 @@ language sql security definer set search_path = public as $$
   select 'event', e.event, count(*)
   from public.site_events e
   join v on v.day = e.day and v.session_id = e.session_id
-  group by e.event;
+  group by e.event
+  union all
+  select 'since', to_char(min(created_at) at time zone 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"'), 0
+  from public.daily_visits where source is not null;
 $$;
 
 grant execute on function public.heartbeat(text, text, text) to anon, authenticated;
