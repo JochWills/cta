@@ -477,3 +477,97 @@ where not exists (select 1 from public.reviews);
 alter table public.products drop constraint if exists products_free_price;
 alter table public.products add constraint products_free_price
   check ((module_slug = 'freebies') = (price_cents = 0)) not valid;
+
+
+-- ------------------------------------------------------------
+-- 11. VISITOR SOURCES + JOURNEY (admin dashboard)
+--    Adds to section 7's daily_visits: where each session came from
+--    (a label like 'Google', 'Instagram' or 'Direct', worked out in the
+--    browser by src/presence.js from the referring site, the in-app
+--    browser and any utm_source/fbclid on the link) and the device type.
+--    Recorded once per session per day, on its first heartbeat. Still no
+--    cookie and nothing tied to a person: just a label next to the same
+--    random id.
+--
+--    site_events records which steps a session got to (opened a
+--    preview, added to cart, started checkout), once each per day, for
+--    the dashboard's funnel. Same shape as daily_visits: RLS on, no
+--    policies, reachable only through the functions below.
+--
+--    Rows from before this existed have a null source and are left out
+--    of visitor_insights(), so the funnel only compares like with like.
+-- ------------------------------------------------------------
+alter table public.daily_visits add column if not exists source text;
+alter table public.daily_visits add column if not exists device text;
+
+create table if not exists public.site_events (
+  day        date not null,
+  session_id text not null,
+  event      text not null check (event in ('preview', 'cart', 'checkout')),
+  primary key (day, session_id, event)
+);
+alter table public.site_events enable row level security;
+
+-- Replaces section 7's one-argument heartbeat. The new arguments have
+-- defaults, so a tab still running the old script keeps working.
+drop function if exists public.heartbeat(text);
+create or replace function public.heartbeat(p_session_id text, p_source text default null, p_device text default null)
+returns void
+language plpgsql security definer set search_path = public as $$
+begin
+  insert into public.site_sessions (session_id, last_seen)
+  values (p_session_id, now())
+  on conflict (session_id) do update set last_seen = now();
+
+  insert into public.daily_visits (day, session_id, source, device)
+  values (
+    current_date,
+    p_session_id,
+    nullif(left(trim(p_source), 40), ''),
+    case when p_device in ('mobile', 'tablet', 'desktop') then p_device end
+  )
+  on conflict do nothing;
+
+  delete from public.site_sessions where last_seen < now() - interval '1 day';
+end;
+$$;
+
+create or replace function public.track_event(p_session_id text, p_event text) returns void
+language plpgsql security definer set search_path = public as $$
+begin
+  if p_event not in ('preview', 'cart', 'checkout') or length(p_session_id) > 64 then
+    return;
+  end if;
+  insert into public.site_events (day, session_id, event)
+  values (current_date, p_session_id, p_event)
+  on conflict do nothing;
+end;
+$$;
+
+-- Counts for the last p_days days, one row per (kind, label):
+--   'total'  / ''          sessions with a recorded source
+--   'source' / 'Google'…   sessions per source
+--   'device' / 'mobile'…   sessions per device
+--   'event'  / 'preview'…  sessions that reached each step
+create or replace function public.visitor_insights(p_days int default 30)
+returns table(kind text, label text, visitors bigint)
+language sql security definer set search_path = public as $$
+  with v as (
+    select * from public.daily_visits
+    where day > current_date - p_days and source is not null
+  )
+  select 'total', '', count(*) from v
+  union all
+  select 'source', source, count(*) from v group by source
+  union all
+  select 'device', coalesce(device, 'unknown'), count(*) from v group by device
+  union all
+  select 'event', e.event, count(*)
+  from public.site_events e
+  join v on v.day = e.day and v.session_id = e.session_id
+  group by e.event;
+$$;
+
+grant execute on function public.heartbeat(text, text, text) to anon, authenticated;
+grant execute on function public.track_event(text, text) to anon, authenticated;
+grant execute on function public.visitor_insights(int) to anon, authenticated;

@@ -17,7 +17,7 @@ import { openDownloadModal, closeDownloadModal, submitDownloadRequest } from "./
 import { openFreebie, closeFreebie, submitFreebie } from "./freebies.js";
 import { initFaqAccordions } from "./faq.js";
 import { initReviews } from "./reviews.js";
-import { startPresence } from "./presence.js";
+import { startPresence, track } from "./presence.js";
 import { hasDB, sbRpc } from "./supabase.js";
 
 /* ------------------------------------------------------------------
@@ -82,6 +82,7 @@ document.addEventListener("click", (e) => {
   if (e.target.closest("#toDetails")) {
     state.checkoutStep = "details";
     renderDrawer();
+    track("checkout");
     loadPaystack().catch(() => {}); // warm it up so the popup opens straight away; placeOrder retries or falls back
     setTimeout(() => $("#buyerEmail")?.focus(), 60);
     return;

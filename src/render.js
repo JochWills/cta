@@ -2,6 +2,7 @@ import { MODULES, MOD, isFreebie } from "./catalogue.js";
 import { state, rands, esc, $, slugifyCode } from "./state.js";
 import { publicStorageUrl } from "./supabase.js";
 import { loadFreebiePreview } from "./freebies.js";
+import { track } from "./presence.js";
 
 /**
  * e.g. ("taxation", "tax3-a1b2", 2) -> full URL for page 2's preview image.
@@ -369,6 +370,7 @@ export function openPreview(id) {
   if (!p) return;
   const m = MOD[p.module_slug] || MODULES[0];
   const free = isFreebie(p);
+  track("preview");
   $("#previewModal").classList.toggle("is-wide", free);
 
   if (free) {

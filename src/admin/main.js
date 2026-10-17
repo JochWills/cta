@@ -30,6 +30,7 @@ import {
   getSignedPdfUrl,
   fetchActiveVisitors,
   fetchDailyVisitors,
+  fetchVisitorInsights,
   listDiscounts,
   createDiscount,
   deleteDiscount,
@@ -74,7 +75,7 @@ async function doLogin() {
 async function enterDashboard() {
   showLoggedIn();
   setTab(adminState.tab);
-  await Promise.all([loadOrders(), loadProducts(), loadDiscounts(), loadReviews(), loadDailyVisitors()]);
+  await Promise.all([loadOrders(), loadProducts(), loadDiscounts(), loadReviews(), loadDailyVisitors(), loadVisitorInsights()]);
   startVisitorPoll();
 }
 
@@ -86,6 +87,18 @@ async function loadDailyVisitors() {
     renderDashboard();
   } catch {
     // ignore — chart shows its own empty state
+  }
+}
+
+const INSIGHT_DAYS = { today: 1, "7": 7, "30": 30, "90": 90, all: 36500 };
+
+/** Sources and journey for the dashboard's current range — refetched when the range changes. Same anon RPC idea as above. */
+async function loadVisitorInsights() {
+  try {
+    adminState.visitorInsights = await fetchVisitorInsights(INSIGHT_DAYS[adminState.dashboardRange] || 30);
+    renderDashboard();
+  } catch {
+    // ignore — the cards show their own empty state
   }
 }
 
@@ -137,7 +150,7 @@ async function refreshDashboard() {
   btn.disabled = true;
   btn.classList.add("is-spinning");
   try {
-    await Promise.all([loadOrders(), loadProducts(), loadReviews(), loadDailyVisitors()]);
+    await Promise.all([loadOrders(), loadProducts(), loadReviews(), loadDailyVisitors(), loadVisitorInsights()]);
     toast("Dashboard refreshed");
   } finally {
     btn.disabled = false;
@@ -539,6 +552,7 @@ $("#discountForm").addEventListener("submit", saveDiscountForm);
 $("#dashRange").addEventListener("change", (e) => {
   adminState.dashboardRange = e.target.value;
   renderDashboard();
+  loadVisitorInsights();
 });
 
 document.addEventListener("click", (e) => {

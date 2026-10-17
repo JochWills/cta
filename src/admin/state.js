@@ -18,6 +18,8 @@ export const adminState = {
   reviews: [],
   /** { day, visitors }[] for the Dashboard's daily-visitors chart, oldest first, once loaded. */
   dailyVisitors: [],
+  /** { kind, label, visitors }[] for the Dashboard's sources and journey cards, for dashboardRange. */
+  visitorInsights: [],
   /** Which dashboard tab is showing: "dashboard" | "orders" | "notes" | "discounts" | "reviews". */
   tab: "dashboard",
   /** Product row being edited in the modal, or null when adding a new one. */

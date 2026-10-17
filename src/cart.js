@@ -1,6 +1,7 @@
 import { state } from "./state.js";
 import { SEED, isFreebie } from "./catalogue.js";
 import { hasDB, sbGet } from "./supabase.js";
+import { track } from "./presence.js";
 import { syncCart, toast, openCart, renderModules, buyableFor } from "./render.js";
 
 const PRODUCT_COLUMNS = "id,code,title,description,module_slug,price_cents,sort_order,preview_pages,page_count,created_at";
@@ -102,6 +103,7 @@ export function addToCart(id) {
   state.checkoutStep = "cart";
   saveCart();
   syncCart();
+  track("cart");
   toast(`${product.title} added to cart`);
 }
 
@@ -115,6 +117,7 @@ export function addAllToCart(slug) {
   state.checkoutStep = "cart";
   saveCart();
   syncCart();
+  track("cart");
   toast(`${missing.length} note${missing.length === 1 ? "" : "s"} added to cart`);
   openCart();
 }

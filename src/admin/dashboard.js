@@ -561,6 +561,70 @@ function renderVisitorChart(series) {
 }
 
 /* ------------------------------------------------------------------
+   Where visitors come from / Visitor journey — from visitor_insights()
+   (see adminState.visitorInsights), refetched for each range. Only
+   sessions since source tracking began are counted, so a long range
+   just starts from then.
+------------------------------------------------------------------ */
+const MAX_SOURCES = 8;
+const DEVICE_LABELS = { mobile: "Phone", desktop: "Computer", tablet: "Tablet", unknown: "Unknown" };
+
+const pct = (n, total) => (total ? Math.round((n / total) * 100) : 0);
+
+function barRow(label, count, total, meta = `${pct(count, total)}%`) {
+  return `
+    <div class="src-row">
+      <span class="src-label">${esc(label)}</span>
+      <span class="src-count">${count} <span>${esc(meta)}</span></span>
+      <span class="src-bar"><span style="width:${Math.max(count ? 2 : 0, pct(count, total))}%"></span></span>
+    </div>`;
+}
+
+function insightRows(kind) {
+  return adminState.visitorInsights
+    .filter((r) => r.kind === kind)
+    .map((r) => ({ label: r.label, count: Number(r.visitors) }))
+    .sort((a, b) => b.count - a.count);
+}
+
+function insightsTotal() {
+  return Number(adminState.visitorInsights.find((r) => r.kind === "total")?.visitors || 0);
+}
+
+function renderSources() {
+  const total = insightsTotal();
+  if (!total) return `<div class="empty-state">No visits recorded in this range yet.</div>`;
+
+  let sources = insightRows("source");
+  if (sources.length > MAX_SOURCES) {
+    const rest = sources.slice(MAX_SOURCES - 1);
+    sources = [...sources.slice(0, MAX_SOURCES - 1), { label: "Other", count: rest.reduce((s, r) => s + r.count, 0) }];
+  }
+  const devices = insightRows("device")
+    .map((d) => `${esc(DEVICE_LABELS[d.label] || d.label)} ${pct(d.count, total)}%`)
+    .join(" · ");
+
+  return `
+    <div class="src-list">${sources.map((s) => barRow(s.label, s.count, total)).join("")}</div>
+    <p class="src-foot">${devices}</p>
+    <p class="src-foot">"Direct" is anyone with no referring site: typed in, a bookmark, or a link opened from WhatsApp, which hides where it came from.</p>`;
+}
+
+function renderJourney(paidCount) {
+  const total = insightsTotal();
+  if (!total) return `<div class="empty-state">No visits recorded in this range yet.</div>`;
+  const events = Object.fromEntries(insightRows("event").map((e) => [e.label, e.count]));
+  const steps = [
+    ["Visited", total],
+    ["Opened a preview", events.preview || 0],
+    ["Added to cart", events.cart || 0],
+    ["Started checkout", events.checkout || 0],
+    ["Paid", paidCount],
+  ];
+  return `<div class="src-list">${steps.map(([label, count]) => barRow(label, count, total)).join("")}</div>`;
+}
+
+/* ------------------------------------------------------------------
    Recent Orders / Top Selling Notes
 ------------------------------------------------------------------ */
 function renderRecentOrders(orders) {
@@ -680,6 +744,10 @@ export function renderDashboard() {
     : `<div class="empty-state">No visits recorded yet.</div>`;
   const vScroller = document.querySelector("#dashVisitorsChart .dash-chart-scroll");
   if (vScroller) vScroller.scrollLeft = vScroller.scrollWidth;
+
+  $("#dashSourcesSub").textContent = `Unique visitors, ${RANGE_LABELS[range]}`;
+  $("#dashSources").innerHTML = renderSources();
+  $("#dashJourney").innerHTML = renderJourney(data.paidCount);
 
   $("#dashRecentOrders").innerHTML = renderRecentOrders(data.recentOrders);
   $("#dashTopNotes").innerHTML = renderTopNotesList(data.topNotes);

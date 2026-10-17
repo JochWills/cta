@@ -87,7 +87,8 @@ src/
                              reviews (the cards in index.html are only a fallback)
                              and adds "Read more" to long ones
   presence.js               startPresence — anonymous heartbeat behind the admin
-                             page's live visitor count, see Data model below
+                             page's live visitor count and visitor sources, plus
+                             track() for the funnel steps, see Data model below
   render.js                 All DOM rendering + toast/drawer/filter helpers
   styles.css                Everything, token-first, one file
   admin/                    Admin page's own state/api/render/main split + admin.css
@@ -222,7 +223,15 @@ heartbeat), written by the same `heartbeat` call as `site_sessions` above
 but never pruned, since `site_sessions` only ever holds roughly the last
 day. Backs the admin page's "Daily visitors" chart (`daily_visitor_counts()`
 — see `supabase/schema.sql`'s "LIVE VISITOR COUNT + DAILY VISITORS"
-section), which needs real history `site_sessions` can't provide.
+section), which needs real history `site_sessions` can't provide. Its `source`
+(a label like `Google`/`Instagram`/`Direct`, worked out by `sourceLabel`
+in `presence.js` from utm_source/click ids, the in-app browser's user
+agent, then the referrer) and `device` columns, plus `site_events`
+(`preview`/`cart`/`checkout`, once per session per day, written by
+`track()`), back the dashboard's "Where visitors come from" and
+"Visitor journey" cards via `visitor_insights(p_days)` — section 11 of
+`schema.sql`. Sessions from before that existed have a null source and
+are left out.
 
 `reviews` — `name` (null = "Anonymous student"), `body`, `rating` (1-5;
 null only on the two seeded from before the form existed), `is_published`,
