@@ -113,12 +113,12 @@ h1,h2,h3{font-family:'Playfair Display',Georgia,serif;font-weight:400;letter-spa
   display:flex;align-items:center;
 }
 .hero-copy{padding:80px 40px;max-width:600px;}
-/* EasyNotes promo — a small card fixed to the right edge of the page,
-   below the header and under the cart drawer and modals. On hover it
+/* EasyNotes promo — a card on the right edge of the hero, scrolling
+   away with it. On hover it
    slides out a little further and an arrow appears. A plain strip under
    the hero on phones (see the 720px block). */
 .side-promo{
-  position:fixed;z-index:50;right:0;top:50%;
+  position:absolute;z-index:2;right:0;top:50%;
   transform:translate(6px,-50%);
   width:108px;padding:18px 18px 16px 12px;border-radius:14px 0 0 14px;
   display:flex;flex-direction:column;align-items:center;text-align:center;
