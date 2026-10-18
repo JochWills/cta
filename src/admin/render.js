@@ -20,14 +20,35 @@ export function toast(message) {
 ------------------------------------------------------------------ */
 export function showLoggedOut() {
   $("#loginView").hidden = false;
+  $("#riddleView").hidden = true;
   $("#dashboardView").hidden = true;
   $("#logoutWrap").hidden = true;
   $("#passwordInput").value = "";
   $("#passwordInput")?.focus();
 }
 
+/** The riddle screen. `question` null means one is still on its way. */
+export function showRiddle(question) {
+  $("#loginView").hidden = true;
+  $("#riddleView").hidden = false;
+  $("#dashboardView").hidden = true;
+  $("#logoutWrap").hidden = true;
+  const q = $("#riddleQuestion");
+  q.classList.toggle("is-loading", !question);
+  q.textContent = question || "Finding you a riddle…";
+  if (question) {
+    $("#riddleInput").value = "";
+    $("#riddleInput").focus();
+  }
+}
+
+export function riddleError(message) {
+  $("#riddleError").innerHTML = message ? `<div class="err">${esc(message)}</div>` : "";
+}
+
 export function showLoggedIn() {
   $("#loginView").hidden = true;
+  $("#riddleView").hidden = true;
   $("#dashboardView").hidden = false;
   $("#logoutWrap").hidden = false;
 }

@@ -5,6 +5,8 @@ import {
   showLoggedIn,
   showLoggedOut,
   loginError,
+  showRiddle,
+  riddleError,
   setTab,
   renderOrders,
   renderProducts,
@@ -20,6 +22,8 @@ import {
 import {
   AuthError,
   login,
+  askRiddle,
+  answerRiddle,
   fetchOrders,
   deleteOrder,
   listProducts,
@@ -45,11 +49,9 @@ const PREVIEW_MAX_PAGES = 3;
 
 async function boot() {
   loadSession();
-  if (adminState.token) {
-    await enterDashboard();
-  } else {
-    showLoggedOut();
-  }
+  // A kept sign-in skips the password, never the riddle.
+  if (adminState.token) await startRiddle();
+  else showLoggedOut();
 }
 
 async function doLogin() {
@@ -63,13 +65,62 @@ async function doLogin() {
     const remember = $("#rememberInput").checked;
     const { token, expires_at } = await login(password, remember);
     saveSession(token, expires_at, remember);
-    await enterDashboard();
+    await startRiddle();
   } catch (err) {
     loginError(err.message);
   } finally {
     btn.disabled = false;
     btn.textContent = "Log in";
   }
+}
+
+/* ------------------------------------------------------------------
+   Riddle — between the password and the dashboard, every page load.
+   admin-riddle picks it and checks the answer; the page only ever holds
+   the question and a signed "which riddle" challenge.
+------------------------------------------------------------------ */
+let riddleChallenge = "";
+
+async function startRiddle(message = "") {
+  riddleChallenge = "";
+  showRiddle(null);
+  riddleError(message);
+  try {
+    const { question, challenge } = await askRiddle();
+    riddleChallenge = challenge;
+    showRiddle(question);
+  } catch (err) {
+    if (err instanceof AuthError) return backToLogin();
+    riddleError(err.message);
+  }
+}
+
+async function submitRiddle() {
+  const answer = $("#riddleInput").value.trim();
+  if (!answer || !riddleChallenge) return;
+  const btn = $("#riddleBtn");
+  btn.disabled = true;
+  btn.textContent = "Checking…";
+  riddleError("");
+  try {
+    const { token } = await answerRiddle(riddleChallenge, answer);
+    adminState.unlocked = token;
+    await enterDashboard();
+  } catch (err) {
+    if (err instanceof AuthError) return backToLogin();
+    if (err.expired) return startRiddle(err.message);
+    riddleError(err.message);
+    $("#riddleInput").select();
+  } finally {
+    btn.disabled = false;
+    btn.textContent = "Unlock";
+  }
+}
+
+function backToLogin() {
+  clearSession();
+  showLoggedOut();
+  loginError("Session expired — log in again");
 }
 
 async function enterDashboard() {
@@ -124,11 +175,14 @@ function stopVisitorPoll() {
   visitorPollTimer = null;
 }
 
+/** A data call came back 401: the unlocked token ran out. Back to a riddle if
+ * the password session is still good (startRiddle finds out), else the login. */
 function handleAuthError() {
   stopVisitorPoll();
-  clearSession();
-  showLoggedOut();
-  loginError("Session expired — log in again");
+  adminState.unlocked = "";
+  if (!$("#riddleView").hidden) return; // several loads failing at once — one riddle is enough
+  if (adminState.token) startRiddle("Locked again. Solve another riddle to carry on.");
+  else backToLogin();
 }
 
 async function loadOrders() {
@@ -540,6 +594,13 @@ async function viewCurrentPdf() {
 /* ------------------------------------------------------------------
    Delegated events (same pattern as src/main.js)
 ------------------------------------------------------------------ */
+$("#riddleForm").addEventListener("submit", (e) => {
+  e.preventDefault();
+  submitRiddle();
+});
+$("#newRiddleBtn").addEventListener("click", () => startRiddle());
+$("#riddleLogoutBtn").addEventListener("click", () => doLogout());
+
 $("#loginForm").addEventListener("submit", (e) => {
   e.preventDefault();
   doLogin();

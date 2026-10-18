@@ -102,13 +102,14 @@ src/
 supabase/
   schema.sql                Tables, RLS policies, both storage buckets, 28 seed rows
   functions/
-    _shared/admin.ts        Token auth + CORS shared by the six admin-* functions
+    _shared/admin.ts        Token auth + CORS shared by the seven admin-* functions
     admin-login/             ┐
     admin-orders/             } deployed — see docs/admin.md
     admin-products/           │
     admin-upload/            │
     admin-discounts/         │
-    admin-reviews/           ┘
+    admin-reviews/           │
+    admin-riddle/            ┘ the riddle after the password, see Current state
     paystack-initiate/        ┐ deployed — see docs/paystack.md
     paystack-webhook/         ┘
     order-download/          deployed — self-serve download links, see Data model below
@@ -207,6 +208,14 @@ via the "Already paid? Get your notes" footer link. See that function's own
 comment for why it always responds `200 { ok, reason }` rather than
 404/403.
 
+**Thank-you email.** `paystack-webhook` also sends one email through Resend
+when it first flips an order to paid: thanks, the titles bought, and a "Get
+your notes" button linking to `/?paid=1&ref=...&email=...` — the same
+download-window handling as above, with the email in the link so it works on
+any device. Skipped entirely while the `RESEND_API_KEY` secret is unset;
+`EMAIL_FROM` and `EMAIL_REPLY_TO` secrets are optional. Sending from
+`@pgdanotes.co.za` needs that domain verified in Resend (DNS at GoDaddy).
+
 `modules` — the four module rows. Currently the frontend uses the hardcoded
 `MODULES` array for presentation and only reads `products` from the database.
 
@@ -284,6 +293,13 @@ needs a redeploy to take effect.
 
 ## Current state
 
+**Admin riddle.** The admin page is locked twice: the password
+(`admin-login`), then a random riddle (`admin-riddle`) on every page load —
+a kept sign-in skips only the password. The riddle pool and answers live in
+`admin-riddle` only. Tokens carry a `stage` (`pass` → `riddle` → `unlocked`,
+see `_shared/admin.ts`); the data functions accept `unlocked` only, and the
+page holds that one in memory, never storage.
+
 Done: full front end, module filtering, cart drawer, two-step checkout, order +
 email capture into Supabase, responsive down to 390px, keyboard focus states,
 reduced-motion support, Paystack checkout (`docs/paystack.md`), self-serve PDF
@@ -298,10 +314,8 @@ the database — see Data model above), plus automatic bundle discounts
 see Data model above).
 
 Not done:
-1. **Delivery email** — email hosting on `pgdanotes.co.za` (or a verified
-   sending domain with Resend/Postmark) would let `order-download`'s links
-   also go out by email as a backup copy; not required for delivery to work,
-   since the download modal already handles that without one.
+1. **Thank-you email live** — the code is deployed (see Data model above);
+   it starts sending once Resend is set up and `RESEND_API_KEY` is set.
 2. **The catalogue itself** — the live database has one real product in it
    (added through the admin page, PDF + preview working end-to-end). The
    other ~27 sections from `SEED`/`schema.sql` exist as local demo/seed data

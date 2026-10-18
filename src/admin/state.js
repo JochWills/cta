@@ -4,8 +4,12 @@
  * share small helpers (esc, $, rands).
  */
 export const adminState = {
-  /** Signed session token from admin-login, or "" when logged out. */
+  /** Signed session token from admin-login, or "" when logged out. On its
+   * own it only gets a riddle (see admin-riddle) — kept per loadSession below. */
   token: "",
+  /** Token from solving the riddle — the one the data functions accept.
+   * Memory only, never stored, so every page load asks a riddle again. */
+  unlocked: "",
   /** ISO timestamp the token expires at. */
   expiresAt: "",
   /** Orders, newest first, once loaded. */
@@ -73,6 +77,7 @@ export function saveSession(token, expiresAt, remember = false) {
 
 export function clearSession() {
   adminState.token = "";
+  adminState.unlocked = "";
   adminState.expiresAt = "";
   for (const store of [sessionStorage, localStorage]) {
     try {

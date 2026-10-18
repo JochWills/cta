@@ -173,9 +173,10 @@ const observer = new IntersectionObserver(
 const returnParams = new URLSearchParams(location.search);
 if (returnParams.get("paid") === "1") {
   const reference = returnParams.get("ref") || "";
-  let email = "";
+  // The thank-you email's link carries the email itself, so it works on any device.
+  let email = returnParams.get("email") || "";
   try {
-    email = localStorage.getItem("cta_last_email") || "";
+    email = email || localStorage.getItem("cta_last_email") || "";
     // Back from a payment for the order this cart became — clear the saved
     // cart before loadCart() below reads it. Normally paymentDone() in
     // checkout.js has already done this (popup flow); this covers the
