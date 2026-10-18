@@ -174,7 +174,7 @@ h1,h2,h3{font-family:'Playfair Display',Georgia,serif;font-weight:400;letter-spa
 .hero p.lede{
   margin:22px 0 0;max-width:36ch;color:var(--ink-soft);font-size:16px;line-height:1.65;
 }
-.hero-rating{margin:20px 0 -8px;font-size:15px;line-height:1;min-height:18px;}
+.hero-rating{margin:20px 0 -8px;font-size:15px;line-height:1;min-height:20px;}
 /* Both of these fill in a moment after load. Until then they keep their
    space (invisibly) instead of display:none, so the hero is already its
    final height and the photo doesn't rescale mid-entrance; each one's
