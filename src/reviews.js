@@ -7,8 +7,9 @@
  * no database configured or the fetch fails, and get replaced otherwise.
  *
  * "Read more": every .review-body is clamped to the same height in CSS; a
- * toggle is added only to the ones whose text actually overflows it, so a
- * short review never gets a pointless button. Overflow depends on the
+ * button is added only to the ones whose text actually overflows it, so a
+ * short review never gets a pointless one. It grows that card to fill the
+ * carousel (expandReview) and "Read less" puts it back. Overflow depends on the
  * card's width, so it's re-checked on resize.
  */
 import { $, esc } from "./state.js";
@@ -58,15 +59,61 @@ function wireReadMore() {
     btn.textContent = "Read more";
     btn.setAttribute("aria-expanded", "false");
     review.querySelector(".review-body").after(btn);
-
-    btn.addEventListener("click", () => {
-      const open = review.classList.toggle("is-open");
-      btn.textContent = open ? "Show less" : "Read more";
-      btn.setAttribute("aria-expanded", String(open));
-      if (!open) syncClamp(review);
-    });
+    btn.addEventListener("click", () => (review.classList.contains("is-open") ? collapseReview(review) : expandReview(review)));
   });
   syncAll();
+}
+
+/* "Read more" grows the card to the carousel's full width and its full
+   height; "Read less" shrinks it back. Both animate in CSS (flex-basis and
+   the body's max-height); while that runs, snapping is switched off and the
+   track is kept lined up on the card so it grows in place. */
+const GROW_MS = 450;
+
+function followCard(review) {
+  const track = $("#reviewTrack");
+  track.classList.add("is-resizing");
+  const until = performance.now() + GROW_MS + 50;
+  const step = () => {
+    track.scrollLeft = review.offsetLeft - track.offsetLeft;
+    if (performance.now() < until) requestAnimationFrame(step);
+    else {
+      track.classList.remove("is-resizing");
+      syncAll();
+      carouselSync();
+    }
+  };
+  requestAnimationFrame(step);
+}
+
+function expandReview(review) {
+  document.querySelectorAll(".review.is-open").forEach((r) => r !== review && collapseReview(r));
+  const body = review.querySelector(".review-body");
+  // Measure the full height at the final (wider) width before animating to it.
+  review.classList.add("is-measuring", "is-open");
+  const full = body.scrollHeight;
+  review.classList.remove("is-open");
+  void review.offsetWidth;
+  review.classList.remove("is-measuring");
+  requestAnimationFrame(() => {
+    review.classList.add("is-open");
+    body.style.maxHeight = `${full}px`;
+  });
+  const btn = review.querySelector(".review-more");
+  btn.textContent = "Read less";
+  btn.setAttribute("aria-expanded", "true");
+  followCard(review);
+}
+
+function collapseReview(review) {
+  if (!review.classList.contains("is-open")) return;
+  review.classList.remove("is-open");
+  review.querySelector(".review-body").style.maxHeight = "";
+  const btn = review.querySelector(".review-more");
+  btn.textContent = "Read more";
+  btn.setAttribute("aria-expanded", "false");
+  lastTouched = Date.now(); // give them a moment before the carousel moves on
+  followCard(review);
 }
 
 export async function initReviews() {
@@ -121,7 +168,10 @@ function setUpCarousel() {
   const cards = [...track.querySelectorAll(".review")];
   if (!cards.length) return;
 
-  const perView = () => Math.max(1, Math.round(track.clientWidth / cards[0].offsetWidth));
+  const perView = () => {
+    const card = cards.find((c) => !c.classList.contains("is-open")) || cards[0];
+    return Math.max(1, Math.round(track.clientWidth / card.offsetWidth));
+  };
   const pages = () => Math.ceil(cards.length / perView());
   // The last page can be a partial one (3 reviews, 2 in view), so being
   // scrolled to the end always counts as the last page.
@@ -152,6 +202,7 @@ function setUpCarousel() {
   nav.onclick = (e) => {
     const arrow = e.target.closest("[data-dir]");
     const dot = e.target.closest("[data-page]");
+    if (arrow || dot) cards.forEach(collapseReview);
     if (arrow) goTo(page() + Number(arrow.dataset.dir));
     else if (dot) goTo(Number(dot.dataset.page));
     lastTouched = Date.now();

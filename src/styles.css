@@ -484,14 +484,24 @@ h1,h2,h3{font-family:'Playfair Display',Georgia,serif;font-weight:400;letter-spa
 /* A carousel: one row of cards, two in view (one on phones), scrolled
    sideways with scroll-snap. Arrows and dots: setUpCarousel in reviews.js. */
 .review-grid{
-  display:grid;grid-auto-flow:column;grid-auto-columns:calc((100% - 24px) / 2);gap:24px;
+  display:flex;gap:24px;
   margin-top:32px;overflow-x:auto;overscroll-behavior-x:contain;
   scroll-snap-type:x mandatory;scrollbar-width:none;
   padding:4px 0 8px;
 }
+.review-grid.is-resizing{scroll-snap-type:none;}
 .review-grid::-webkit-scrollbar{display:none;}
 .review-grid:focus-visible{outline:2px solid var(--accent);outline-offset:4px;border-radius:var(--radius);}
-.review{scroll-snap-align:start;}
+.review{
+  flex:0 0 calc((100% - 24px) / 2);scroll-snap-align:start;
+  transition:flex-basis .45s cubic-bezier(.4,0,.2,1);
+}
+/* "Read more": the card takes the carousel's full width and full height (expandReview) */
+.review.is-open{flex-basis:100%;}
+.review .review-body{transition:max-height .45s cubic-bezier(.4,0,.2,1);}
+.review.is-open .review-body::after{opacity:0;}
+.review.is-clamped .review-body::after{transition:opacity .3s ease;}
+.review.is-measuring,.review.is-measuring .review-body{transition:none;}
 .review-nav{display:flex;align-items:center;justify-content:center;gap:18px;margin-top:22px;}
 .review-nav[hidden]{display:none;}
 .review-arrow{
@@ -521,10 +531,6 @@ h1,h2,h3{font-family:'Playfair Display',Georgia,serif;font-weight:400;letter-spa
   content:"";position:absolute;left:0;right:0;bottom:0;height:3.4em;
   background:linear-gradient(rgba(255,255,255,0),var(--paper));pointer-events:none;
 }
-/* Expanded, the review scrolls inside its card instead of growing it, so
-   every card in the carousel stays the same height. */
-.review.is-open .review-body{overflow-y:auto;overscroll-behavior:contain;padding-right:8px;scrollbar-width:thin;}
-.review.is-open .review-body::after{display:none;}
 .review-more{
   margin-top:10px;padding:0;font-size:13px;font-weight:500;color:var(--accent-deep);
   text-decoration:underline;text-underline-offset:3px;
@@ -844,14 +850,15 @@ details.faq p{margin:12px 0 0;color:var(--ink-soft);font-size:14px;max-width:66c
   .modules{padding-top:44px;}
   .trust-grid{grid-template-columns:repeat(2,1fr);gap:26px;}
   .two-col{grid-template-columns:1fr;gap:40px;}
-  .review-grid{grid-auto-columns:100%;}
+  .review{flex-basis:100%;}
   .review-page{padding:44px 26px 70px;}
   .review-form-card{padding:8px 20px 24px;}
   .footer-grid{grid-template-columns:1fr 1fr;gap:32px;}
 }
 @media (max-width:720px){
   .product-grid{grid-template-columns:repeat(2,1fr);gap:14px;}
-  .module-grid{grid-template-columns:1fr;}
+  /* No module notebooks on phones — the filter chips above the notes do the same job */
+  .modules{display:none;}
   .card h3{font-size:20px;}
   .section{padding:56px 0;}
   .shop{padding:44px 0 56px;}
