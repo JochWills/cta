@@ -230,7 +230,11 @@ is doing (`activity`, e.g. "Shop" or "Previewing: VAT", read off the page
 by `currentActivity` in `presence.js`) and its cart size; `live_visitors()`
 (schema.sql section 12) turns that into the admin header's "online"
 pop-up. That function is service_role-only, reached through `admin-live`,
-so the anon key can count visitors but not browse them.
+so the anon key can count visitors but not browse them. "Online" means
+looking at the site right now: a tab only heartbeats while visible, calls
+`leave_site` the moment it's hidden or closed (a keepalive request, so it
+survives the page closing), and bots/headless browsers never heartbeat at
+all (`isBot` in `presence.js`), so they're out of every visitor stat too.
 
 `daily_visits` — one row per session id per calendar day (not per
 heartbeat), written by the same `heartbeat` call as `site_sessions` above

@@ -680,3 +680,15 @@ $$;
 grant execute on function public.heartbeat(text, text, text, text, int) to anon, authenticated;
 revoke execute on function public.live_visitors() from public, anon, authenticated;
 grant execute on function public.live_visitors() to service_role;
+
+-- Called by src/presence.js the moment a tab is closed or put in the
+-- background, so it drops off the live count straight away instead of
+-- lingering for the 45-second window. Pushes last_seen back rather than
+-- deleting, so started_at survives if the visitor comes back to the tab.
+-- Session ids are random UUIDs, so one tab can't sign another out.
+create or replace function public.leave_site(p_session_id text) returns void
+language sql security definer set search_path = public as $$
+  update public.site_sessions set last_seen = now() - interval '1 hour'
+  where session_id = p_session_id and last_seen > now() - interval '1 hour';
+$$;
+grant execute on function public.leave_site(text) to anon, authenticated;

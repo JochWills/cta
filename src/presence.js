@@ -143,8 +143,20 @@ function stored(key, make) {
   }
 }
 
+/**
+ * Crawlers (Google renders pages with JS), link-preview fetchers, speed
+ * testers and automated/headless browsers — none of them are people, so
+ * they're left out of the live count and the visitor stats entirely.
+ */
+function isBot() {
+  return (
+    navigator.webdriver === true ||
+    /bot|crawl|spider|slurp|headless|lighthouse|pagespeed|prerender/i.test(navigator.userAgent)
+  );
+}
+
 export function startPresence() {
-  if (!hasDB) return;
+  if (!hasDB || isBot()) return;
 
   sessionId = stored("cta_session_id", () => crypto.randomUUID());
   // Kept for the whole tab, so moving to /terms and back doesn't turn a
@@ -167,12 +179,30 @@ export function startPresence() {
       p_cart: Number(cart),
     }).catch(() => {}); // best-effort, never worth surfacing to a visitor
   };
-  beat();
-  setInterval(beat, HEARTBEAT_MS);
+  // The live count means "looking at the site right now": a tab only beats
+  // while it's visible, says it's gone the moment it's hidden or closed, and
+  // beats straight away when it's back. (Browsers also throttle timers in
+  // background tabs, which would make them flicker in and out otherwise.)
+  let left = false;
+  const leave = () => {
+    if (left) return;
+    left = true;
+    sbRpc("leave_site", { p_session_id: sessionId }, { keepalive: true }).catch(() => {});
+  };
+  const backAgain = () => {
+    left = false;
+    beat();
+  };
+
+  if (!document.hidden) beat();
+  setInterval(() => !document.hidden && beat(), HEARTBEAT_MS);
   // Between beats: send one early when what they're doing changes.
   setInterval(() => {
     if (!document.hidden && snapshot() !== lastSent && Date.now() - lastBeat > ACTIVITY_CHECK_MS) beat();
   }, ACTIVITY_CHECK_MS);
+  document.addEventListener("visibilitychange", () => (document.hidden ? leave() : backAgain()));
+  addEventListener("pagehide", leave);
+  addEventListener("pageshow", (e) => e.persisted && !document.hidden && backAgain()); // back via the back/forward cache
 }
 
 /** Note that this session reached a step: "preview", "cart" or "checkout". Once a day per step is all the database keeps. */

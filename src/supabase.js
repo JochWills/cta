@@ -67,11 +67,13 @@ export async function sbFunction(name, payload) {
 }
 
 /** Call a Postgres function exposed at PostgREST's /rpc/ endpoint (see supabase/schema.sql). */
-export async function sbRpc(fn, args = {}) {
+/** `keepalive` lets the request finish even as the page closes (see presence.js's leave). */
+export async function sbRpc(fn, args = {}, { keepalive = false } = {}) {
   const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/${fn}`, {
     method: "POST",
     headers: headers(),
     body: JSON.stringify(args),
+    keepalive,
   });
   if (!res.ok) throw new Error(`Supabase rpc ${fn} failed (${res.status}): ${await res.text()}`);
   return res.json();

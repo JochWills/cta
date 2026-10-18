@@ -104,7 +104,7 @@ async function loadVisitorInsights() {
   }
 }
 
-const VISITOR_POLL_MS = 15_000;
+const VISITOR_POLL_MS = 10_000; // same as the live pop-up, so the two never disagree for long
 let visitorPollTimer = null;
 
 async function updateVisitorCount() {
