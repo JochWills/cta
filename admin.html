@@ -139,10 +139,12 @@
         <div class="dash-grid-2">
           <div class="admin-card dash-card">
             <div class="dash-card-head">
-              <h3>Recent orders</h3>
-              <button type="button" class="dash-view-all" data-tab="orders">View all →</button>
+              <div>
+                <h3>Daily visitors</h3>
+                <p class="dash-card-sub">Unique browser sessions per day, last 14 days</p>
+              </div>
             </div>
-            <div id="dashRecentOrders"></div>
+            <div id="dashVisitorsChart" class="dash-chart-host"></div>
           </div>
 
           <div class="admin-card dash-card">
@@ -152,16 +154,6 @@
             </div>
             <div id="dashTopNotes"></div>
           </div>
-        </div>
-
-        <div class="admin-card dash-card dash-card-spaced">
-          <div class="dash-card-head">
-            <div>
-              <h3>Daily visitors</h3>
-              <p class="dash-card-sub">Unique browser sessions per day, last 14 days</p>
-            </div>
-          </div>
-          <div id="dashVisitorsChart" class="dash-chart-host"></div>
         </div>
 
         <div class="dash-grid-2 dash-grid-even">

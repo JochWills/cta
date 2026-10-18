@@ -12,7 +12,6 @@
 import { $, esc, rands } from "../state.js";
 import { adminState } from "./state.js";
 import { MODULES } from "../catalogue.js";
-import { STATUS_LABEL } from "./render.js";
 
 const RANGE_LABELS = { today: "today", "7": "last 7 days", "30": "last 30 days", "90": "last 90 days", all: "all time" };
 const PERIOD_NOUN = { today: "day", "7": "7 days", "30": "30 days", "90": "90 days" };
@@ -90,20 +89,24 @@ function bucketConfig(rangeKey, orders) {
   };
 }
 
-/** Revenue/paid-count/average/pending-created totals for orders whose date
+/** Revenue/paid-count/average/unique-customer totals for orders whose date
  * (orderDate — see above) falls in [start, end). Shared by the current
  * period and, for the % change shown on each stat tile, the immediately
  * preceding period of the same length. */
+/** Different people who paid, counted by email (case and spaces ignored). Freebie downloads aren't paid, so never count. */
+function uniqueCustomers(paidOrders) {
+  return new Set(paidOrders.map((o) => String(o.email || "").trim().toLowerCase()).filter(Boolean)).size;
+}
+
 function periodTotals(orders, start, end) {
   const inRange = (o) => {
     const d = orderDate(o);
     return d >= start && (!end || d < end);
   };
   const paid = orders.filter((o) => o.status === "paid" && inRange(o));
-  const pendingCount = orders.filter((o) => o.status === "pending" && inRange(o)).length;
   const revenueCents = paid.reduce((sum, o) => sum + o.total_cents, 0);
   const avgCents = paid.length ? Math.round(revenueCents / paid.length) : 0;
-  return { revenueCents, paidCount: paid.length, avgCents, pendingCount };
+  return { revenueCents, paidCount: paid.length, avgCents, customerCount: uniqueCustomers(paid) };
 }
 
 /**
@@ -124,7 +127,7 @@ function computeDashboard(rangeKey) {
   const cfg = bucketConfig(rangeKey, orders);
   const current = periodTotals(orders, cfg.rangeStart, null);
 
-  let deltas = { revenueCents: null, paidCount: null, avgCents: null, pendingCount: null };
+  let deltas = { revenueCents: null, paidCount: null, avgCents: null, customerCount: null };
   if (rangeKey !== "all") {
     const days = rangeKey === "today" ? 1 : parseInt(rangeKey, 10);
     const prevStart = new Date(cfg.rangeStart);
@@ -134,7 +137,7 @@ function computeDashboard(rangeKey) {
       revenueCents: pctDelta(rangeKey, current.revenueCents, prev.revenueCents),
       paidCount: pctDelta(rangeKey, current.paidCount, prev.paidCount),
       avgCents: pctDelta(rangeKey, current.avgCents, prev.avgCents),
-      pendingCount: pctDelta(rangeKey, current.pendingCount, prev.pendingCount),
+      customerCount: pctDelta(rangeKey, current.customerCount, prev.customerCount),
     };
   }
 
@@ -149,12 +152,8 @@ function computeDashboard(rangeKey) {
     revenueByBucket.set(key, revenueByBucket.get(key) + o.total_cents);
     countByBucket.set(key, countByBucket.get(key) + 1);
   }
-  const pendingByBucket = new Map(cfg.buckets.map((b) => [b.key, 0]));
-  for (const o of orders) {
-    if (o.status !== "pending") continue;
-    const key = cfg.keyFor(orderDate(o));
-    if (pendingByBucket.has(key)) pendingByBucket.set(key, pendingByBucket.get(key) + 1);
-  }
+  const paidByBucket = new Map(cfg.buckets.map((b) => [b.key, []]));
+  for (const o of paidInRange) paidByBucket.get(cfg.keyFor(orderDate(o)))?.push(o);
 
   const series = cfg.buckets.map((b) => ({ label: b.label, cents: revenueByBucket.get(b.key) || 0 }));
   const paidCountSeries = cfg.buckets.map((b) => countByBucket.get(b.key) || 0);
@@ -162,7 +161,7 @@ function computeDashboard(rangeKey) {
     const c = countByBucket.get(b.key) || 0;
     return c ? Math.round((revenueByBucket.get(b.key) || 0) / c) : 0;
   });
-  const pendingSeries = cfg.buckets.map((b) => pendingByBucket.get(b.key) || 0);
+  const customerSeries = cfg.buckets.map((b) => uniqueCustomers(paidByBucket.get(b.key) || []));
 
   // Tallied from each order's own item snapshot (see CLAUDE.md's Data model —
   // orders.items is a jsonb copy taken at purchase time), so this still
@@ -197,27 +196,13 @@ function computeDashboard(rangeKey) {
     .map((c) => ({ ...c, pct: categoryTotal ? Math.round((c.cents / categoryTotal) * 100) : 0 }))
     .sort((a, b) => b.cents - a.cents);
 
-  // Recent Orders isn't scoped to the picked range — it's a "what just
-  // happened" glance, not a range aggregate, so it always shows the actual
-  // most recent orders regardless of which stats range is selected.
-  const recentOrders = orders.slice(0, 5);
 
-  return { ...current, rangeStart: cfg.rangeStart, deltas, series, paidCountSeries, avgSeries, pendingSeries, topNotes, categories, categoryTotal, recentOrders };
+  return { ...current, rangeStart: cfg.rangeStart, deltas, series, paidCountSeries, avgSeries, customerSeries, topNotes, categories, categoryTotal };
 }
 
 /* ------------------------------------------------------------------
    Small building blocks
 ------------------------------------------------------------------ */
-
-/** "Josh Williams" -> "J*** W." — Recent Orders is a glance/summary widget
- * shown alongside the full, unmasked detail already one click away on the
- * Orders tab, so trimming names here is purely a lighter-weight look for
- * this particular view, not a real access restriction. */
-function maskName(fullName) {
-  const words = (fullName || "").trim().split(/\s+/).filter(Boolean);
-  if (!words.length) return "—";
-  return words.map((w, i) => (i === 0 ? `${w[0]}***` : `${w[0]}.`)).join(" ");
-}
 
 /* Greetings by time of day. No names in them — the admin password is
  * shared, so this page doesn't know who's looking. */
@@ -312,7 +297,7 @@ const ICONS = {
   revenue: '<rect x="2.5" y="6" width="19" height="12" rx="2.5"/><circle cx="12" cy="12" r="3"/><path d="M6 9h.01M18 15h.01"/>',
   bag: '<path d="M3 4h2l2.4 11.2a2 2 0 0 0 2 1.6h7.7a2 2 0 0 0 2-1.55L20.5 8H6"/><circle cx="10" cy="20" r="1.3"/><circle cx="18" cy="20" r="1.3"/>',
   tag: '<path d="M12.3 3H5.5a2 2 0 0 0-2 2v6.8c0 .53.21 1.04.59 1.41l8.7 8.7a2 2 0 0 0 2.82 0l6.2-6.2a2 2 0 0 0 0-2.82l-8.7-8.7A2 2 0 0 0 12.3 3z"/><circle cx="8.3" cy="8.3" r="1.3"/>',
-  clock: '<circle cx="12" cy="12" r="9"/><path d="M12 7.3v5l3.3 1.9"/>',
+  people: '<circle cx="9" cy="8" r="3.2"/><path d="M3 19.5c.6-3.3 3-5.3 6-5.3s5.4 2 6 5.3"/><circle cx="16.5" cy="9" r="2.6"/><path d="M15.4 14.4a5 5 0 0 1 1.1-.1c2.5 0 4.4 1.7 4.9 4.6"/>',
 };
 
 function statTile({ label, value, icon, tint, ink, sub, spark }) {
@@ -682,37 +667,8 @@ function renderJourney(rangeStart) {
 }
 
 /* ------------------------------------------------------------------
-   Recent Orders / Top Selling Notes
+   Top Selling Notes
 ------------------------------------------------------------------ */
-function renderRecentOrders(orders) {
-  if (!orders.length) return `<div class="empty-state">No orders yet.</div>`;
-  // No Reference column here — it's a "what just happened" glance, and the
-  // full reference (CTA-XXXXXX, longer than this compact card has room for
-  // next to Date/Customer/Notes/Amount/Status) is right there on the Orders
-  // tab this card's "View all" leads to.
-  const rows = orders
-    .map((o) => {
-      const items = Array.isArray(o.items) ? o.items : [];
-      const itemsLabel = items.length ? (items.length === 1 ? items[0].title : `${items[0].title} +${items.length - 1} more`) : "—";
-      return `
-        <tr>
-          <td>${esc(new Date(o.created_at).toLocaleDateString("en-ZA", { day: "numeric", month: "short" }))}</td>
-          <td>${esc(maskName(o.full_name))}</td>
-          <td>${esc(itemsLabel)}</td>
-          <td>${o.status === "free" ? "—" : rands(o.total_cents)}</td>
-          <td><span class="status-badge status-${esc(o.status)}">${esc(STATUS_LABEL[o.status] || o.status)}</span></td>
-        </tr>`;
-    })
-    .join("");
-  return `
-    <div class="admin-table-wrap">
-      <table class="admin-table admin-table-compact">
-        <thead><tr><th>Date</th><th>Customer</th><th>Notes</th><th>Amount</th><th>Status</th></tr></thead>
-        <tbody>${rows}</tbody>
-      </table>
-    </div>`;
-}
-
 function renderTopNotesList(topNotes) {
   if (!topNotes.length) return `<div class="empty-state">No sales in this range yet.</div>`;
   const rows = topNotes
@@ -770,13 +726,13 @@ export function renderDashboard() {
       spark: renderSparkline(data.avgSeries, "var(--cga-ink)"),
     }),
     statTile({
-      label: "Pending orders",
-      value: String(data.pendingCount),
-      icon: ICONS.clock,
+      label: "Customers",
+      value: String(data.customerCount),
+      icon: ICONS.people,
       tint: "var(--ma-tint)",
       ink: "var(--ma-ink)",
-      sub: data.pendingCount ? deltaHtml(data.deltas.pendingCount, range, false) : `<span class="stat-sub">No pending orders</span>`,
-      spark: renderSparkline(data.pendingSeries, "var(--ma-ink)"),
+      sub: deltaHtml(data.deltas.customerCount, range, true),
+      spark: renderSparkline(data.customerSeries, "var(--ma-ink)"),
     }),
   ].join("");
 
@@ -806,7 +762,6 @@ export function renderDashboard() {
   $("#dashSources").innerHTML = renderSources();
   $("#dashJourney").innerHTML = renderJourney(data.rangeStart);
 
-  $("#dashRecentOrders").innerHTML = renderRecentOrders(data.recentOrders);
   $("#dashTopNotes").innerHTML = renderTopNotesList(data.topNotes);
 }
 
