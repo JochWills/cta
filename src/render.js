@@ -20,18 +20,19 @@ export function renderModules() {
   $("#moduleGrid").innerHTML = MODULES.filter((m) => !m.free).map((m) => {
     const count = state.products.filter((p) => p.module_slug === m.slug).length;
     return `
-    <button class="module-card" data-jump="${m.slug}">
-      <span class="module-card-top">
-        <span class="module-icon" style="background:${m.tint}">
-          <svg viewBox="0 0 24 24" style="stroke:${m.ink}">${m.icon}</svg>
-        </span>
-        <span class="module-num">${count}<i>${count === 1 ? "item" : "items"}</i></span>
+    <div class="nb-slot">
+    <button class="module-card" data-jump="${m.slug}" style="--m-tint:${m.tint};--m-ink:${m.ink}">
+      <span class="nb-spine" aria-hidden="true"></span>
+      <span class="nb-band" aria-hidden="true"></span>
+      <span class="nb-label">
+        <h3>${esc(m.name)}</h3>
+        <span class="module-num">${count}<i>${count === 1 ? "note" : "notes"}</i></span>
       </span>
-      <h3>${esc(m.name)}</h3>
       <span class="module-link">View notes
         <svg viewBox="0 0 16 10"><path d="M1 5h13M10 1l4 4-4 4"/></svg>
       </span>
-    </button>`;
+    </button>
+    </div>`;
   }).join("");
 }
 
@@ -138,15 +139,16 @@ export function renderProducts() {
       const isNew = isNewProduct(p);
       const free = isFreebie(p);
       return `
-    <article class="card" ${p.preview_pages > 0 || free ? `data-preview="${esc(p.id)}"` : ""}>
+    <article class="card" style="--m-tint:${m.tint};--m-ink:${m.ink}" ${p.preview_pages > 0 || free ? `data-preview="${esc(p.id)}"` : ""}>
       ${
         isNew
           ? `<span class="new-badge">New</span>`
           : ""
       }
-      <span class="tag" style="background:${m.tint};color:${m.ink}">${esc(m.tag)}</span>
+      <span class="tag">${esc(m.tag)}</span>
       <h3>${esc(p.title)}</h3>
       <p>${esc(p.description || "")}</p>
+      <button class="card-more" type="button" data-more hidden>Read more</button>
       <div class="card-foot">
         <span class="price-block">
           <span class="price">${free ? "Free" : rands(p.price_cents)}</span>
@@ -154,11 +156,11 @@ export function renderProducts() {
         </span>
         ${
           free
-            ? `<button class="add-btn" style="background:${m.tint};color:${m.ink}"
+            ? `<button class="add-btn"
                 data-freebie="${esc(p.id)}" aria-label="Download ${esc(p.title)} for free">
                 <svg viewBox="0 0 24 24" style="stroke:currentColor"><path d="M12 4v11M7 10.5l5 5 5-5M5 19.5h14"/></svg>
               </button>`
-            : `<button class="add-btn" style="background:${m.tint};color:${m.ink}"
+            : `<button class="add-btn"
                 data-add="${esc(p.id)}"
                 aria-label="${inCart ? "Already in cart" : "Add " + esc(p.title) + " to cart"}">
           ${
@@ -172,7 +174,25 @@ export function renderProducts() {
     </article>`;
     })
     .join("");
+  syncCardMore();
 }
+
+/** Show "Read more" only on cards whose description is cut off at 4 lines
+ * (the clamp is in styles.css). Re-checked on resize and once the web
+ * fonts load, since both change where the text wraps. */
+function syncCardMore() {
+  document.querySelectorAll("#productGrid .card").forEach((card) => {
+    if (card.classList.contains("is-open")) return;
+    const desc = card.querySelector("p");
+    card.querySelector(".card-more").hidden = desc.scrollHeight <= desc.clientHeight + 1;
+  });
+}
+let moreTimer;
+window.addEventListener("resize", () => {
+  clearTimeout(moreTimer);
+  moreTimer = setTimeout(syncCardMore, 150);
+});
+document.fonts?.ready.then(syncCardMore);
 
 /* ------------------------------------------------------------------
    Cart drawer
@@ -394,6 +414,8 @@ export function openPreview(id) {
   $("#previewTag").style.background = m.tint;
   $("#previewTag").style.color = m.ink;
   $("#previewTitle").textContent = p.title;
+  // The card cuts long descriptions off at 4 lines, so the full text lives here.
+  $("#previewDesc").textContent = p.description || "";
   // A freebie may be a spreadsheet — freebies.js fills this in once it knows.
   $("#previewPages").textContent = free ? "" : p.page_count ? `PDF · ${pagesLabel(p.page_count)}` : "PDF";
   const btn = $("#previewAddBtn");

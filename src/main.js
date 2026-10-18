@@ -51,6 +51,14 @@ document.addEventListener("click", (e) => {
   const remove = e.target.closest("[data-rm]");
   if (remove) return removeFromCart(remove.dataset.rm);
 
+  // Before the preview check — the button sits inside a clickable card.
+  const more = e.target.closest("[data-more]");
+  if (more) {
+    const open = more.closest(".card").classList.toggle("is-open");
+    more.textContent = open ? "Show less" : "Read more";
+    return;
+  }
+
   const preview = e.target.closest("[data-preview]");
   if (preview) return openPreview(preview.dataset.preview);
   if (e.target.closest("#closePreview") || e.target.closest("#previewScrim")) return closePreview();

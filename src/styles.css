@@ -156,6 +156,15 @@ h1,h2,h3{font-family:'Playfair Display',Georgia,serif;font-weight:400;letter-spa
 .hero p.lede{
   margin:22px 0 0;max-width:36ch;color:var(--ink-soft);font-size:16px;line-height:1.65;
 }
+.hero-rating{margin:20px 0 -8px;font-size:15px;line-height:1;}
+.hero-rating[hidden]{display:none;}
+.hero-rating a{display:inline-flex;align-items:center;gap:9px;color:var(--ink);}
+.hero-rating-stars{display:inline-flex;align-items:center;gap:0;position:relative;top:-0.5px;} /* digits sit above the line box centre, so lift the stars to match */
+/* the star shape fills ~3/4 of its box, so 18px reads the same height as the digits */
+.hero-rating .star{width:18px;height:18px;margin:0 -1px;}
+.hero-rating strong{font-weight:600;letter-spacing:.01em;}
+.hero-rating-count{margin-left:-4px;color:var(--ink-faint);}
+.hero-rating a:hover .hero-rating-count{color:var(--accent-deep);text-decoration:underline;text-underline-offset:3px;}
 .hero-cta{display:flex;align-items:center;gap:26px;flex-wrap:wrap;margin-top:34px;}
 .btn{
   display:inline-flex;align-items:center;justify-content:center;gap:10px;
@@ -202,43 +211,107 @@ h1,h2,h3{font-family:'Playfair Display',Georgia,serif;font-weight:400;letter-spa
 /* ============================================================
    MODULE CARDS
    ============================================================ */
-.modules{margin-top:34px;position:relative;z-index:5;}
-.module-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:22px;}
+.modules{padding-top:56px;background:#FCFAF8;position:relative;z-index:5;}
+.module-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:40px 22px;}
+/* The notebooks stand on a wooden shelf. Each card's slot draws its own
+   length of shelf, reaching half the gap either side, so neighbours join up
+   into one shelf per row at any column count. */
+.nb-slot{position:relative;display:flex;padding:0 6px 22px;}
+.nb-slot::before,.nb-slot::after{content:"";position:absolute;left:-11px;right:-11px;pointer-events:none;}
+/* top surface, seen at a slight angle */
+.nb-slot::before{
+  bottom:12px;height:12px;z-index:-1;
+  background:
+    repeating-linear-gradient(90deg,rgba(120,84,52,.05) 0 1px,transparent 1px 23px),
+    linear-gradient(180deg,#E6D4BE,#D9C2A5);
+}
+/* front edge of the plank, with its shadow on the wall below */
+.nb-slot::after{
+  bottom:0;height:13px;
+  background:
+    repeating-linear-gradient(90deg,rgba(90,60,35,.06) 0 2px,transparent 2px 17px),
+    linear-gradient(180deg,#C9A985,#B8956F);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.35),0 10px 14px -6px rgba(80,55,35,.28);
+}
+/* round off the shelf's two ends on the outer slots of a row */
+.nb-slot:first-child::before,.nb-slot:first-child::after{border-top-left-radius:2px;border-bottom-left-radius:2px;}
+/* Each module card is drawn as a hardcover notebook: a cover in the
+   module's tint (--m-tint/--m-ink, set inline in renderModules), a darker
+   spine, an elastic band, a paper label, and page edges stacked behind. */
 .module-card{
-  background:var(--paper);border:1px solid var(--rule);border-radius:var(--radius);
-  padding:24px 22px;display:flex;flex-direction:column;align-items:flex-start;box-shadow:var(--shadow);
-  text-align:left;width:100%;transition:transform .25s ease,box-shadow .25s ease;
+  /* toned-down versions of the module colours, so the covers read as dusty pastels */
+  --nb-cover:color-mix(in srgb,var(--m-tint) 62%,#EFEBE8);
+  --nb-ink:color-mix(in srgb,var(--m-ink) 58%,#A9A19D);
+  position:relative;z-index:1;isolation:isolate;width:100%;min-height:200px;
+  display:flex;flex-direction:column;align-items:flex-start;text-align:left;
+  padding:22px 46px 20px 40px;
+  border-radius:4px 14px 14px 4px;
+  background:
+    repeating-linear-gradient(45deg,rgba(255,255,255,.12) 0 2px,transparent 2px 5px),
+    var(--nb-cover);
+  /* page edges: alternating white sheets and hairlines, then the drop shadow */
+  box-shadow:
+    inset -1px 0 0 rgba(0,0,0,.04),
+    3px 3px 0 -1px #fff, 3px 3px 0 0 #E7E1DC,
+    6px 6px 0 -1px #fff, 6px 6px 0 0 #E7E1DC,
+    4px 4px 10px rgba(43,37,35,.12);
+  transform-origin:left bottom;
+  transition:transform .3s ease,box-shadow .3s ease;
 }
-.module-card:hover{transform:translateY(-3px);box-shadow:var(--shadow-lift);}
-.module-card-top{display:flex;align-items:center;justify-content:space-between;width:100%;}
-.module-icon{
-  width:52px;height:52px;border-radius:10px;flex-shrink:0;display:grid;place-items:center;
+.module-card:hover{
+  transform:translateY(-4px) rotate(-1deg);
+  box-shadow:
+    inset -1px 0 0 rgba(0,0,0,.04),
+    3px 3px 0 -1px #fff, 3px 3px 0 0 #E7E1DC,
+    6px 6px 0 -1px #fff, 6px 6px 0 0 #E7E1DC,
+    10px 18px 26px rgba(43,37,35,.16);
 }
-.module-icon svg{width:24px;height:24px;stroke-width:1.5;fill:none;stroke-linecap:round;stroke-linejoin:round;}
+.nb-spine{
+  position:absolute;left:0;top:0;bottom:0;width:20px;border-radius:4px 0 0 4px;
+  background:linear-gradient(90deg,rgba(0,0,0,.10),rgba(255,255,255,.12) 70%,rgba(0,0,0,.08)),var(--nb-ink);
+  opacity:.85;
+}
+/* stitching where the spine meets the cover */
+.nb-spine::after{
+  content:"";position:absolute;top:10px;bottom:10px;right:-6px;
+  border-left:1.5px dashed color-mix(in srgb,var(--nb-ink) 55%,transparent);
+}
+.nb-band{
+  position:absolute;top:0;bottom:0;right:20px;width:9px;
+  background:linear-gradient(90deg,rgba(0,0,0,.12),rgba(255,255,255,.18) 50%,rgba(0,0,0,.12)),var(--nb-ink);
+  box-shadow:1px 0 2px rgba(0,0,0,.12);
+}
+/* the paper label stuck on the cover */
+.nb-label{
+  display:block;width:100%;margin:6px 0 16px;padding:12px 14px 11px;
+  background:#FFFDFB;border-radius:3px;
+  box-shadow:0 1px 2px rgba(43,37,35,.08);
+  border:1px solid color-mix(in srgb,var(--nb-ink) 25%,transparent);
+}
+.module-card h3{font-family:'Newsreader','Playfair Display',Georgia,serif;font-weight:400;font-size:19px;line-height:1.22;letter-spacing:-.015em;margin:0;color:#2A2422;}
 /* How many sections are actually for sale in this module right now — reads
    as a live stat rather than a static blurb, and updates once real product
    counts come in (renderModules runs again from loadProducts). */
 .module-num{
-  font-family:'Playfair Display',serif;font-size:22px;color:var(--accent);
-  display:inline-flex;align-items:baseline;gap:6px;
+  display:inline-flex;align-items:baseline;gap:5px;margin-top:8px;padding-top:7px;width:100%;
+  border-top:1px solid #EEE6E1;
+  font-family:'Playfair Display',serif;font-size:16px;color:var(--nb-ink);
 }
 .module-num i{
-  font-style:normal;font-family:'Inter',sans-serif;font-size:11px;
-  letter-spacing:.08em;text-transform:uppercase;color:var(--ink-faint);
+  font-style:normal;font-family:'Inter',sans-serif;font-size:10px;
+  letter-spacing:.1em;text-transform:uppercase;color:var(--ink-faint);
 }
-.module-card h3{font-size:18.5px;line-height:1.28;margin:18px 0 14px;}
 .module-link{
-  margin-top:auto;padding-top:16px;border-top:1px solid var(--rule);width:100%;
-  display:inline-flex;align-items:center;gap:8px;
-  font-size:11px;letter-spacing:.13em;text-transform:uppercase;color:var(--accent-deep);font-weight:500;
+  margin-top:auto;display:inline-flex;align-items:center;gap:8px;
+  font-size:11px;letter-spacing:.13em;text-transform:uppercase;color:var(--nb-ink);font-weight:600;
 }
-.module-link svg{width:15px;height:9px;stroke:currentColor;stroke-width:1.4;fill:none;transition:transform .2s ease;}
+.module-link svg{width:15px;height:9px;stroke:currentColor;stroke-width:1.5;fill:none;transition:transform .2s ease;}
 .module-card:hover .module-link svg{transform:translateX(4px);}
 
 /* ============================================================
    SHOP
    ============================================================ */
-.shop{padding:64px 0 76px;}
+.shop{padding:64px 0 76px;background:#FCFAF8;}
 .shop-head{display:flex;align-items:flex-end;justify-content:space-between;gap:24px;flex-wrap:wrap;}
 .shop-head h2{font-size:32px;}
 .shop-head .sub{margin:6px 0 0;color:var(--ink-soft);font-size:14px;}
@@ -296,42 +369,71 @@ h1,h2,h3{font-family:'Playfair Display',Georgia,serif;font-weight:400;letter-spa
 .chip:hover{border-color:var(--accent);color:var(--accent-deep);}
 .chip.is-on{background:var(--ink);border-color:var(--ink);color:#fff;}
 
-.product-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:20px;}
+.product-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:18px;}
+/* Each card gets its module's colours as --m-tint/--m-ink (set inline in
+   renderProducts), which the tag and button use. */
 .card{
-  background:var(--paper);border:1px solid var(--rule);border-radius:var(--radius);
-  padding:22px 20px 18px;display:flex;flex-direction:column;
-  transition:transform .25s ease,box-shadow .25s ease,border-color .25s ease;
+  position:relative;isolation:isolate;
+  background:#FFFFFF;border-radius:12px;
+  padding:20px 20px 24px;display:flex;flex-direction:column;
+  box-shadow:0 1px 2px rgba(43,37,35,.04),0 4px 16px rgba(43,37,35,.065);
+  transition:transform .25s ease,box-shadow .25s ease;
 }
-.card:hover{transform:translateY(-3px);box-shadow:var(--shadow-lift);border-color:#E4D8D2;}
+.card:hover{transform:translateY(-3px);box-shadow:0 2px 4px rgba(43,37,35,.05),0 14px 30px rgba(43,37,35,.11);}
 .card[data-preview]{cursor:pointer;}
-.card{position:relative;}
 .tag,.new-badge{
   white-space:nowrap;font-size:9.5px;line-height:1.6;letter-spacing:.11em;text-transform:uppercase;
   padding:5px 9px;border-radius:5px;font-weight:600;
 }
 .tag{align-self:flex-start;}
+.card .tag{
+  background:var(--m-tint);color:var(--m-ink);border-radius:5px;padding:5px 10px;
+  font-size:9px;letter-spacing:.12em;font-weight:600;
+  max-width:100%;overflow:hidden;text-overflow:ellipsis;
+}
 /* Pinned on the card's top edge rather than beside .tag — at 5-across a
    long tag ("Financial Reporting") leaves no room for both on one line. */
 .new-badge{
-  position:absolute;top:0;right:16px;transform:translateY(-50%);
+  position:absolute;top:0;left:20px;transform:translateY(-50%);
   padding:3px 11px;border-radius:999px;
   /* Saturated, not a pastel — every module tag is a pastel tint, so any
      light colour here reads as just another module. */
   background:#D92D2D;color:#fff;
-  box-shadow:0 0 0 3px var(--paper);
+  box-shadow:0 0 0 3px #FFFFFF;
 }
-.card h3{font-size:18px;line-height:1.3;margin:14px 0 0;}
-.card p{margin:10px 0 0;font-size:13px;color:var(--ink-soft);line-height:1.55;}
-.card-foot{display:flex;align-items:center;justify-content:space-between;margin-top:auto;padding-top:22px;}
+.card h3,.card .price{font-family:'Newsreader','Playfair Display',Georgia,serif;font-weight:400;color:#2A2422;}
+.card h3{font-size:22px;line-height:1.22;letter-spacing:-.02em;margin:16px 0 0;}
+.card p{margin:16px 0 24px;font-size:13.5px;color:#6B6670;line-height:1.6;}
+/* Long descriptions stop at 4 lines so one wordy note doesn't stretch its
+   whole row; "Read more" (syncCardMore in render.js) opens the rest on the
+   card, and the preview shows it in full too. */
+.card p{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:4;line-clamp:4;overflow:hidden;}
+.card.is-open p{display:block;-webkit-line-clamp:unset;line-clamp:none;overflow:visible;}
+.card-more{
+  align-self:flex-start;margin:-16px 0 24px;padding:2px 0;
+  font-size:12.5px;font-weight:500;color:var(--m-ink);
+  border-bottom:1px solid currentColor;line-height:1.3;
+}
+.card-more:hover{opacity:.75;}
+.card-more[hidden]{display:none;}
+.card-foot{
+  display:flex;align-items:center;justify-content:space-between;
+  margin-top:auto;padding-top:16px;border-top:1px solid #E7E2DE;
+}
 .price{font-family:'Playfair Display',serif;font-size:21px;}
 .price-block{display:flex;flex-direction:column;gap:2px;}
 .page-count{font-size:12px;color:var(--ink-faint);}
+.card .price-block{padding-left:2px;}
+.card .price{font-size:22px;line-height:1.15;letter-spacing:-.01em;}
+.card .page-count{font-size:9.5px;letter-spacing:.2em;text-transform:uppercase;color:#77717A;margin-top:3px;}
 .add-btn{
   width:42px;height:42px;border-radius:10px;display:grid;place-items:center;
   transition:transform .2s ease,filter .2s ease;
 }
 .add-btn svg{width:19px;height:19px;stroke-width:1.5;fill:none;stroke-linecap:round;stroke-linejoin:round;}
 .add-btn:hover{transform:scale(1.07);filter:brightness(.96);}
+.card .add-btn{width:47px;height:45px;border-radius:11px;background:color-mix(in srgb,var(--m-tint) 80%,#fff);color:var(--m-ink);}
+.card .add-btn svg{width:20px;height:20px;stroke-width:1.4;}
 .add-btn.is-in{position:relative;}
 
 .empty-state{
@@ -379,7 +481,29 @@ h1,h2,h3{font-family:'Playfair Display',Georgia,serif;font-weight:400;letter-spa
 
 /* Sections from About down alternate white / cream (.alt), so Reviews is on
    cream and its cards are white to stand off it. */
-.review-grid{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-top:32px;}
+/* A carousel: one row of cards, two in view (one on phones), scrolled
+   sideways with scroll-snap. Arrows and dots: setUpCarousel in reviews.js. */
+.review-grid{
+  display:grid;grid-auto-flow:column;grid-auto-columns:calc((100% - 24px) / 2);gap:24px;
+  margin-top:32px;overflow-x:auto;overscroll-behavior-x:contain;
+  scroll-snap-type:x mandatory;scrollbar-width:none;
+  padding:4px 0 8px;
+}
+.review-grid::-webkit-scrollbar{display:none;}
+.review-grid:focus-visible{outline:2px solid var(--accent);outline-offset:4px;border-radius:var(--radius);}
+.review{scroll-snap-align:start;}
+.review-nav{display:flex;align-items:center;justify-content:center;gap:18px;margin-top:22px;}
+.review-nav[hidden]{display:none;}
+.review-arrow{
+  width:42px;height:42px;border-radius:50%;display:grid;place-items:center;
+  border:1px solid var(--rule);background:var(--paper);color:var(--ink);
+  transition:border-color .2s ease,color .2s ease,opacity .2s ease;
+}
+.review-arrow svg{width:17px;height:17px;stroke:currentColor;stroke-width:1.6;fill:none;stroke-linecap:round;stroke-linejoin:round;}
+.review-arrow:hover{border-color:var(--accent);color:var(--accent-deep);}
+.review-dots{display:flex;gap:8px;}
+.review-dot{width:8px;height:8px;border-radius:999px;background:var(--rule);transition:width .25s ease,background .25s ease;}
+.review-dot[aria-current="true"]{width:22px;background:var(--accent);}
 /* Column flex + the caption's margin-top:auto keeps names level across a row. */
 .review{
   margin:0;background:var(--paper);border:1px solid var(--rule);border-radius:var(--radius);
@@ -397,7 +521,9 @@ h1,h2,h3{font-family:'Playfair Display',Georgia,serif;font-weight:400;letter-spa
   content:"";position:absolute;left:0;right:0;bottom:0;height:3.4em;
   background:linear-gradient(rgba(255,255,255,0),var(--paper));pointer-events:none;
 }
-.review.is-open .review-body{max-height:none;}
+/* Expanded, the review scrolls inside its card instead of growing it, so
+   every card in the carousel stays the same height. */
+.review.is-open .review-body{overflow-y:auto;overscroll-behavior:contain;padding-right:8px;scrollbar-width:thin;}
 .review.is-open .review-body::after{display:none;}
 .review-more{
   margin-top:10px;padding:0;font-size:13px;font-weight:500;color:var(--accent-deep);
@@ -408,8 +534,6 @@ h1,h2,h3{font-family:'Playfair Display',Georgia,serif;font-weight:400;letter-spa
 }
 .review figcaption::before{content:"— ";}
 .review[hidden]{display:none;} /* .review's display:flex would otherwise beat [hidden] */
-.reviews-more{display:block;margin:28px auto 0;}
-.reviews-more[hidden]{display:none;}
 .review-stars{position:absolute;top:26px;right:28px;display:flex;gap:2px;}
 
 /* Stars, drawn from one mask so the same shape serves the homepage cards,
@@ -618,6 +742,8 @@ details.faq p{margin:12px 0 0;color:var(--ink-soft);font-size:14px;max-width:66c
 .preview-info{padding:22px 26px 26px;text-align:center;}
 .preview-info h3{font-size:19px;margin:10px 0 0;}
 .preview-pages{margin:6px 0 0;font-size:13px;color:var(--ink-soft);}
+.preview-desc{margin:12px auto 0;max-width:46ch;font-size:13.5px;line-height:1.6;color:var(--ink-soft);}
+.preview-desc:empty{display:none;}
 .preview-info .btn{width:100%;margin-top:16px;}
 .preview-info .note{margin-top:10px;}
 /* A freebie shows the whole file in an iframe (src/freebies.js), so give it room. */
@@ -715,10 +841,10 @@ details.faq p{margin:12px 0 0;color:var(--ink-soft);font-size:14px;max-width:66c
   .hero-bg{display:none;}
   .hero-grid{display:block;}
   .hero-copy{padding:56px 26px 40px;max-width:none;}
-  .modules{margin-top:34px;}
+  .modules{padding-top:44px;}
   .trust-grid{grid-template-columns:repeat(2,1fr);gap:26px;}
   .two-col{grid-template-columns:1fr;gap:40px;}
-  .review-grid{grid-template-columns:1fr;}
+  .review-grid{grid-auto-columns:100%;}
   .review-page{padding:44px 26px 70px;}
   .review-form-card{padding:8px 20px 24px;}
   .footer-grid{grid-template-columns:1fr 1fr;gap:32px;}
@@ -726,8 +852,7 @@ details.faq p{margin:12px 0 0;color:var(--ink-soft);font-size:14px;max-width:66c
 @media (max-width:720px){
   .product-grid{grid-template-columns:repeat(2,1fr);gap:14px;}
   .module-grid{grid-template-columns:1fr;}
-  .card{padding:18px 16px 16px;}
-  .card h3{font-size:16px;}
+  .card h3{font-size:20px;}
   .section{padding:56px 0;}
   .shop{padding:44px 0 56px;}
   .select-menu{width:100%;}
@@ -755,7 +880,19 @@ details.faq p{margin:12px 0 0;color:var(--ink-soft);font-size:14px;max-width:66c
   .side-promo-arrow{margin-top:0;opacity:1;}
 }
 @media (max-width:420px){
-  .product-grid{grid-template-columns:1fr;}
+  /* Still two across on phones */
+  .product-grid{gap:10px;}
+  .card{padding:14px 12px 14px;border-radius:10px;}
+  .card .tag{padding:4px 7px;font-size:7.5px;letter-spacing:.06em;max-width:100%;position:relative;}
+  .card h3{font-size:17px;margin-top:12px;}
+  .card p{margin:10px 0 16px;font-size:11.5px;line-height:1.55;}
+  .card-more{margin:-10px 0 16px;font-size:11px;}
+  .card-foot{padding-top:12px;}
+  .card .price{font-size:18px;}
+  .card .page-count{font-size:8px;letter-spacing:.14em;}
+  .card .add-btn{width:36px;height:34px;border-radius:9px;}
+  .card .add-btn svg{width:16px;height:16px;}
+  .new-badge{left:12px;}
   .header-inner{gap:12px;}
   .logo .mark{font-size:28px;}
 }

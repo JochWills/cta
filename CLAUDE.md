@@ -234,7 +234,7 @@ agent, then the referrer) and `device` columns, plus `site_events`
 are left out.
 
 `reviews` — `name` (null = "Anonymous student"), `body`, `rating` (1-5;
-null only on the two seeded from before the form existed), `is_published`,
+nullable, though every review has one now), `is_published`,
 `created_at`. Anyone with the `/review` link can submit — not checked
 against an order, by choice — but a submission always lands unpublished:
 the anon key's column grant only covers `name`/`body`/`rating`, and it can
