@@ -62,32 +62,6 @@
     </form>
   </section>
 
-  <!-- ══════════════ RIDDLE ══════════════
-       The second lock, after the password (or a kept sign-in) — a random
-       riddle from admin-riddle, asked every time this page loads. -->
-  <section id="riddleView" class="admin-card login-card wrap" hidden>
-    <div class="login-mark" aria-hidden="true">
-      <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-linejoin="round" stroke-linecap="round" stroke-width="3">
-        <path d="M24 24a8 8 0 1 1 11.3 7.3c-2 .9-3.3 2.9-3.3 5.1V39"/>
-        <path d="M32 47v.5"/>
-      </svg>
-    </div>
-    <h1>One more thing</h1>
-    <p class="lede">Solve the riddle to open the dashboard.</p>
-    <p class="riddle-question" id="riddleQuestion" aria-live="polite"></p>
-    <form id="riddleForm">
-      <label class="field"><span>Your answer</span>
-        <input type="text" id="riddleInput" autocomplete="off" autocapitalize="off" spellcheck="false" required>
-      </label>
-      <div id="riddleError"></div>
-      <button class="btn" id="riddleBtn" type="submit">Unlock</button>
-    </form>
-    <div class="riddle-links">
-      <button type="button" class="link-btn" id="newRiddleBtn">Try a different riddle</button>
-      <button type="button" class="link-btn" id="riddleLogoutBtn">Log out</button>
-    </div>
-  </section>
-
   <!-- ══════════════ DASHBOARD ══════════════ -->
   <!-- .admin-shell right on this section (not a wrapper div one level in) —
        the sidebar needs to run flush against the actual left edge of the

@@ -512,6 +512,10 @@ create table if not exists public.site_events (
   primary key (day, session_id, event)
 );
 alter table public.site_events enable row level security;
+-- When the step was first reached that day, for the dashboard's "last
+-- activity" badges. Nullable: rows from before it existed only have a day.
+alter table public.site_events add column if not exists created_at timestamptz;
+alter table public.site_events alter column created_at set default now();
 
 -- Replaces section 7's one-argument heartbeat. The new arguments have
 -- defaults, so a tab still running the old script keeps working.
@@ -555,6 +559,9 @@ $$;
 --   'device' / 'mobile'…   sessions per device
 --   'event'  / 'preview'…  sessions that reached each step
 --   'since'  / ISO time    when source tracking began (all time, not just p_days; null before the first visit)
+--   'last_visit' / ISO time            newest sourced visit in the range
+--   'last_preview'… / ISO time or date newest session to reach each step
+--                                      (just the date for rows older than site_events.created_at)
 create or replace function public.visitor_insights(p_days int default 30)
 returns table(kind text, label text, visitors bigint)
 language sql security definer set search_path = public as $$
@@ -574,7 +581,16 @@ language sql security definer set search_path = public as $$
   group by e.event
   union all
   select 'since', to_char(min(created_at) at time zone 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"'), 0
-  from public.daily_visits where source is not null;
+  from public.daily_visits where source is not null
+  union all
+  select 'last_visit', to_char(max(created_at) at time zone 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"'), 0 from v
+  union all
+  select 'last_' || e.event,
+         coalesce(to_char(max(e.created_at) at time zone 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"'), to_char(max(e.day), 'YYYY-MM-DD')),
+         0
+  from public.site_events e
+  join v on v.day = e.day and v.session_id = e.session_id
+  group by e.event;
 $$;
 
 grant execute on function public.heartbeat(text, text, text) to anon, authenticated;

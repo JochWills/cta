@@ -571,10 +571,10 @@ const DEVICE_LABELS = { mobile: "Phone", desktop: "Computer", tablet: "Tablet", 
 
 const pct = (n, total) => (total ? Math.round((n / total) * 100) : 0);
 
-function barRow(label, count, total, meta = `${pct(count, total)}%`) {
+function barRow(label, count, total, meta = `${pct(count, total)}%`, badge = "") {
   return `
     <div class="src-row">
-      <span class="src-label">${esc(label)}</span>
+      <span class="src-label">${esc(label)}${badge}</span>
       <span class="src-count">${count} <span>${esc(meta)}</span></span>
       <span class="src-bar"><span style="width:${Math.max(count ? 2 : 0, pct(count, total))}%"></span></span>
     </div>`;
@@ -621,19 +621,64 @@ function trackedPaidCount(rangeStart) {
   return adminState.orders.filter((o) => o.status === "paid" && orderDate(o).getTime() >= from).length;
 }
 
+/** Newest paid order counted in the funnel's Paid step (same window as trackedPaidCount). */
+function lastTrackedPaid(rangeStart) {
+  const since = Date.parse(adminState.visitorInsights.find((r) => r.kind === "since")?.label || "");
+  if (Number.isNaN(since)) return "";
+  const from = Math.max(since, rangeStart.getTime());
+  const times = adminState.orders
+    .filter((o) => o.status === "paid")
+    .map((o) => orderDate(o).getTime())
+    .filter((t) => t >= from);
+  return times.length ? new Date(Math.max(...times)).toISOString() : "";
+}
+
+/**
+ * "4m ago" / "3h ago" / "2d ago" / "12 Oct" for a full ISO time, or
+ * "today" / "yesterday" / "3d ago" for a bare YYYY-MM-DD (visitor_insights
+ * only has the day for steps recorded before it kept times).
+ */
+function timeAgo(value) {
+  if (!value) return "";
+  if (/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+    const [y, m, d] = value.split("-").map(Number);
+    const days = Math.round((new Date().setHours(0, 0, 0, 0) - new Date(y, m - 1, d).getTime()) / 864e5);
+    return days <= 0 ? "today" : days === 1 ? "yesterday" : days < 7 ? `${days}d ago` : new Date(y, m - 1, d).toLocaleDateString("en-ZA", { day: "numeric", month: "short" });
+  }
+  const t = Date.parse(value);
+  if (Number.isNaN(t)) return "";
+  const mins = Math.floor((Date.now() - t) / 60000);
+  if (mins < 1) return "just now";
+  if (mins < 60) return `${mins}m ago`;
+  if (mins < 24 * 60) return `${Math.floor(mins / 60)}h ago`;
+  if (mins < 7 * 24 * 60) return `${Math.floor(mins / 1440)}d ago`;
+  return new Date(t).toLocaleDateString("en-ZA", { day: "numeric", month: "short" });
+}
+
+/** The small "last activity" pill beside a journey step; nothing if there's been none. */
+function lastBadge(value) {
+  const ago = timeAgo(value);
+  if (!ago) return "";
+  const exact = /T/.test(value) ? new Date(value).toLocaleString("en-ZA", { dateStyle: "medium", timeStyle: "short" }) : value;
+  return ` <span class="last-badge" title="Last one: ${esc(exact)}">${esc(ago)}</span>`;
+}
+
 function renderJourney(rangeStart) {
   const total = insightsTotal();
   if (!total) return `<div class="empty-state">No visits recorded in this range yet.</div>`;
   const paidCount = trackedPaidCount(rangeStart);
   const events = Object.fromEntries(insightRows("event").map((e) => [e.label, e.count]));
+  const last = (step) => adminState.visitorInsights.find((r) => r.kind === `last_${step}`)?.label || "";
   const steps = [
-    ["Visited", total],
-    ["Opened a preview", events.preview || 0],
-    ["Added to cart", events.cart || 0],
-    ["Started checkout", events.checkout || 0],
-    ["Paid", paidCount],
+    ["Visited", total, last("visit")],
+    ["Opened a preview", events.preview || 0, last("preview")],
+    ["Added to cart", events.cart || 0, last("cart")],
+    ["Started checkout", events.checkout || 0, last("checkout")],
+    ["Paid", paidCount, lastTrackedPaid(rangeStart)],
   ];
-  return `<div class="src-list">${steps.map(([label, count]) => barRow(label, count, total)).join("")}</div>`;
+  return `<div class="src-list">${steps
+    .map(([label, count, when]) => barRow(label, count, total, undefined, count ? lastBadge(when) : ""))
+    .join("")}</div>`;
 }
 
 /* ------------------------------------------------------------------

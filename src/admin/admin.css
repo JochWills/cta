@@ -62,15 +62,6 @@
 .remember-field input{width:16px;height:16px;flex-shrink:0;margin:0;accent-color:var(--accent);}
 .remember-field span{font-size:13px;color:var(--ink-soft);}
 .login-card .btn{width:100%;margin-top:22px;}
-/* Riddle screen — same card as the login */
-.riddle-question{
-  margin:24px 0 0;padding:18px 18px;border-radius:10px;background:var(--blush);
-  font-family:'Playfair Display',serif;font-size:18px;line-height:1.45;color:var(--ink);min-height:62px;
-}
-.riddle-question.is-loading{color:var(--ink-faint);font-family:inherit;font-size:14px;}
-.riddle-links{display:flex;justify-content:space-between;margin-top:18px;}
-.link-btn{padding:0;font-size:13px;color:var(--ink-soft);text-decoration:underline;text-underline-offset:3px;}
-.link-btn:hover{color:var(--accent-deep);}
 
 /* Select needs the same treatment .field gives input/textarea in styles.css */
 .field select{
@@ -415,6 +406,11 @@
 .src-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:5px 12px;align-items:baseline;font-size:13px;}
 .src-label{color:var(--ink);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .src-count{font-weight:600;color:var(--ink);white-space:nowrap;}
+/* "Last activity" pill beside each Visitor journey step */
+.last-badge{
+  display:inline-block;margin-left:8px;padding:2px 8px;border-radius:999px;vertical-align:1px;
+  background:var(--blush);color:var(--accent-deep);font-size:10.5px;font-weight:500;letter-spacing:.02em;
+}
 .src-count span{font-weight:500;color:var(--ink-faint);font-size:12px;margin-left:4px;}
 .src-bar{grid-column:1/-1;height:6px;border-radius:99px;background:var(--cream);overflow:hidden;}
 .src-bar span{display:block;height:100%;border-radius:inherit;background:var(--accent-deep);}

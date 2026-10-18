@@ -102,14 +102,13 @@ src/
 supabase/
   schema.sql                Tables, RLS policies, both storage buckets, 28 seed rows
   functions/
-    _shared/admin.ts        Token auth + CORS shared by the seven admin-* functions
+    _shared/admin.ts        Token auth + CORS shared by the six admin-* functions
     admin-login/             ┐
     admin-orders/             } deployed — see docs/admin.md
     admin-products/           │
     admin-upload/            │
     admin-discounts/         │
-    admin-reviews/           │
-    admin-riddle/            ┘ the riddle after the password, see Current state
+    admin-reviews/           ┘
     paystack-initiate/        ┐ deployed — see docs/paystack.md
     paystack-webhook/         ┘
     order-download/          deployed — self-serve download links, see Data model below
@@ -237,7 +236,7 @@ section), which needs real history `site_sessions` can't provide. Its `source`
 in `presence.js` from utm_source/click ids, the in-app browser's user
 agent, then the referrer) and `device` columns, plus `site_events`
 (`preview`/`cart`/`checkout`, once per session per day, written by
-`track()`), back the dashboard's "Where visitors come from" and
+`track()`, timestamped for the journey card's "last activity" badges), back the dashboard's "Where visitors come from" and
 "Visitor journey" cards via `visitor_insights(p_days)` — section 11 of
 `schema.sql`. Sessions from before that existed have a null source and
 are left out.
@@ -292,13 +291,6 @@ needs a redeploy to take effect.
   secrets. If you find yourself writing one into `src/`, stop.
 
 ## Current state
-
-**Admin riddle.** The admin page is locked twice: the password
-(`admin-login`), then a random riddle (`admin-riddle`) on every page load —
-a kept sign-in skips only the password. The riddle pool and answers live in
-`admin-riddle` only. Tokens carry a `stage` (`pass` → `riddle` → `unlocked`,
-see `_shared/admin.ts`); the data functions accept `unlocked` only, and the
-page holds that one in memory, never storage.
 
 Done: full front end, module filtering, cart drawer, two-step checkout, order +
 email capture into Supabase, responsive down to 390px, keyboard focus states,

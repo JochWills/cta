@@ -5,8 +5,6 @@ import {
   showLoggedIn,
   showLoggedOut,
   loginError,
-  showRiddle,
-  riddleError,
   setTab,
   renderOrders,
   renderProducts,
@@ -22,8 +20,6 @@ import {
 import {
   AuthError,
   login,
-  askRiddle,
-  answerRiddle,
   fetchOrders,
   deleteOrder,
   listProducts,
@@ -49,9 +45,11 @@ const PREVIEW_MAX_PAGES = 3;
 
 async function boot() {
   loadSession();
-  // A kept sign-in skips the password, never the riddle.
-  if (adminState.token) await startRiddle();
-  else showLoggedOut();
+  if (adminState.token) {
+    await enterDashboard();
+  } else {
+    showLoggedOut();
+  }
 }
 
 async function doLogin() {
@@ -65,62 +63,13 @@ async function doLogin() {
     const remember = $("#rememberInput").checked;
     const { token, expires_at } = await login(password, remember);
     saveSession(token, expires_at, remember);
-    await startRiddle();
+    await enterDashboard();
   } catch (err) {
     loginError(err.message);
   } finally {
     btn.disabled = false;
     btn.textContent = "Log in";
   }
-}
-
-/* ------------------------------------------------------------------
-   Riddle — between the password and the dashboard, every page load.
-   admin-riddle picks it and checks the answer; the page only ever holds
-   the question and a signed "which riddle" challenge.
------------------------------------------------------------------- */
-let riddleChallenge = "";
-
-async function startRiddle(message = "") {
-  riddleChallenge = "";
-  showRiddle(null);
-  riddleError(message);
-  try {
-    const { question, challenge } = await askRiddle();
-    riddleChallenge = challenge;
-    showRiddle(question);
-  } catch (err) {
-    if (err instanceof AuthError) return backToLogin();
-    riddleError(err.message);
-  }
-}
-
-async function submitRiddle() {
-  const answer = $("#riddleInput").value.trim();
-  if (!answer || !riddleChallenge) return;
-  const btn = $("#riddleBtn");
-  btn.disabled = true;
-  btn.textContent = "Checking…";
-  riddleError("");
-  try {
-    const { token } = await answerRiddle(riddleChallenge, answer);
-    adminState.unlocked = token;
-    await enterDashboard();
-  } catch (err) {
-    if (err instanceof AuthError) return backToLogin();
-    if (err.expired) return startRiddle(err.message);
-    riddleError(err.message);
-    $("#riddleInput").select();
-  } finally {
-    btn.disabled = false;
-    btn.textContent = "Unlock";
-  }
-}
-
-function backToLogin() {
-  clearSession();
-  showLoggedOut();
-  loginError("Session expired — log in again");
 }
 
 async function enterDashboard() {
@@ -165,24 +114,28 @@ async function updateVisitorCount() {
   }
 }
 
+// The journey card's "last activity" badges (and its counts) refresh on
+// their own while the page is open, so "4m ago" doesn't go stale.
+const INSIGHTS_POLL_MS = 60_000;
+let insightsPollTimer = null;
+
 function startVisitorPoll() {
   updateVisitorCount();
   visitorPollTimer = setInterval(updateVisitorCount, VISITOR_POLL_MS);
+  insightsPollTimer = setInterval(loadVisitorInsights, INSIGHTS_POLL_MS);
 }
 
 function stopVisitorPoll() {
   clearInterval(visitorPollTimer);
-  visitorPollTimer = null;
+  clearInterval(insightsPollTimer);
+  visitorPollTimer = insightsPollTimer = null;
 }
 
-/** A data call came back 401: the unlocked token ran out. Back to a riddle if
- * the password session is still good (startRiddle finds out), else the login. */
 function handleAuthError() {
   stopVisitorPoll();
-  adminState.unlocked = "";
-  if (!$("#riddleView").hidden) return; // several loads failing at once — one riddle is enough
-  if (adminState.token) startRiddle("Locked again. Solve another riddle to carry on.");
-  else backToLogin();
+  clearSession();
+  showLoggedOut();
+  loginError("Session expired — log in again");
 }
 
 async function loadOrders() {
@@ -594,13 +547,6 @@ async function viewCurrentPdf() {
 /* ------------------------------------------------------------------
    Delegated events (same pattern as src/main.js)
 ------------------------------------------------------------------ */
-$("#riddleForm").addEventListener("submit", (e) => {
-  e.preventDefault();
-  submitRiddle();
-});
-$("#newRiddleBtn").addEventListener("click", () => startRiddle());
-$("#riddleLogoutBtn").addEventListener("click", () => doLogout());
-
 $("#loginForm").addEventListener("submit", (e) => {
   e.preventDefault();
   doLogin();

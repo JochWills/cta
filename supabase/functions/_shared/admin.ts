@@ -8,16 +8,10 @@
  * needs OPTIONS + CORS handling — that lives here once instead of in each.
  *
  * Auth is a single shared password (ADMIN_PASSWORD, checked in
- * admin-login), not per-user accounts — this is a one-person shop — then a
- * riddle. Every token is stateless and HMAC-signed (ADMIN_SESSION_SECRET),
- * with a `stage`:
- *   "pass"    — from admin-login. Only good for asking admin-riddle for a
- *               riddle; this is what "keep me signed in" keeps.
- *   "riddle"  — a signed record of which riddle was asked (10 minutes).
- *   "unlocked"— from admin-riddle for a right answer. The only stage the
- *               data functions accept (verifyToken). The admin page keeps it
- *               in memory only, so every page load asks a riddle again.
- * No session table: the signature, stage and embedded expiry are the whole check.
+ * admin-login), not per-user accounts — this is a one-person shop. A
+ * successful login gets a short-lived, stateless, HMAC-signed token
+ * (ADMIN_SESSION_SECRET) that the other admin-* functions verify. No session
+ * table: the signature and the embedded expiry are the whole check.
  */
 
 const SESSION_SECRET = Deno.env.get("ADMIN_SESSION_SECRET")!;
@@ -47,42 +41,31 @@ async function hmacKey() {
   );
 }
 
-export type Stage = "pass" | "riddle" | "unlocked";
-// deno-lint-ignore no-explicit-any
-type Claims = { exp: number; stage: Stage; [k: string]: any };
-
-/** Sign any claims: base64url(payload) + "." + base64url(signature). */
-export async function signClaims(claims: Claims): Promise<{ token: string; expires_at: string }> {
-  const payload = new TextEncoder().encode(JSON.stringify(claims));
+/** Issue a token good for 12 hours (30 days if `remember`): base64url(payload) + "." + base64url(signature). */
+export async function signToken(remember = false): Promise<{ token: string; expires_at: string }> {
+  const exp = Date.now() + (remember ? REMEMBER_TTL_MS : TOKEN_TTL_MS);
+  const payload = new TextEncoder().encode(JSON.stringify({ exp }));
   const key = await hmacKey();
   const sig = new Uint8Array(await crypto.subtle.sign("HMAC", key, payload));
-  return { token: `${toBase64Url(payload)}.${toBase64Url(sig)}`, expires_at: new Date(claims.exp).toISOString() };
+  return { token: `${toBase64Url(payload)}.${toBase64Url(sig)}`, expires_at: new Date(exp).toISOString() };
 }
 
-/** The claims in a token if its signature checks out, it hasn't expired and it's at `stage`; else null. */
-export async function readToken(token: string, stage: Stage): Promise<Claims | null> {
-  const [payloadPart, sigPart] = (token || "").split(".");
-  if (!payloadPart || !sigPart) return null;
+/** Verify the X-Admin-Token header — signature must check out and not be expired. */
+export async function verifyToken(req: Request): Promise<boolean> {
+  const token = req.headers.get("X-Admin-Token") ?? "";
+  const [payloadPart, sigPart] = token.split(".");
+  if (!payloadPart || !sigPart) return false;
+
   try {
     const payload = fromBase64Url(payloadPart);
     const sig = fromBase64Url(sigPart);
     const key = await hmacKey();
-    if (!(await crypto.subtle.verify("HMAC", key, sig, payload))) return null;
-    const claims = JSON.parse(new TextDecoder().decode(payload));
-    return typeof claims.exp === "number" && Date.now() < claims.exp && claims.stage === stage ? claims : null;
+    if (!(await crypto.subtle.verify("HMAC", key, sig, payload))) return false;
+    const { exp } = JSON.parse(new TextDecoder().decode(payload));
+    return typeof exp === "number" && Date.now() < exp;
   } catch {
-    return null;
+    return false;
   }
-}
-
-/** admin-login's token: good for 12 hours (30 days if `remember`), but only for getting a riddle. */
-export function signToken(remember = false) {
-  return signClaims({ exp: Date.now() + (remember ? REMEMBER_TTL_MS : TOKEN_TTL_MS), stage: "pass" });
-}
-
-/** For the data functions: the X-Admin-Token header must be an unlocked (riddle solved) token. */
-export async function verifyToken(req: Request): Promise<boolean> {
-  return (await readToken(req.headers.get("X-Admin-Token") ?? "", "unlocked")) !== null;
 }
 
 /** Constant-time string compare for the password check in admin-login. */
