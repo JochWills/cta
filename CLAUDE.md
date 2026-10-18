@@ -102,13 +102,14 @@ src/
 supabase/
   schema.sql                Tables, RLS policies, both storage buckets, 28 seed rows
   functions/
-    _shared/admin.ts        Token auth + CORS shared by the six admin-* functions
+    _shared/admin.ts        Token auth + CORS shared by the seven admin-* functions
     admin-login/             ┐
     admin-orders/             } deployed — see docs/admin.md
     admin-products/           │
     admin-upload/            │
     admin-discounts/         │
-    admin-reviews/           ┘
+    admin-reviews/           │
+    admin-live/              ┘ who's online right now, see Data model's site_sessions
     paystack-initiate/        ┐ deployed — see docs/paystack.md
     paystack-webhook/         ┘
     order-download/          deployed — self-serve download links, see Data model below
@@ -224,7 +225,12 @@ admin page's live visitor count. No RLS policies at all on the table itself
 — both reads and writes go through `security definer` functions (see below)
 that anon can call directly, so the raw table (and its session ids/
 timestamps) is never itself queryable. `heartbeat` also prunes rows older
-than a day, so the table doesn't grow forever.
+than a day, so the table doesn't grow forever. Each heartbeat also carries what the tab
+is doing (`activity`, e.g. "Shop" or "Previewing: VAT", read off the page
+by `currentActivity` in `presence.js`) and its cart size; `live_visitors()`
+(schema.sql section 12) turns that into the admin header's "online"
+pop-up. That function is service_role-only, reached through `admin-live`,
+so the anon key can count visitors but not browse them.
 
 `daily_visits` — one row per session id per calendar day (not per
 heartbeat), written by the same `heartbeat` call as `site_sessions` above

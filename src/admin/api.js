@@ -78,6 +78,9 @@ export function uploadFile(file, path, bucket = "notes") {
  */
 export const fetchActiveVisitors = () => sbRpc("active_visitor_count");
 
+/** The per-visitor breakdown behind that count — admin-only, unlike the count (see admin-live). */
+export const fetchLiveVisitors = () => call("admin-live");
+
 /** Same idea, but per-day history instead of a live count — see daily_visits
  * in supabase/schema.sql. Days with zero visits come back absent, not zero. */
 export const fetchDailyVisitors = (days = 14) => sbRpc("daily_visitor_counts", { p_days: days });

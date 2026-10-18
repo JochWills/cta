@@ -16,6 +16,7 @@ import {
   syncFreebieFields,
   productFormError,
   confirmDelete,
+  renderLiveVisitors,
 } from "./render.js";
 import {
   AuthError,
@@ -29,6 +30,7 @@ import {
   uploadFile,
   getSignedPdfUrl,
   fetchActiveVisitors,
+  fetchLiveVisitors,
   fetchDailyVisitors,
   fetchVisitorInsights,
   listDiscounts,
@@ -127,6 +129,39 @@ function startVisitorPoll() {
     loadVisitorInsights();
     loadOrders(true);
   }, INSIGHTS_POLL_MS);
+}
+
+/* ------------------------------------------------------------------
+   Live visitors pop-up — opened from the header's "online" pill
+------------------------------------------------------------------ */
+const LIVE_POLL_MS = 10_000;
+let livePollTimer = null;
+
+async function loadLiveVisitors() {
+  try {
+    const rows = await fetchLiveVisitors();
+    renderLiveVisitors(rows);
+    $("#liveVisitorsCount").textContent = rows.length;
+  } catch (err) {
+    if (err instanceof AuthError) {
+      closeLive();
+      return handleAuthError();
+    }
+    $("#liveBody").innerHTML = `<div class="empty-state">Couldn't load who's online. Trying again shortly.</div>`;
+  }
+}
+
+function openLive() {
+  $("#liveModal").hidden = false;
+  $("#liveBody").innerHTML = `<div class="empty-state">Loading…</div>`;
+  loadLiveVisitors();
+  livePollTimer = setInterval(loadLiveVisitors, LIVE_POLL_MS);
+}
+
+function closeLive() {
+  $("#liveModal").hidden = true;
+  clearInterval(livePollTimer);
+  livePollTimer = null;
 }
 
 function stopVisitorPoll() {
@@ -311,6 +346,7 @@ async function backfillPageCounts() {
 }
 
 function doLogout() {
+  closeLive();
   stopVisitorPoll();
   clearSession();
   showLoggedOut();
@@ -552,6 +588,10 @@ async function viewCurrentPdf() {
 /* ------------------------------------------------------------------
    Delegated events (same pattern as src/main.js)
 ------------------------------------------------------------------ */
+$("#liveVisitors").addEventListener("click", openLive);
+document.addEventListener("click", (e) => e.target.closest("[data-close-live]") && closeLive());
+document.addEventListener("keydown", (e) => e.key === "Escape" && !$("#liveModal").hidden && closeLive());
+
 $("#loginForm").addEventListener("submit", (e) => {
   e.preventDefault();
   doLogin();

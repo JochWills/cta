@@ -9,14 +9,20 @@
  * visitor_insights().
  *
  * The first heartbeat also sends a source label (see sourceLabel) and the
- * device type, and track() records the shop steps a session reaches.
+ * device type, and track() records the shop steps a session reaches. Every
+ * heartbeat also says what the tab is doing (currentActivity) and how many
+ * notes are in the cart, for the admin page's live list.
  *
  * Silently does nothing if there's no database configured (hasDB false) —
  * same as the rest of the shop in that case.
  */
 import { hasDB, sbRpc } from "./supabase.js";
+import { state } from "./state.js";
 
 const HEARTBEAT_MS = 20_000;
+// How often to look for a change in what the visitor's doing, so the admin
+// page's live list catches up within seconds rather than at the next beat.
+const ACTIVITY_CHECK_MS = 3_000;
 
 let sessionId = "";
 
@@ -89,6 +95,33 @@ function sourceLabel() {
   return "Direct";
 }
 
+const SECTION_NAMES = { shop: "Shop", about: "About", reviews: "Reviews", faqs: "FAQs", contact: "Contact" };
+
+/**
+ * A short label for what this tab is doing right now, for the admin page's
+ * live list — read straight off the page, so nothing else has to report in:
+ * an open window first (preview, cart, checkout, the get-your-notes or
+ * free-download form), else the section in the middle of the screen.
+ */
+function currentActivity() {
+  const open = (id) => {
+    const el = document.getElementById(id);
+    return el && !el.hidden;
+  };
+  if (open("previewModal")) return `Previewing: ${document.getElementById("previewTitle")?.textContent || "a note"}`;
+  if (open("freebieModal")) return "Free download form";
+  if (open("downloadModal")) return "Getting their notes";
+  if (document.getElementById("drawer")?.classList.contains("is-open")) {
+    return state.checkoutStep === "details" ? "Checkout" : state.checkoutStep === "done" ? "Paying" : "Viewing cart";
+  }
+  const middle = innerHeight / 2;
+  for (const [id, name] of Object.entries(SECTION_NAMES)) {
+    const r = document.getElementById(id)?.getBoundingClientRect();
+    if (r && r.top <= middle && r.bottom >= middle) return name;
+  }
+  return "Home";
+}
+
 function deviceType() {
   const ua = navigator.userAgent;
   if (/iPad|Tablet/i.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1)) return "tablet";
@@ -119,10 +152,27 @@ export function startPresence() {
   const source = stored("cta_source", sourceLabel);
   const device = deviceType();
 
-  const beat = () =>
-    sbRpc("heartbeat", { p_session_id: sessionId, p_source: source, p_device: device }).catch(() => {}); // best-effort, never worth surfacing to a visitor
+  let lastSent = "";
+  let lastBeat = 0;
+  const snapshot = () => `${currentActivity()}|${state.cart.length}`;
+  const beat = () => {
+    lastSent = snapshot();
+    lastBeat = Date.now();
+    const [activity, cart] = lastSent.split("|");
+    sbRpc("heartbeat", {
+      p_session_id: sessionId,
+      p_source: source,
+      p_device: device,
+      p_activity: activity,
+      p_cart: Number(cart),
+    }).catch(() => {}); // best-effort, never worth surfacing to a visitor
+  };
   beat();
   setInterval(beat, HEARTBEAT_MS);
+  // Between beats: send one early when what they're doing changes.
+  setInterval(() => {
+    if (!document.hidden && snapshot() !== lastSent && Date.now() - lastBeat > ACTIVITY_CHECK_MS) beat();
+  }, ACTIVITY_CHECK_MS);
 }
 
 /** Note that this session reached a step: "preview", "cart" or "checkout". Once a day per step is all the database keeps. */

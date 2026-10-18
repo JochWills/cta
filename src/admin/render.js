@@ -325,3 +325,62 @@ document.addEventListener("keydown", (e) => {
 export function productFormError(message) {
   $("#productFormError").innerHTML = message ? `<div class="err">${esc(message)}</div>` : "";
 }
+
+/* ------------------------------------------------------------------
+   Live visitors pop-up (header "online" pill)
+------------------------------------------------------------------ */
+const STEP_LABEL = { preview: "Opened a preview", cart: "Added to cart", checkout: "Started checkout" };
+const DEVICE_LABEL = { mobile: "Phone", tablet: "Tablet", desktop: "Computer", unknown: "Unknown device" };
+
+/** "under a minute" / "4 min" / "1 h 12 min" since `iso`. */
+function onSiteFor(iso) {
+  const mins = Math.floor((Date.now() - Date.parse(iso)) / 60000);
+  if (!(mins >= 1)) return "under a minute";
+  if (mins < 60) return `${mins} min`;
+  return `${Math.floor(mins / 60)} h ${mins % 60} min`;
+}
+
+/** Counts per value, biggest first: [["Instagram", 3], ["Direct", 1]]. */
+function tally(rows, key) {
+  const m = new Map();
+  for (const r of rows) m.set(r[key], (m.get(r[key]) || 0) + 1);
+  return [...m.entries()].sort((a, b) => b[1] - a[1]);
+}
+
+export function renderLiveVisitors(rows) {
+  const body = $("#liveBody");
+  if (!rows.length) {
+    body.innerHTML = `<div class="empty-state">Nobody's on the site right now.</div>`;
+    return;
+  }
+  const chips = (pairs, label = (k) => k) =>
+    pairs.map(([k, n]) => `<span class="live-chip">${esc(label(k))} <strong>${n}</strong></span>`).join("");
+  const inCart = rows.filter((r) => r.cart_count > 0).length;
+  body.innerHTML = `
+    <div class="live-summary">
+      <div class="live-stat"><strong>${rows.length}</strong><span>online</span></div>
+      <div class="live-stat"><strong>${inCart}</strong><span>with notes in cart</span></div>
+      <div class="live-stat"><strong>${rows.filter((r) => /^Checkout|^Paying/.test(r.activity || "")).length}</strong><span>at checkout</span></div>
+    </div>
+    <div class="live-chips">${chips(tally(rows, "source"))}</div>
+    <div class="live-chips">${chips(tally(rows, "device"), (k) => DEVICE_LABEL[k] || k)}</div>
+    <ul class="live-list">
+      ${rows
+        .slice()
+        .reverse() // newest arrivals first
+        .map(
+          (r) => `
+        <li class="live-row">
+          <div class="live-row-main">
+            <span class="live-activity">${esc(r.activity || "Just arrived")}</span>
+            <span class="live-meta">${esc(r.source)} · ${esc(DEVICE_LABEL[r.device] || r.device)} · on site ${esc(onSiteFor(r.started_at))}</span>
+          </div>
+          <div class="live-row-tags">
+            ${r.cart_count ? `<span class="live-tag is-cart">${r.cart_count} in cart</span>` : ""}
+            ${r.furthest ? `<span class="live-tag">${esc(STEP_LABEL[r.furthest] || r.furthest)}</span>` : ""}
+          </div>
+        </li>`
+        )
+        .join("")}
+    </ul>`;
+}

@@ -456,7 +456,33 @@
   padding:7px 14px;border-radius:999px;
   background:var(--tax-tint);color:var(--tax-ink);
   font-size:12.5px;font-weight:600;
+  transition:filter .2s ease,box-shadow .2s ease;
 }
+/* It's a button now — opens the live visitors pop-up */
+.live-visitors:hover{filter:brightness(.97);box-shadow:0 0 0 3px rgba(106,143,98,.15);}
+
+/* ── live visitors pop-up ── */
+.live-panel{width:min(620px,100%);padding:30px 30px 26px;}
+.live-panel .live-close{position:absolute;top:16px;right:16px;} /* doubled up so it beats styles.css's .icon-btn whichever loads last */
+.live-panel h2{display:flex;align-items:center;gap:12px;}
+.live-panel h2 .live-dot{width:9px;height:9px;}
+.live-sub{margin:4px 0 0;font-size:13px;color:var(--ink-soft);}
+.live-summary{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:22px;}
+.live-stat{background:var(--cream);border:1px solid var(--rule);border-radius:10px;padding:12px 14px;}
+.live-stat strong{display:block;font-size:22px;line-height:1.1;color:var(--ink);}
+.live-stat span{font-size:12px;color:var(--ink-soft);}
+.live-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px;}
+.live-chips + .live-chips{margin-top:6px;}
+.live-chip{font-size:12px;padding:4px 10px;border-radius:999px;background:var(--blush);color:var(--ink-soft);}
+.live-chip strong{color:var(--ink);font-weight:600;margin-left:2px;}
+.live-list{list-style:none;margin:18px 0 0;padding:0;border-top:1px solid var(--rule);}
+.live-row{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:12px 0;border-bottom:1px solid var(--rule);}
+.live-row-main{min-width:0;display:flex;flex-direction:column;gap:2px;}
+.live-activity{font-size:14px;font-weight:500;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.live-meta{font-size:12px;color:var(--ink-soft);}
+.live-row-tags{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:5px;flex-shrink:0;}
+.live-tag{font-size:11px;padding:3px 9px;border-radius:999px;background:var(--cga-tint);color:var(--cga-ink);white-space:nowrap;}
+.live-tag.is-cart{background:var(--tax-tint);color:var(--tax-ink);font-weight:600;}
 .live-dot{
   position:relative;width:7px;height:7px;border-radius:50%;
   background:var(--tax-ink);flex-shrink:0;
@@ -509,9 +535,17 @@
      own content was 198px wide with only ~330px of header left to put it
      in) — pre-existing, just newly visible now that #logoutWrap is pushed
      to the right instead of silently overflowing past the edge while
-     sitting flush against the logo. The live count is the more skippable
-     of the two on a small phone. */
-  .live-visitors{display:none;}
+     sitting flush against the logo. So on a small phone the live count
+     drops its "online" word and keeps just the dot and number. */
+  .live-visitors{padding:7px 11px;}
+  .live-word{display:none;}
+  #logoutWrap{gap:8px;}
+  #logoutBtn{padding:10px 14px;font-size:11px;}
+  .live-summary{grid-template-columns:1fr 1fr 1fr;gap:6px;}
+  .live-stat{padding:10px;}
+  .live-stat strong{font-size:18px;}
+  .live-row{flex-direction:column;align-items:flex-start;gap:6px;}
+  .live-row-tags{justify-content:flex-start;}
 }
 
 @media (max-width:420px){

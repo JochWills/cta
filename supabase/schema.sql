@@ -606,3 +606,77 @@ $$;
 grant execute on function public.heartbeat(text, text, text) to anon, authenticated;
 grant execute on function public.track_event(text, text) to anon, authenticated;
 grant execute on function public.visitor_insights(int) to anon, authenticated;
+
+
+-- ------------------------------------------------------------
+-- 12. LIVE VISITOR BREAKDOWN (admin header's "online" pop-up)
+--    site_sessions (section 7) also keeps, per open tab: when it
+--    arrived, what it's doing right now (a short label worked out in the
+--    browser by src/presence.js, like "Shop", "Previewing: VAT" or
+--    "Checkout") and how many notes are in its cart. Still the same
+--    random id, nothing tied to a person, pruned after a day.
+--
+--    live_visitors() lists the tabs active in the last 45 seconds (same
+--    window as active_visitor_count) with their source and device from
+--    daily_visits and the furthest step from site_events. Unlike the
+--    other visitor functions it is NOT granted to anon: only the
+--    service_role can call it, through the admin-live Edge Function, so
+--    the anon key can't browse what individual visitors are doing.
+-- ------------------------------------------------------------
+alter table public.site_sessions add column if not exists started_at timestamptz not null default now();
+alter table public.site_sessions add column if not exists activity text;
+alter table public.site_sessions add column if not exists cart_count int not null default 0;
+
+-- Replaces section 11's three-argument heartbeat; the new arguments have
+-- defaults, so a tab still running an older script keeps working.
+drop function if exists public.heartbeat(text, text, text);
+create or replace function public.heartbeat(
+  p_session_id text, p_source text default null, p_device text default null,
+  p_activity text default null, p_cart int default null
+)
+returns void
+language plpgsql security definer set search_path = public as $$
+begin
+  insert into public.site_sessions (session_id, last_seen, activity, cart_count)
+  values (p_session_id, now(), nullif(left(trim(p_activity), 80), ''), greatest(0, least(coalesce(p_cart, 0), 999)))
+  on conflict (session_id) do update set
+    last_seen = now(),
+    activity = coalesce(nullif(left(trim(excluded.activity), 80), ''), site_sessions.activity),
+    cart_count = case when p_cart is null then site_sessions.cart_count else excluded.cart_count end;
+
+  insert into public.daily_visits (day, session_id, source, device)
+  values (
+    current_date,
+    p_session_id,
+    nullif(left(trim(p_source), 40), ''),
+    case when p_device in ('mobile', 'tablet', 'desktop') then p_device end
+  )
+  on conflict do nothing;
+
+  delete from public.site_sessions where last_seen < now() - interval '1 day';
+end;
+$$;
+
+create or replace function public.live_visitors()
+returns table(started_at timestamptz, last_seen timestamptz, activity text, cart_count int, source text, device text, furthest text)
+language sql security definer set search_path = public as $$
+  select
+    s.started_at, s.last_seen, s.activity, s.cart_count,
+    coalesce(v.source, 'Unknown'), coalesce(v.device, 'unknown'),
+    (select e.event from public.site_events e
+      where e.session_id = s.session_id and e.day = current_date
+      order by case e.event when 'checkout' then 3 when 'cart' then 2 else 1 end desc
+      limit 1)
+  from public.site_sessions s
+  left join lateral (
+    select d.source, d.device from public.daily_visits d
+    where d.session_id = s.session_id and d.source is not null
+    order by d.day desc limit 1
+  ) v on true
+  where s.last_seen > now() - interval '45 seconds'
+  order by s.started_at;
+$$;
+
+grant execute on function public.heartbeat(text, text, text, text, int) to anon, authenticated;
+revoke execute on function public.live_visitors() from public, anon, authenticated;
+grant execute on function public.live_visitors() to service_role;
