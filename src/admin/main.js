@@ -16,7 +16,8 @@ import {
   syncFreebieFields,
   productFormError,
   confirmDelete,
-  renderLiveVisitors,
+  setLiveRows,
+  toggleLiveRow,
 } from "./render.js";
 import {
   AuthError,
@@ -140,7 +141,7 @@ let livePollTimer = null;
 async function loadLiveVisitors() {
   try {
     const rows = await fetchLiveVisitors();
-    renderLiveVisitors(rows);
+    setLiveRows(rows);
     $("#liveVisitorsCount").textContent = rows.length;
   } catch (err) {
     if (err instanceof AuthError) {
@@ -589,7 +590,11 @@ async function viewCurrentPdf() {
    Delegated events (same pattern as src/main.js)
 ------------------------------------------------------------------ */
 $("#liveVisitors").addEventListener("click", openLive);
-document.addEventListener("click", (e) => e.target.closest("[data-close-live]") && closeLive());
+document.addEventListener("click", (e) => {
+  if (e.target.closest("[data-close-live]")) return closeLive();
+  const row = e.target.closest("[data-live-row]");
+  if (row) toggleLiveRow(row.dataset.liveRow);
+});
 document.addEventListener("keydown", (e) => e.key === "Escape" && !$("#liveModal").hidden && closeLive());
 
 $("#loginForm").addEventListener("submit", (e) => {

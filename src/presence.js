@@ -10,19 +10,22 @@
  *
  * The first heartbeat also sends a source label (see sourceLabel) and the
  * device type, and track() records the shop steps a session reaches. Every
- * heartbeat also says what the tab is doing (currentActivity) and how many
- * notes are in the cart, for the admin page's live list.
+ * heartbeat also says what the tab is doing (currentActivity), how many
+ * notes are in the cart, and a few more anonymous details (visitDetails),
+ * for the admin page's live list.
  *
  * Silently does nothing if there's no database configured (hasDB false) —
  * same as the rest of the shop in that case.
  */
 import { hasDB, sbRpc } from "./supabase.js";
 import { state } from "./state.js";
+import { MOD } from "./catalogue.js";
 
 const HEARTBEAT_MS = 20_000;
-// How often to look for a change in what the visitor's doing, so the admin
-// page's live list catches up within seconds rather than at the next beat.
-const ACTIVITY_CHECK_MS = 3_000;
+// Minimum gap between beats sent early because what the visitor's doing
+// changed, so the admin page's live list catches up within a couple of
+// seconds rather than at the next 20-second beat.
+const ACTIVITY_CHECK_MS = 2_000;
 
 let sessionId = "";
 
@@ -143,6 +146,84 @@ function stored(key, make) {
   }
 }
 
+/* ------------------------------------------------------------------
+   Detail for the admin page's live pop-up (visitDetails, sent with each
+   heartbeat). All anonymous: nothing here names the visitor, and the visit
+   counter lives only in their own browser — just the count is sent.
+------------------------------------------------------------------ */
+const IDLE_AFTER_MS = 30_000;
+let lastInteraction = Date.now();
+const previewed = new Set();
+
+function browserAndOs() {
+  const ua = navigator.userAgent;
+  const os = /iPhone/.test(ua) ? "iPhone" : /iPad/.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1) ? "iPad"
+    : /Android/.test(ua) ? "Android" : /Windows/.test(ua) ? "Windows" : /Mac OS X/.test(ua) ? "Mac" : /CrOS/.test(ua) ? "Chromebook" : /Linux/.test(ua) ? "Linux" : "Other";
+  const browser = /Instagram/.test(ua) ? "Instagram app" : /FBAN|FBAV/.test(ua) ? "Facebook app" : /musical_ly|TikTok/.test(ua) ? "TikTok app"
+    : /SamsungBrowser/.test(ua) ? "Samsung Internet" : /Edg\//.test(ua) ? "Edge" : /OPR\/|Opera/.test(ua) ? "Opera"
+    : /Firefox|FxiOS/.test(ua) ? "Firefox" : /Chrome|CriOS/.test(ua) ? "Chrome" : /Safari/.test(ua) ? "Safari" : "Other";
+  return { os, browser };
+}
+
+/** "South Africa" for the SA time zones, else the zone's city, e.g. "London". Only as precise as the time zone. */
+function region() {
+  try {
+    const tz = Intl.DateTimeFormat().resolvedOptions().timeZone || "";
+    if (/^Africa\/(Johannesburg|Maseru|Mbabane)$/.test(tz)) return "South Africa";
+    return tz.split("/").pop().replace(/_/g, " ") || "";
+  } catch {
+    return "";
+  }
+}
+
+/** utm_campaign / utm_medium / utm_content off the link they arrived on, e.g. "story · launch". */
+function campaignLabel() {
+  const q = new URLSearchParams(location.search);
+  return ["utm_campaign", "utm_medium", "utm_content"].map((k) => (q.get(k) || "").trim().slice(0, 30)).filter(Boolean).join(" · ");
+}
+
+/** Visits from this browser so far, counted per tab session, kept in its own localStorage. */
+function visitCount() {
+  try {
+    const raw = JSON.parse(localStorage.getItem("cta_visits") || "null");
+    const v = raw && raw.n ? raw : { n: 0, first: new Date().toISOString() };
+    if (!sessionStorage.getItem("cta_visit_counted")) {
+      v.n += 1;
+      localStorage.setItem("cta_visits", JSON.stringify(v));
+      sessionStorage.setItem("cta_visit_counted", "1");
+    }
+    return v;
+  } catch {
+    return null; // storage blocked — the pop-up just won't say new or returning
+  }
+}
+
+let fixedDetails = null;
+function visitDetails() {
+  if (!fixedDetails) {
+    const { os, browser } = browserAndOs();
+    const visits = visitCount();
+    fixedDetails = {
+      os,
+      browser,
+      screen: `${screen.width}×${screen.height}`,
+      region: region(),
+      campaign: stored("cta_campaign", campaignLabel),
+      visits: visits?.n || null,
+      first_visit: visits?.first || null,
+    };
+  }
+  const filter = state.activeFilter === "all" ? "" : MOD[state.activeFilter]?.short || state.activeFilter;
+  return {
+    ...fixedDetails,
+    cart: state.cart.map((i) => i.title),
+    cart_cents: state.cart.reduce((sum, i) => sum + (i.price_cents || 0), 0),
+    previewed: [...previewed].slice(-15),
+    filter,
+    idle: Date.now() - lastInteraction > IDLE_AFTER_MS,
+  };
+}
+
 /**
  * Crawlers (Google renders pages with JS), link-preview fetchers, speed
  * testers and automated/headless browsers — none of them are people, so
@@ -166,17 +247,27 @@ export function startPresence() {
 
   let lastSent = "";
   let lastBeat = 0;
-  const snapshot = () => `${currentActivity()}|${state.cart.length}`;
+  ["pointerdown", "keydown", "scroll", "touchstart", "mousemove"].forEach((type) =>
+    addEventListener(type, () => (lastInteraction = Date.now()), { passive: true })
+  );
+  // What gets compared to decide whether to send an early beat: everything
+  // that can change mid-visit, including going idle or coming back.
+  const snapshot = () => {
+    const activity = currentActivity();
+    if (activity.startsWith("Previewing: ")) previewed.add(activity.slice(12));
+    const d = visitDetails();
+    return JSON.stringify([activity, d.cart, d.filter, d.idle, d.previewed.length]);
+  };
   const beat = () => {
     lastSent = snapshot();
     lastBeat = Date.now();
-    const [activity, cart] = lastSent.split("|");
     sbRpc("heartbeat", {
       p_session_id: sessionId,
       p_source: source,
       p_device: device,
-      p_activity: activity,
-      p_cart: Number(cart),
+      p_activity: currentActivity(),
+      p_cart: state.cart.length,
+      p_details: visitDetails(),
     }).catch(() => {}); // best-effort, never worth surfacing to a visitor
   };
   // The live count means "looking at the site right now": a tab only beats
@@ -198,8 +289,9 @@ export function startPresence() {
   setInterval(() => !document.hidden && beat(), HEARTBEAT_MS);
   // Between beats: send one early when what they're doing changes.
   setInterval(() => {
-    if (!document.hidden && snapshot() !== lastSent && Date.now() - lastBeat > ACTIVITY_CHECK_MS) beat();
-  }, ACTIVITY_CHECK_MS);
+    // A beat at most every ~2s; checked every 1s so a change never waits long.
+    if (!document.hidden && snapshot() !== lastSent && Date.now() - lastBeat >= ACTIVITY_CHECK_MS) beat();
+  }, 1000);
   document.addEventListener("visibilitychange", () => (document.hidden ? leave() : backAgain()));
   addEventListener("pagehide", leave);
   addEventListener("pageshow", (e) => e.persisted && !document.hidden && backAgain()); // back via the back/forward cache

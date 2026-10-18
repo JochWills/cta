@@ -347,8 +347,62 @@ function tally(rows, key) {
   return [...m.entries()].sort((a, b) => b[1] - a[1]);
 }
 
+/** Rows the admin has opened, by live_visitors()'s key — kept across the 10-second refresh. */
+const openLiveRows = new Set();
+
+function ordinal(n) {
+  const s = ["th", "st", "nd", "rd"], v = n % 100;
+  return n + (s[(v - 20) % 10] || s[v] || s[0]);
+}
+
+/** "New visitor" or "Returning · 3rd visit · first came 2 days ago". */
+function visitLabel(d) {
+  if (!d?.visits) return "";
+  if (d.visits === 1) return "New visitor";
+  const days = Math.floor((Date.now() - Date.parse(d.first_visit)) / 864e5);
+  const first = !(days >= 1) ? "earlier today" : days === 1 ? "yesterday" : `${days} days ago`;
+  return `Returning · ${ordinal(d.visits)} visit · first came ${first}`;
+}
+
+const clock = (iso) => new Date(iso).toLocaleTimeString("en-ZA", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+
+function liveDetailHtml(r) {
+  const d = r.details || {};
+  const facts = [
+    [d.os && d.browser ? `${d.os} · ${d.browser}` : "", "Device"],
+    [d.screen, "Screen"],
+    [d.region, "Region"],
+    [d.campaign, "Campaign"],
+    [visitLabel(d), "Visits"],
+    [d.filter, "Filter"],
+  ].filter(([v]) => v);
+  const trail = Array.isArray(r.trail) ? r.trail : [];
+  return `
+    <div class="live-detail">
+      ${facts.length ? `<dl class="live-facts">${facts.map(([v, k]) => `<dt>${k}</dt><dd>${esc(v)}</dd>`).join("")}</dl>` : ""}
+      ${
+        d.cart?.length
+          ? `<div class="live-block"><h4>In cart · ${esc(rands(d.cart_cents || 0))}</h4><ul>${d.cart.map((t) => `<li>${esc(t)}</li>`).join("")}</ul></div>`
+          : ""
+      }
+      ${
+        d.previewed?.length
+          ? `<div class="live-block"><h4>Previewed</h4><ul>${d.previewed.map((t) => `<li>${esc(t)}</li>`).join("")}</ul></div>`
+          : ""
+      }
+      ${
+        trail.length
+          ? `<div class="live-block"><h4>Path this visit</h4><ol class="live-trail">${trail
+              .map((step) => `<li><time>${esc(clock(step.t))}</time><span>${esc(step.a)}</span></li>`)
+              .join("")}</ol></div>`
+          : ""
+      }
+    </div>`;
+}
+
 export function renderLiveVisitors(rows) {
   const body = $("#liveBody");
+  const listScroll = body.querySelector(".live-list")?.scrollTop || 0;
   if (!rows.length) {
     body.innerHTML = `<div class="empty-state">Nobody's on the site right now.</div>`;
     return;
@@ -356,31 +410,54 @@ export function renderLiveVisitors(rows) {
   const chips = (pairs, label = (k) => k) =>
     pairs.map(([k, n]) => `<span class="live-chip">${esc(label(k))} <strong>${n}</strong></span>`).join("");
   const inCart = rows.filter((r) => r.cart_count > 0).length;
+  const regions = rows.map((r) => ({ region: r.details?.region })).filter((r) => r.region);
+  const returning = rows.filter((r) => r.details?.visits > 1).length;
   body.innerHTML = `
     <div class="live-summary">
       <div class="live-stat"><strong>${rows.length}</strong><span>online</span></div>
       <div class="live-stat"><strong>${inCart}</strong><span>with notes in cart</span></div>
       <div class="live-stat"><strong>${rows.filter((r) => /^Checkout|^Paying/.test(r.activity || "")).length}</strong><span>at checkout</span></div>
+      <div class="live-stat"><strong>${returning}</strong><span>returning</span></div>
     </div>
     <div class="live-chips">${chips(tally(rows, "source"))}</div>
-    <div class="live-chips">${chips(tally(rows, "device"), (k) => DEVICE_LABEL[k] || k)}</div>
+    <div class="live-chips">${chips(tally(rows, "device"), (k) => DEVICE_LABEL[k] || k)}${regions.length ? chips(tally(regions, "region")) : ""}</div>
     <ul class="live-list">
       ${rows
         .slice()
         .reverse() // newest arrivals first
-        .map(
-          (r) => `
-        <li class="live-row">
-          <div class="live-row-main">
-            <span class="live-activity">${esc(r.activity || "Just arrived")}</span>
-            <span class="live-meta">${esc(r.source)} · ${esc(DEVICE_LABEL[r.device] || r.device)} · on site ${esc(onSiteFor(r.started_at))}</span>
-          </div>
-          <div class="live-row-tags">
-            ${r.cart_count ? `<span class="live-tag is-cart">${r.cart_count} in cart</span>` : ""}
-            ${r.furthest ? `<span class="live-tag">${esc(STEP_LABEL[r.furthest] || r.furthest)}</span>` : ""}
-          </div>
-        </li>`
-        )
+        .map((r) => {
+          const open = openLiveRows.has(r.key);
+          const d = r.details || {};
+          return `
+        <li class="live-row${open ? " is-open" : ""}">
+          <button type="button" class="live-row-head" data-live-row="${esc(r.key)}" aria-expanded="${open}">
+            <span class="live-row-main">
+              <span class="live-activity">${d.idle ? `<span class="live-idle" title="No scrolling or tapping for 30 seconds">Idle</span>` : ""}${esc(r.activity || "Just arrived")}</span>
+              <span class="live-meta">${esc(r.source)} · ${esc(d.os ? `${d.os} · ${d.browser}` : DEVICE_LABEL[r.device] || r.device)} · on site ${esc(onSiteFor(r.started_at))}${d.visits > 1 ? ` · ${esc(ordinal(d.visits))} visit` : ""}</span>
+            </span>
+            <span class="live-row-tags">
+              ${r.cart_count ? `<span class="live-tag is-cart">${r.cart_count} in cart${d.cart_cents ? ` · ${esc(rands(d.cart_cents))}` : ""}</span>` : ""}
+              ${r.furthest ? `<span class="live-tag">${esc(STEP_LABEL[r.furthest] || r.furthest)}</span>` : ""}
+              <svg class="live-chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+            </span>
+          </button>
+          ${open ? liveDetailHtml(r) : ""}
+        </li>`;
+        })
         .join("")}
     </ul>`;
+  const list = body.querySelector(".live-list");
+  if (list) list.scrollTop = listScroll;
+}
+
+/** A row's head was clicked: open or close its detail (re-rendered from the last data). */
+let lastLiveRows = [];
+export function toggleLiveRow(key) {
+  if (openLiveRows.has(key)) openLiveRows.delete(key);
+  else openLiveRows.add(key);
+  renderLiveVisitors(lastLiveRows);
+}
+export function setLiveRows(rows) {
+  lastLiveRows = rows;
+  renderLiveVisitors(rows);
 }

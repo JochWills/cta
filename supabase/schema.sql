@@ -692,3 +692,106 @@ language sql security definer set search_path = public as $$
   where session_id = p_session_id and last_seen > now() - interval '1 hour';
 $$;
 grant execute on function public.leave_site(text) to anon, authenticated;
+
+
+-- ------------------------------------------------------------
+-- 13. LIVE VISITOR DETAIL (the "Live now" pop-up, expanded)
+--    Two more columns on site_sessions, same random id, still pruned
+--    after a day:
+--      details — a small snapshot from the browser each heartbeat
+--                (src/presence.js's visitDetails): browser/OS, screen
+--                size, rough region from the device's time zone, the
+--                link's utm campaign, which notes are in the cart and
+--                its total, notes previewed this visit, the module
+--                filter, whether they're idle, and a visit count kept
+--                in their own browser (only the count is sent, never a
+--                lasting id).
+--      trail   — this visit's path: one {t, a} entry each time the
+--                activity changes, newest last, capped at 40.
+--    live_visitors() returns both (plus a short hash of the id, so the
+--    admin page can keep a row open across refreshes).
+-- ------------------------------------------------------------
+alter table public.site_sessions add column if not exists details jsonb;
+alter table public.site_sessions add column if not exists trail jsonb not null default '[]'::jsonb;
+
+drop function if exists public.heartbeat(text, text, text, text, int);
+create or replace function public.heartbeat(
+  p_session_id text, p_source text default null, p_device text default null,
+  p_activity text default null, p_cart int default null, p_details jsonb default null
+)
+returns void
+language plpgsql security definer set search_path = public as $$
+declare
+  v_act text := nullif(left(trim(p_activity), 80), '');
+  v_details jsonb := case when p_details is not null and length(p_details::text) <= 4000 then p_details end;
+  v_step jsonb := jsonb_build_object('t', now(), 'a', v_act);
+begin
+  insert into public.site_sessions (session_id, last_seen, activity, cart_count, details, trail)
+  values (
+    p_session_id, now(), v_act, greatest(0, least(coalesce(p_cart, 0), 999)), v_details,
+    case when v_act is not null then jsonb_build_array(v_step) else '[]'::jsonb end
+  )
+  on conflict (session_id) do update set
+    last_seen = now(),
+    activity = coalesce(v_act, site_sessions.activity),
+    cart_count = case when p_cart is null then site_sessions.cart_count else excluded.cart_count end,
+    details = coalesce(v_details, site_sessions.details),
+    trail = case
+      when v_act is not null and v_act is distinct from site_sessions.activity
+        then (case when jsonb_array_length(site_sessions.trail) >= 40 then site_sessions.trail - 0 else site_sessions.trail end) || jsonb_build_array(v_step)
+      else site_sessions.trail
+    end;
+
+  insert into public.daily_visits (day, session_id, source, device)
+  values (
+    current_date,
+    p_session_id,
+    nullif(left(trim(p_source), 40), ''),
+    case when p_device in ('mobile', 'tablet', 'desktop') then p_device end
+  )
+  on conflict do nothing;
+
+  delete from public.site_sessions where last_seen < now() - interval '1 day';
+end;
+$$;
+
+-- Replaces section 12's: also marks the trail, and sets the activity to
+-- "Away", so coming back shows up as a new step.
+create or replace function public.leave_site(p_session_id text) returns void
+language sql security definer set search_path = public as $$
+  update public.site_sessions set
+    last_seen = now() - interval '1 hour',
+    activity = 'Away',
+    trail = (case when jsonb_array_length(trail) >= 40 then trail - 0 else trail end)
+            || jsonb_build_array(jsonb_build_object('t', now(), 'a', 'Left or switched away'))
+  where session_id = p_session_id and last_seen > now() - interval '1 hour';
+$$;
+
+drop function if exists public.live_visitors();
+create or replace function public.live_visitors()
+returns table(key text, started_at timestamptz, last_seen timestamptz, activity text, cart_count int,
+              source text, device text, furthest text, details jsonb, trail jsonb)
+language sql security definer set search_path = public as $$
+  select
+    left(md5(s.session_id), 12),
+    s.started_at, s.last_seen, s.activity, s.cart_count,
+    coalesce(v.source, 'Unknown'), coalesce(v.device, 'unknown'),
+    (select e.event from public.site_events e
+      where e.session_id = s.session_id and e.day = current_date
+      order by case e.event when 'checkout' then 3 when 'cart' then 2 else 1 end desc
+      limit 1),
+    s.details, s.trail
+  from public.site_sessions s
+  left join lateral (
+    select d.source, d.device from public.daily_visits d
+    where d.session_id = s.session_id and d.source is not null
+    order by d.day desc limit 1
+  ) v on true
+  where s.last_seen > now() - interval '45 seconds'
+  order by s.started_at;
+$$;
+
+grant execute on function public.heartbeat(text, text, text, text, int, jsonb) to anon, authenticated;
+grant execute on function public.leave_site(text) to anon, authenticated;
+revoke execute on function public.live_visitors() from public, anon, authenticated;
+grant execute on function public.live_visitors() to service_role;

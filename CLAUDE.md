@@ -234,7 +234,11 @@ so the anon key can count visitors but not browse them. "Online" means
 looking at the site right now: a tab only heartbeats while visible, calls
 `leave_site` the moment it's hidden or closed (a keepalive request, so it
 survives the page closing), and bots/headless browsers never heartbeat at
-all (`isBot` in `presence.js`), so they're out of every visitor stat too.
+all (`isBot` in `presence.js`), so they're out of every visitor stat too. Clicking a visitor in the pop-up
+opens their `details` (browser/OS, screen, time-zone region, utm campaign,
+cart contents and total, notes previewed, filter, idle, and a visit count
+kept only in their own localStorage, `cta_visits`) and `trail` (this
+visit's path) — schema.sql section 13.
 
 `daily_visits` — one row per session id per calendar day (not per
 heartbeat), written by the same `heartbeat` call as `site_sessions` above
