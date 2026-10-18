@@ -648,21 +648,34 @@ function lastBadge(value) {
   return ` <span class="last-badge" title="Last one: ${esc(exact)}">${esc(ago)}</span>`;
 }
 
+/** Paid orders in the last 2 minutes — same window as visitor_insights' 'recent_*' rows. */
+const RECENT_MS = 2 * 60 * 1000;
+function recentPaid() {
+  const from = Date.now() - RECENT_MS;
+  return adminState.orders.filter((o) => o.status === "paid" && orderDate(o).getTime() > from).length;
+}
+
+/** The "+3" pill: how many joined a step in the last 2 minutes. Nothing when none did. */
+function recentBadge(n) {
+  return n > 0 ? ` <span class="recent-badge" title="In the last 2 minutes">+${n}</span>` : "";
+}
+
 function renderJourney(rangeStart) {
   const total = insightsTotal();
   if (!total) return `<div class="empty-state">No visits recorded in this range yet.</div>`;
   const paidCount = trackedPaidCount(rangeStart);
   const events = Object.fromEntries(insightRows("event").map((e) => [e.label, e.count]));
   const last = (step) => adminState.visitorInsights.find((r) => r.kind === `last_${step}`)?.label || "";
+  const recent = (step) => Number(adminState.visitorInsights.find((r) => r.kind === `recent_${step}`)?.visitors || 0);
   const steps = [
-    ["Visited", total, last("visit")],
-    ["Opened a preview", events.preview || 0, last("preview")],
-    ["Added to cart", events.cart || 0, last("cart")],
-    ["Started checkout", events.checkout || 0, last("checkout")],
-    ["Paid", paidCount, lastTrackedPaid(rangeStart)],
+    ["Visited", total, last("visit"), recent("visit")],
+    ["Opened a preview", events.preview || 0, last("preview"), recent("preview")],
+    ["Added to cart", events.cart || 0, last("cart"), recent("cart")],
+    ["Started checkout", events.checkout || 0, last("checkout"), recent("checkout")],
+    ["Paid", paidCount, lastTrackedPaid(rangeStart), recentPaid()],
   ];
   return `<div class="src-list">${steps
-    .map(([label, count, when]) => barRow(label, count, total, undefined, count ? lastBadge(when) : ""))
+    .map(([label, count, when, fresh]) => barRow(label, count, total, undefined, count ? lastBadge(when) + recentBadge(fresh) : ""))
     .join("")}</div>`;
 }
 

@@ -411,6 +411,11 @@
   display:inline-block;margin-left:8px;padding:2px 8px;border-radius:999px;vertical-align:1px;
   background:var(--blush);color:var(--accent-deep);font-size:10.5px;font-weight:500;letter-spacing:.02em;
 }
+/* "+N in the last 2 minutes" pill, after the last-activity one */
+.recent-badge{
+  display:inline-block;margin-left:5px;padding:2px 8px;border-radius:999px;vertical-align:1px;
+  background:var(--tax-tint);color:var(--tax-ink);font-size:10.5px;font-weight:600;letter-spacing:.02em;
+}
 .src-count span{font-weight:500;color:var(--ink-faint);font-size:12px;margin-left:4px;}
 .src-bar{grid-column:1/-1;height:6px;border-radius:99px;background:var(--cream);overflow:hidden;}
 .src-bar span{display:block;height:100%;border-radius:inherit;background:var(--accent-deep);}

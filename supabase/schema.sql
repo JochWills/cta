@@ -562,6 +562,8 @@ $$;
 --   'last_visit' / ISO time            newest sourced visit in the range
 --   'last_preview'… / ISO time or date newest session to reach each step
 --                                      (just the date for rows older than site_events.created_at)
+--   'recent_visit' / ''                sourced visits that started in the last 2 minutes
+--   'recent_preview'… / ''             sessions that reached each step in the last 2 minutes
 create or replace function public.visitor_insights(p_days int default 30)
 returns table(kind text, label text, visitors bigint)
 language sql security definer set search_path = public as $$
@@ -590,6 +592,14 @@ language sql security definer set search_path = public as $$
          0
   from public.site_events e
   join v on v.day = e.day and v.session_id = e.session_id
+  group by e.event
+  union all
+  select 'recent_visit', '', count(*) from v where created_at > now() - interval '2 minutes'
+  union all
+  select 'recent_' || e.event, '', count(*)
+  from public.site_events e
+  join v on v.day = e.day and v.session_id = e.session_id
+  where e.created_at > now() - interval '2 minutes'
   group by e.event;
 $$;
 

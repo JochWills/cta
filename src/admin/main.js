@@ -114,15 +114,19 @@ async function updateVisitorCount() {
   }
 }
 
-// The journey card's "last activity" badges (and its counts) refresh on
-// their own while the page is open, so "4m ago" doesn't go stale.
+// The journey card's badges ("4m ago", "+3 in the last 2 minutes") and its
+// counts refresh on their own while the page is open. Orders too, since the
+// Paid step's badges come from them.
 const INSIGHTS_POLL_MS = 60_000;
 let insightsPollTimer = null;
 
 function startVisitorPoll() {
   updateVisitorCount();
   visitorPollTimer = setInterval(updateVisitorCount, VISITOR_POLL_MS);
-  insightsPollTimer = setInterval(loadVisitorInsights, INSIGHTS_POLL_MS);
+  insightsPollTimer = setInterval(() => {
+    loadVisitorInsights();
+    loadOrders(true);
+  }, INSIGHTS_POLL_MS);
 }
 
 function stopVisitorPoll() {
@@ -138,14 +142,15 @@ function handleAuthError() {
   loginError("Session expired — log in again");
 }
 
-async function loadOrders() {
+/** `quiet` for the background refresh — a blip there isn't worth a toast every minute. */
+async function loadOrders(quiet = false) {
   try {
     adminState.orders = await fetchOrders();
     renderOrders();
     renderDashboard(); // the Dashboard tab is derived entirely from orders — see dashboard.js
   } catch (err) {
     if (err instanceof AuthError) return handleAuthError();
-    toast(err.message);
+    if (!quiet) toast(err.message);
   }
 }
 
