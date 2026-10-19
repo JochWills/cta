@@ -205,10 +205,21 @@
 
     <div class="shop-bar">
       <div class="filters" id="filters"></div>
+      <div class="module-menu" id="moduleMenu">
+        <button type="button" class="module-toggle" id="moduleToggle" aria-haspopup="listbox" aria-expanded="false" aria-controls="moduleList">
+          <span class="module-toggle-swatch" id="moduleToggleSwatch" aria-hidden="true"></span>
+          <span class="module-toggle-text">
+            <small>Module</small>
+            <span class="module-toggle-label" id="moduleToggleLabel">All notes</span>
+          </span>
+          <svg class="select-chevron" viewBox="0 0 12 8" aria-hidden="true"><path d="M1 1.5l5 5 5-5"/></svg>
+        </button>
+        <div class="module-list" id="moduleList" role="listbox" aria-label="Module" hidden></div>
+      </div>
       <div class="select-menu" id="selectMenu" hidden>
         <button type="button" class="select-toggle" id="selectToggle" aria-haspopup="menu" aria-expanded="false" aria-controls="selectList">
-          <svg class="select-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.5"/><path d="M14 17l2.2 2.2L20.5 15"/></svg>
-          Select
+          <span class="select-toggle-swatch" aria-hidden="true"><svg class="select-icon" viewBox="0 0 24 24"><rect x="3.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.5"/><path d="M14 17l2.2 2.2L20.5 15"/></svg></span>
+          <span class="select-toggle-text"><small>Bundles</small><span>Select</span></span>
           <svg class="select-chevron" viewBox="0 0 12 8" aria-hidden="true"><path d="M1 1.5l5 5 5-5"/></svg>
         </button>
         <div class="select-list" id="selectList" role="menu" aria-label="Add a whole module to your cart" hidden></div>

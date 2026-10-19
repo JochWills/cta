@@ -12,6 +12,7 @@ import {
   openPreview,
   closePreview,
   toggleSelectMenu,
+  toggleModuleMenu,
 } from "./render.js";
 import { loadProducts, loadCart, addToCart, addAllToCart, removeFromCart } from "./cart.js";
 import { placeOrder, applyDiscount, removeDiscount, loadPaystack } from "./checkout.js";
@@ -41,6 +42,7 @@ document.addEventListener("click", (e) => {
   }
   if (e.target.closest("#closeFreebie") || e.target.closest("#freebieScrim")) return closeFreebie();
 
+  if (e.target.closest("#moduleToggle")) return toggleModuleMenu();
   if (e.target.closest("#selectToggle")) return toggleSelectMenu();
   const select = e.target.closest("[data-select]");
   if (select) {
@@ -49,6 +51,7 @@ document.addEventListener("click", (e) => {
   }
   // Any other click closes the menu, then carries on as normal.
   if (!$("#selectList").hidden && !e.target.closest("#selectMenu")) toggleSelectMenu(false);
+  if (!$("#moduleList").hidden && !e.target.closest("#moduleList")) toggleModuleMenu(false);
 
   const remove = e.target.closest("[data-rm]");
   if (remove) return removeFromCart(remove.dataset.rm);
@@ -82,7 +85,10 @@ document.addEventListener("click", (e) => {
   if (course) return setCourse(course.dataset.course);
 
   const filter = e.target.closest("[data-filter]");
-  if (filter) return setFilter(filter.dataset.filter);
+  if (filter) {
+    toggleModuleMenu(false);
+    return setFilter(filter.dataset.filter);
+  }
 
   if (e.target.closest("#cartBtn")) return openCart();
   if (e.target.closest("#closeCart") || e.target.closest("#scrim")) return closeCart();
@@ -133,7 +139,18 @@ document.addEventListener("submit", (e) => {
 document.addEventListener("keydown", (e) => {
   // No <form> around the details step, so Enter wouldn't do anything here otherwise.
   if (e.key === "Enter" && e.target.id === "discountInput") return applyDiscount();
+  // Up/down move through the module dropdown's options while it's open.
+  if (!$("#moduleList").hidden && (e.key === "ArrowDown" || e.key === "ArrowUp")) {
+    e.preventDefault();
+    const opts = [...document.querySelectorAll("#moduleList .module-option")];
+    const i = opts.indexOf(document.activeElement);
+    return opts[(i + (e.key === "ArrowDown" ? 1 : -1) + opts.length) % opts.length]?.focus();
+  }
   if (e.key !== "Escape") return;
+  if (!$("#moduleList").hidden) {
+    toggleModuleMenu(false);
+    return $("#moduleToggle").focus();
+  }
   if (!$("#selectList").hidden) {
     toggleSelectMenu(false);
     return $("#selectToggle").focus();

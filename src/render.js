@@ -73,6 +73,55 @@ export function renderFilters() {
     </button>`
     )
     .join("");
+  renderModuleMenu();
+}
+
+/* ------------------------------------------------------------------
+   Module dropdown — phones only, in place of the chips (styles.css
+   swaps them). Same options as the chips, each with its module's
+   colour, icon and note count. Re-rendered with the grid so the counts
+   stay right; the button's label only animates when the module changes.
+------------------------------------------------------------------ */
+let shownModule = null;
+
+function renderModuleMenu() {
+  const items = [{ slug: "all", short: "All notes", tint: "var(--blush)", ink: "var(--accent)", icon: ALL_ICON }, ...modulesIn(state.course)];
+  const current = items.find((m) => m.slug === state.activeFilter) || items[0];
+  const swatch = (m) => `<svg viewBox="0 0 24 24" style="stroke:${m.ink}">${m.icon}</svg>`;
+
+  $("#moduleToggleSwatch").style.background = current.tint;
+  $("#moduleToggleSwatch").innerHTML = swatch(current);
+  $("#moduleToggleLabel").textContent = current.short;
+  if (shownModule !== null && shownModule !== current.slug) {
+    for (const el of [$("#moduleToggleLabel"), $("#moduleToggleSwatch")]) {
+      el.classList.remove("is-changed");
+      void el.offsetWidth; // restart the animation
+      el.classList.add("is-changed");
+    }
+  }
+  shownModule = current.slug;
+
+  $("#moduleList").innerHTML = items
+    .map((m, i) => {
+      const on = m.slug === current.slug;
+      const count = productsFor(m.slug).length;
+      return `
+    <button type="button" class="module-option${on ? " is-on" : ""}${count ? "" : " is-empty"}" role="option"
+            aria-selected="${on}" data-filter="${m.slug}" style="--i:${i}">
+      <span class="select-swatch" style="background:${m.tint}">${swatch(m)}</span>
+      <span class="select-name">${esc(m.short)}<span class="select-count">${count} ${count === 1 ? "note" : "notes"}</span></span>
+      <span class="module-check" aria-hidden="true">${on ? CHECK_ICON : ""}</span>
+    </button>`;
+    })
+    .join("");
+}
+
+export function toggleModuleMenu(open = $("#moduleList").hidden) {
+  if ($("#moduleList").hidden === !open) return;
+  if (open) toggleSelectMenu(false);
+  $("#moduleList").hidden = !open;
+  $("#moduleToggle").setAttribute("aria-expanded", String(open));
+  if (open) ($("#moduleList .is-on") || $("#moduleList .module-option"))?.focus({ preventScroll: true });
 }
 
 /* ------------------------------------------------------------------
@@ -137,6 +186,7 @@ function renderSelectMenu() {
 }
 
 export function toggleSelectMenu(open = $("#selectList").hidden) {
+  if (open && !$("#moduleList").hidden) toggleModuleMenu(false);
   $("#selectList").hidden = !open;
   $("#selectToggle").setAttribute("aria-expanded", String(open));
   if (open) $("#selectList .select-item:not([disabled])")?.focus();
@@ -144,6 +194,7 @@ export function toggleSelectMenu(open = $("#selectList").hidden) {
 
 export function renderProducts() {
   renderSelectMenu();
+  renderModuleMenu();
   const grid = $("#productGrid");
   const base = productsFor(state.activeFilter);
   // New notes float to the top of the grid while their badge shows (24h).
