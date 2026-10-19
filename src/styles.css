@@ -906,9 +906,9 @@ details.faq p{margin:12px 0 0;color:var(--ink-soft);font-size:14px;max-width:66c
      width in halves over a hairline, the module chips sit in an even grid
      (3 across, 2 on narrow phones) and Select spans the full row — same
      height, same gaps, so the whole block lines up. */
-  .shop-head{flex-direction:column;align-items:stretch;gap:22px;}
-  .shop-head h2{font-size:28px;line-height:1.2;}
-  .shop-head .sub{font-size:13.5px;line-height:1.55;}
+  .shop-head{flex-direction:column;align-items:stretch;gap:20px;}
+  .shop-head h2{font-size:28px;line-height:1.15;}
+  .shop-head .sub{margin-top:8px;font-size:13.5px;line-height:1.55;}
   /* Course switch as two eyebrow tabs above the heading, underlined like the header nav */
   .course-switch{
     order:-1;display:grid;grid-template-columns:1fr 1fr;gap:0;margin-top:-18px;padding:0;
@@ -926,10 +926,10 @@ details.faq p{margin:12px 0 0;color:var(--ink-soft);font-size:14px;max-width:66c
   .course-switch button:hover{color:var(--ink-soft);}
   .course-switch button.is-on{background:none;color:var(--ink);}
   .course-switch button.is-on::after{transform:scaleX(1);}
-  .shop-bar{display:grid;grid-template-columns:minmax(0,1fr);gap:8px;margin:22px 0 24px;}
+  .shop-bar{display:grid;grid-template-columns:minmax(0,1fr);gap:8px;margin:20px 0 24px;}
   .filters{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;}
   .chip{display:flex;align-items:center;justify-content:center;min-height:40px;padding:8px 10px;text-align:center;line-height:1.2;font-size:12.5px;}
-  .select-menu{width:100%;}
+  .select-menu{width:100%;margin-top:4px;} /* a touch apart — it adds to the cart, the chips only filter */
   .select-toggle{width:100%;min-height:40px;justify-content:center;padding:8px 16px;}
   .select-list{left:0;width:auto;transform-origin:top center;}
   .hero h1{font-size:40px;}
