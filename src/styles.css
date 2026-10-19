@@ -241,8 +241,6 @@ h1,h2,h3{font-family:'Playfair Display',Georgia,serif;font-weight:400;letter-spa
    ============================================================ */
 .modules{padding-top:56px;background:#FCFAF8;position:relative;z-index:5;}
 .module-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:40px 22px;}
-.module-grid + .shelf-label{margin-top:44px;}
-.shelf-label{margin:0 0 18px;font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-soft);font-weight:500;}
 /* The notebooks stand on a wooden shelf. Each card's slot draws its own
    length of shelf, reaching half the gap either side, so neighbours join up
    into one shelf per row at any column count. */

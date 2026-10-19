@@ -20,7 +20,7 @@ bridging course (for students whose BCom wasn't a BCom Accounting), with
 slugs prefixed `bridging-` (e.g. `bridging-taxation`) plus
 `bridging-freebies`. `modules.course` / `MODULES[].course` is `pgda` or
 `bridging`. The shop has a course switch above the grid (`renderCourses`
-in `render.js`), which, along with the bridging shelf and anything marked
+in `render.js`), and the notebook shelf shows whichever course it's on. The switch, and anything marked
 `data-bridging-only` in `index.html`, stays hidden until at least one
 active bridging note exists. `/#bridging` opens the shop on that course.
 One cart and checkout covers both, and bundle discounts count both. The

@@ -35,7 +35,7 @@ export function renderCourses() {
 }
 
 /* ------------------------------------------------------------------
-   Module cards — one shelf per course
+   Module cards — the shelf shows the course the switch is on
 ------------------------------------------------------------------ */
 function notebook(m) {
   const count = state.products.filter((p) => p.module_slug === m.slug).length;
@@ -56,15 +56,8 @@ function notebook(m) {
 }
 
 export function renderModules() {
-  const courses = hasBridging() ? COURSES : COURSES.slice(0, 1);
-  $("#moduleGrid").innerHTML = courses
-    .map(
-      (c) => `
-    ${courses.length > 1 ? `<p class="shelf-label">${esc(c.name)}</p>` : ""}
-    <div class="module-grid">${modulesIn(c.slug).filter((m) => !m.free).map(notebook).join("")}</div>`
-    )
-    .join("");
-  renderCourses();
+  renderCourses(); // first — it may fall back to PGDA if bridging has no notes
+  $("#moduleGrid").innerHTML = modulesIn(state.course).filter((m) => !m.free).map(notebook).join("");
 }
 
 /* ------------------------------------------------------------------
@@ -494,7 +487,7 @@ export function setFilter(slug) {
   if (slug === "freebies" && state.course !== "pgda") slug = `${state.course}-freebies`;
   if (slug !== "all" && MOD[slug]) state.course = courseOf(slug);
   state.activeFilter = slug;
-  renderCourses();
+  renderModules();
   renderFilters();
   renderProducts();
   document.getElementById("shop").scrollIntoView({ behavior: "smooth", block: "start" });
@@ -506,7 +499,7 @@ export function setCourse(course) {
   state.course = course;
   state.activeFilter = "all";
   toggleSelectMenu(false);
-  renderCourses();
+  renderModules();
   renderFilters();
   renderProducts();
 }
