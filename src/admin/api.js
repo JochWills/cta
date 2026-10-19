@@ -57,6 +57,11 @@ export const publishReview = (id, is_published) =>
   call("admin-reviews", { body: { action: "publish", id, is_published } });
 export const deleteReview = (id) => call("admin-reviews", { body: { action: "delete", id } });
 
+/** When each customer was last emailed the review link — { email, sent_at }[]. */
+export const listReviewRequests = () => call("admin-customers", { body: { action: "list_requests" } });
+/** Email one customer (must have a paid order) the /review link, from notes@pgdanotes.co.za. */
+export const requestReview = (email) => call("admin-customers", { body: { action: "request_review", email } });
+
 /** Short-lived signed URL for a note's current PDF, from the private "notes" bucket. */
 export const getSignedPdfUrl = (filePath) =>
   call("admin-products", { body: { action: "signed_url", file_path: filePath } });

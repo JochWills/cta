@@ -825,3 +825,20 @@ create table if not exists public.admin_login_failures (
 );
 create index if not exists admin_login_failures_at on public.admin_login_failures (at);
 alter table public.admin_login_failures enable row level security;
+
+
+-- ------------------------------------------------------------
+-- 15. REVIEW REQUESTS (admin page's Customers tab)
+--    One row each time Courts emails a customer the /review link from
+--    the Customers tab, so the tab can show "Asked 3 days ago" and avoid
+--    asking twice by accident. Written and read only by the
+--    admin-customers Edge Function (service_role) — RLS on, no policies.
+--    `email` is lower-cased.
+-- ------------------------------------------------------------
+create table if not exists public.review_requests (
+  id      bigint generated always as identity primary key,
+  email   text not null,
+  sent_at timestamptz not null default now()
+);
+create index if not exists review_requests_email on public.review_requests (email);
+alter table public.review_requests enable row level security;

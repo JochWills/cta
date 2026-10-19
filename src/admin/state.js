@@ -20,7 +20,12 @@ export const adminState = {
   dailyVisitors: [],
   /** { kind, label, visitors }[] for the Dashboard's sources and journey cards, for dashboardRange. */
   visitorInsights: [],
-  /** Which dashboard tab is showing: "dashboard" | "orders" | "notes" | "discounts" | "reviews". */
+  /** { email, sent_at }[] — when each customer was last asked for a review, newest first. */
+  reviewRequests: [],
+  /** Customers tab search box and sort order. */
+  customerQuery: "",
+  customerSort: "spent",
+  /** Which dashboard tab is showing: "dashboard" | "orders" | "customers" | "notes" | "discounts" | "reviews". */
   tab: "dashboard",
   /** Product row being edited in the modal, or null when adding a new one. */
   editing: null,

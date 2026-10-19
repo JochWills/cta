@@ -41,6 +41,7 @@ export function setTab(tab) {
   document.querySelectorAll("[data-tab]").forEach((b) => b.classList.toggle("is-on", b.dataset.tab === tab));
   $("#dashOverview").hidden = tab !== "dashboard";
   $("#ordersView").hidden = tab !== "orders";
+  $("#customersView").hidden = tab !== "customers";
   $("#notesView").hidden = tab !== "notes";
   $("#discountsView").hidden = tab !== "discounts";
   $("#reviewsView").hidden = tab !== "reviews";
@@ -102,6 +103,148 @@ function orderRow(o) {
       <td><span class="status-badge status-${esc(o.status)}">${esc(STATUS_LABEL[o.status] || o.status)}</span></td>
       <td><div class="admin-row-actions"><button class="btn ghost" data-del-order="${esc(o.id)}">Delete</button></div></td>
     </tr>`;
+}
+
+/* ------------------------------------------------------------------
+   Customers — one row per unique email across paid orders (free
+   downloads and unpaid checkouts aren't purchases), worked out here from
+   the orders already loaded. A row opens to show that customer's order
+   history; "Ask for a review" emails them the /review link (admin-customers).
+------------------------------------------------------------------ */
+const openCustomers = new Set();
+
+export function customerList() {
+  const byEmail = new Map();
+  // Oldest first, so the name ends up as the most recent one they used.
+  const paid = adminState.orders.filter((o) => o.status === "paid").slice().reverse();
+  for (const o of paid) {
+    const key = String(o.email || "").trim().toLowerCase();
+    if (!key) continue;
+    const c = byEmail.get(key) || { email: key, name: "", orders: [], notes: 0, spentCents: 0, first: null, last: null };
+    const when = new Date(o.paid_at || o.created_at);
+    if (o.full_name) c.name = o.full_name;
+    c.orders.unshift(o); // newest first
+    c.notes += Array.isArray(o.items) ? o.items.length : 0;
+    c.spentCents += o.total_cents || 0;
+    if (!c.first || when < c.first) c.first = when;
+    if (!c.last || when > c.last) c.last = when;
+    byEmail.set(key, c);
+  }
+  const asked = new Map();
+  for (const r of adminState.reviewRequests) if (!asked.has(r.email)) asked.set(r.email, new Date(r.sent_at));
+  for (const c of byEmail.values()) c.askedAt = asked.get(c.email) || null;
+  return [...byEmail.values()];
+}
+
+const dateLabel = (d) => d.toLocaleDateString("en-ZA", { day: "numeric", month: "short", year: "numeric" });
+
+function agoLabel(d) {
+  const days = Math.floor((Date.now() - d.getTime()) / 86400000);
+  if (days < 1) return "today";
+  if (days === 1) return "yesterday";
+  if (days < 30) return `${days} days ago`;
+  const months = Math.floor(days / 30);
+  return months < 12 ? `${months} month${months === 1 ? "" : "s"} ago` : dateLabel(d);
+}
+
+export function renderCustomers() {
+  const all = customerList();
+  const repeat = all.filter((c) => c.orders.length > 1).length;
+  const spent = all.reduce((sum, c) => sum + c.spentCents, 0);
+  const askedCount = all.filter((c) => c.askedAt).length;
+  const tile = (label, value, sub) => `
+    <div class="customer-tile"><span class="stat-label">${label}</span><strong>${value}</strong>${sub ? `<span class="stat-sub">${sub}</span>` : ""}</div>`;
+  $("#customerSummary").innerHTML =
+    tile("Customers", all.length.toLocaleString("en-ZA"), "with a paid order") +
+    tile("Repeat customers", repeat.toLocaleString("en-ZA"), all.length ? `${Math.round((repeat / all.length) * 100)}% came back` : "") +
+    tile("Average spend", all.length ? rands(Math.round(spent / all.length)) : "—", "per customer") +
+    tile("Asked for a review", askedCount.toLocaleString("en-ZA"), all.length ? `of ${all.length}` : "");
+
+  const q = adminState.customerQuery.trim().toLowerCase();
+  const list = all.filter((c) => !q || c.email.includes(q) || c.name.toLowerCase().includes(q));
+  const sorters = {
+    spent: (a, b) => b.spentCents - a.spentCents || b.last - a.last,
+    recent: (a, b) => b.last - a.last,
+    orders: (a, b) => b.orders.length - a.orders.length || b.spentCents - a.spentCents,
+    name: (a, b) => (a.name || a.email).localeCompare(b.name || b.email),
+  };
+  list.sort(sorters[adminState.customerSort] || sorters.spent);
+
+  const box = $("#customersTable");
+  if (!list.length) {
+    box.innerHTML = `<div class="empty-state">${all.length ? "No customers match that search." : "No paid orders yet."}</div>`;
+    return;
+  }
+  box.innerHTML = `
+    <div class="admin-table-wrap">
+      <table class="admin-table customer-table">
+        <thead><tr>
+          <th>Customer</th><th>Orders</th><th>Notes</th><th>Total spent</th><th>Last purchase</th><th>Review</th><th></th>
+        </tr></thead>
+        <tbody>${list.map(customerRow).join("")}</tbody>
+      </table>
+    </div>`;
+}
+
+function customerRow(c) {
+  const open = openCustomers.has(c.email);
+  return `
+    <tr class="customer-row${open ? " is-open" : ""}" data-customer-toggle="${esc(c.email)}">
+      <td>
+        <div class="customer-name">
+          <svg class="customer-caret" viewBox="0 0 12 8" aria-hidden="true"><path d="M1 1.5l5 5 5-5"/></svg>
+          <span>
+            <span>${esc(c.name || "—")}</span>
+            <span class="meta">${esc(c.email)}</span>
+          </span>
+        </div>
+      </td>
+      <td>${c.orders.length}${c.orders.length > 1 ? ` <span class="repeat-badge">Repeat</span>` : ""}</td>
+      <td>${c.notes}</td>
+      <td><strong>${rands(c.spentCents)}</strong></td>
+      <td>
+        <div>${esc(dateLabel(c.last))}</div>
+        <div class="meta">${esc(agoLabel(c.last))}</div>
+      </td>
+      <td>${c.askedAt ? `<span class="asked-badge">Asked ${esc(agoLabel(c.askedAt))}</span>` : `<span class="meta">Not asked</span>`}</td>
+      <td>
+        <div class="admin-row-actions">
+          <button class="btn ghost" data-ask-review="${esc(c.email)}">${c.askedAt ? "Ask again" : "Ask for a review"}</button>
+        </div>
+      </td>
+    </tr>
+    <tr class="customer-detail" ${open ? "" : "hidden"}>
+      <td colspan="7">
+        <div class="customer-history">
+          <p class="customer-history-head">Purchase history · customer since ${esc(dateLabel(c.first))}</p>
+          ${c.orders.map(historyItem).join("")}
+        </div>
+      </td>
+    </tr>`;
+}
+
+function historyItem(o) {
+  const items = Array.isArray(o.items) ? o.items : [];
+  return `
+    <div class="history-order">
+      <div class="history-meta">
+        <strong>${esc(dateLabel(new Date(o.paid_at || o.created_at)))}</strong>
+        <span class="ref">${esc(o.reference)}</span>
+      </div>
+      <ul class="history-items">
+        ${items.map((i) => `<li><span>${esc(i.title)}</span><span>${rands(i.price_cents)}</span></li>`).join("")}
+      </ul>
+      <div class="history-total">
+        ${o.discount_percent ? `<span class="meta">${o.discount_code ? esc(o.discount_code) : "Bundle"} · ${esc(o.discount_percent)}% off</span>` : ""}
+        <strong>${rands(o.total_cents)}</strong>
+      </div>
+    </div>`;
+}
+
+export function toggleCustomer(email) {
+  if (openCustomers.has(email)) openCustomers.delete(email);
+  else openCustomers.add(email);
+  renderCustomers();
 }
 
 /* ------------------------------------------------------------------
@@ -298,8 +441,16 @@ export function closeProductForm() {
 let resolveConfirm = null;
 let focusBeforeConfirm = null;
 
-export function confirmDelete({ title, message, confirmLabel = "Delete" }) {
+const TRASH_ICON = $("#confirmModal .confirm-icon").innerHTML;
+const MAIL_ICON = '<svg viewBox="0 0 24 24"><rect x="3" y="5.5" width="18" height="13" rx="2"/><path d="M3.5 7l8.5 6.5L20.5 7"/></svg>';
+
+/** tone "send" swaps the bin icon and red button for a mail icon and a normal one. */
+export function confirmDelete({ title, message, confirmLabel = "Delete", tone = "danger" }) {
   resolveConfirm?.(false); // a second one opening cancels the first
+  const send = tone === "send";
+  $("#confirmModal .confirm-icon").innerHTML = send ? MAIL_ICON : TRASH_ICON;
+  $("#confirmModal .confirm-icon").classList.toggle("is-send", send);
+  $("#confirmOk").className = send ? "btn" : "btn danger";
   $("#confirmTitle").textContent = title;
   $("#confirmMessage").textContent = message;
   $("#confirmOk").textContent = confirmLabel;

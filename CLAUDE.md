@@ -115,14 +115,15 @@ src/
 supabase/
   schema.sql                Tables, RLS policies, both storage buckets, 28 seed rows
   functions/
-    _shared/admin.ts        Token auth + CORS shared by the seven admin-* functions
+    _shared/admin.ts        Token auth + CORS shared by the eight admin-* functions
     admin-login/             ┐
     admin-orders/             } deployed — see docs/admin.md
     admin-products/           │
     admin-upload/            │
     admin-discounts/         │
     admin-reviews/           │
-    admin-live/              ┘ who's online right now, see Data model's site_sessions
+    admin-live/              │ who's online right now, see Data model's site_sessions
+    admin-customers/         ┘ Customers tab: "ask for a review" emails, see Data model's review_requests
     paystack-initiate/        ┐ deployed — see docs/paystack.md
     paystack-webhook/         ┘
     order-download/          deployed — self-serve download links, see Data model below
@@ -275,6 +276,15 @@ against an order, by choice — but a submission always lands unpublished:
 the anon key's column grant only covers `name`/`body`/`rating`, and it can
 only read rows where `is_published` is true. Publishing, unpublishing and
 deleting go through `admin-reviews` (the admin page's Reviews tab).
+
+`review_requests` — one row per "Ask for a review" email sent from the
+admin page's Customers tab (`email` lower-cased, `sent_at`). The Customers
+tab itself (one row per unique email across `paid` orders, with their
+order history and totals) is worked out in the browser from the orders
+`admin-orders` already returns; `admin-customers` only lists these rows
+and sends the email through Resend (from `EMAIL_FROM`, the /review link),
+and only to an address with a paid order. RLS on, no policies
+(schema.sql section 15).
 
 ### RLS — read this before changing any query
 

@@ -8,6 +8,9 @@ import {
   loginError,
   setTab,
   renderOrders,
+  renderCustomers,
+  toggleCustomer,
+  customerList,
   renderProducts,
   renderDiscounts,
   renderReviews,
@@ -41,6 +44,8 @@ import {
   listReviews,
   publishReview,
   deleteReview,
+  listReviewRequests,
+  requestReview,
 } from "./api.js";
 import { renderPreviewPages, countPdfPages } from "./pdfPreview.js";
 import { renderDashboard } from "./dashboard.js";
@@ -79,7 +84,7 @@ async function doLogin() {
 async function enterDashboard() {
   showLoggedIn();
   setTab(adminState.tab);
-  await Promise.all([loadOrders(), loadProducts(), loadDiscounts(), loadReviews(), loadDailyVisitors(), loadVisitorInsights()]);
+  await Promise.all([loadOrders(), loadProducts(), loadDiscounts(), loadReviews(), loadReviewRequests(), loadDailyVisitors(), loadVisitorInsights()]);
   startVisitorPoll();
 }
 
@@ -180,10 +185,48 @@ function handleAuthError() {
 }
 
 /** `quiet` for the background refresh — a blip there isn't worth a toast every minute. */
+async function loadReviewRequests() {
+  try {
+    adminState.reviewRequests = await listReviewRequests();
+    renderCustomers();
+  } catch (err) {
+    if (err instanceof AuthError) return handleAuthError();
+    toast(err.message);
+  }
+}
+
+/** Customers tab's "Ask for a review" — confirm, then email them the /review link. */
+async function doAskReview(email, btn) {
+  const c = customerList().find((x) => x.email === email);
+  if (!c) return;
+  const who = c.name || c.email;
+  const ok = await confirmDelete({
+    tone: "send",
+    title: c.askedAt ? "Ask for a review again?" : "Ask for a review?",
+    message: `${who} (${c.email}) gets an email from notes@pgdanotes.co.za asking for a short review, with the review link.${
+      c.askedAt ? " You last asked them " + c.askedAt.toLocaleDateString("en-ZA") + "." : ""
+    }`,
+    confirmLabel: "Send email",
+  });
+  if (!ok) return;
+  btn.disabled = true;
+  btn.textContent = "Sending…";
+  try {
+    const sent = await requestReview(c.email);
+    adminState.reviewRequests.unshift(sent);
+    toast(`Review request sent to ${who}`);
+  } catch (err) {
+    if (err instanceof AuthError) return handleAuthError();
+    toast(err.message);
+  }
+  renderCustomers();
+}
+
 async function loadOrders(quiet = false) {
   try {
     adminState.orders = await fetchOrders();
     renderOrders();
+    renderCustomers();
     renderDashboard(); // the Dashboard tab is derived entirely from orders — see dashboard.js
   } catch (err) {
     if (err instanceof AuthError) return handleAuthError();
@@ -607,6 +650,15 @@ $("#productForm").addEventListener("submit", saveProductForm);
 $("#pf_module").addEventListener("change", syncFreebieFields);
 $("#discountForm").addEventListener("submit", saveDiscountForm);
 
+$("#customerSearch").addEventListener("input", (e) => {
+  adminState.customerQuery = e.target.value;
+  renderCustomers();
+});
+$("#customerSort").addEventListener("change", (e) => {
+  adminState.customerSort = e.target.value;
+  renderCustomers();
+});
+
 $("#dashRange").addEventListener("change", (e) => {
   adminState.dashboardRange = e.target.value;
   renderDashboard();
@@ -627,6 +679,12 @@ document.addEventListener("click", (e) => {
 
   const del = e.target.closest("[data-del]");
   if (del) return doDelete(del.dataset.del);
+
+  const ask = e.target.closest("[data-ask-review]");
+  if (ask) return doAskReview(ask.dataset.askReview, ask);
+
+  const customer = e.target.closest("[data-customer-toggle]");
+  if (customer) return toggleCustomer(customer.dataset.customerToggle);
 
   const delOrder = e.target.closest("[data-del-order]");
   if (delOrder) return doDeleteOrder(delOrder.dataset.delOrder);
