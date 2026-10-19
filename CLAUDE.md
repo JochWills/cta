@@ -296,6 +296,19 @@ files only and cannot run server code. See `docs/deploy-render.md`.
 `VITE_` variables are read at build time, not runtime, so any change to them
 needs a redeploy to take effect.
 
+## Security notes
+
+- **Admin login lockout.** `admin-login` refuses all attempts for 15 minutes
+  after 5 wrong passwords from one connection (or 30 overall), counted in
+  `admin_login_failures` (schema.sql section 14, hashed IPs only).
+- **render.yaml's `headers:` aren't applied to the live site** (checked with
+  `curl -I`: no Cache-Control no-store, no Referrer-Policy) — the Render
+  service doesn't seem to be synced from the Blueprint. So every HTML page
+  sets the referrer policy with a `<meta>` and hides itself if framed by
+  another site (a small inline script at the top of `<head>`). Keep that
+  snippet in any new page. Headers set in Render's dashboard would cover
+  it properly.
+
 ## Secrets
 
 - `VITE_`-prefixed variables are **bundled into the public JavaScript**. Only the

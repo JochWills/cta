@@ -400,7 +400,32 @@ function liveDetailHtml(r) {
     </div>`;
 }
 
-export function renderLiveVisitors(rows) {
+/**
+ * `details` is whatever a visitor's browser sent (heartbeat is anon-callable),
+ * so anyone could send junk on purpose. Keep only the expected fields, in the
+ * expected shapes, so one bad row can't break the whole pop-up. (Everything
+ * shown still goes through esc() as usual.)
+ */
+function cleanDetails(raw) {
+  const d = raw && typeof raw === "object" && !Array.isArray(raw) ? raw : {};
+  const text = (v) => (typeof v === "string" ? v.slice(0, 120) : "");
+  const list = (v) => (Array.isArray(v) ? v.filter((x) => typeof x === "string").slice(0, 30).map((x) => x.slice(0, 120)) : []);
+  const num = (v) => (Number.isFinite(v) && v >= 0 ? Math.floor(v) : 0);
+  return {
+    os: text(d.os), browser: text(d.browser), screen: text(d.screen), region: text(d.region),
+    campaign: text(d.campaign), filter: text(d.filter),
+    visits: num(d.visits), first_visit: text(d.first_visit),
+    cart: list(d.cart), cart_cents: num(d.cart_cents), previewed: list(d.previewed),
+    idle: d.idle === true,
+  };
+}
+
+export function renderLiveVisitors(rawRows) {
+  const rows = (Array.isArray(rawRows) ? rawRows : []).map((r) => ({
+    ...r,
+    details: cleanDetails(r.details),
+    trail: Array.isArray(r.trail) ? r.trail.filter((t) => t && typeof t.a === "string") : [],
+  }));
   const body = $("#liveBody");
   const listScroll = body.querySelector(".live-list")?.scrollTop || 0;
   if (!rows.length) {

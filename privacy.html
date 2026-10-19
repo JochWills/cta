@@ -2,6 +2,17 @@
 <html lang="en-ZA">
 <head>
 <meta charset="UTF-8" />
+<!-- Security that would normally be response headers (render.yaml's aren't
+     being applied by Render): don't send full page addresses to other sites,
+     and refuse to be shown inside another site's frame (clickjacking) —
+     hide, and try to open as the top-level page instead. -->
+<meta name="referrer" content="strict-origin-when-cross-origin" />
+<script>
+  if (window.top !== window.self) {
+    document.documentElement.style.display = "none";
+    try { window.top.location = window.location.href; } catch (e) {}
+  }
+</script>
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Privacy policy — PGDA Notes by Courts</title>
 <meta name="description" content="What PGDA Notes by Courts collects, why, and how it's kept safe." />

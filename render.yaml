@@ -60,6 +60,15 @@ services:
       - path: /*
         name: Referrer-Policy
         value: strict-origin-when-cross-origin
+      # Clickjacking: nobody else may show these pages in a frame. Each page
+      # also has a meta/script fallback, since Render isn't applying this
+      # file's headers to the live site (set them in the dashboard too).
+      - path: /*
+        name: X-Frame-Options
+        value: DENY
+      - path: /*
+        name: Content-Security-Policy
+        value: "frame-ancestors 'none'"
 
     # Serve the legal pages without ".html" in the address bar — a rewrite,
     # not a redirect, so the URL the visitor sees stays /terms, but Render

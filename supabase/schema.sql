@@ -795,3 +795,22 @@ grant execute on function public.heartbeat(text, text, text, text, int, jsonb) t
 grant execute on function public.leave_site(text) to anon, authenticated;
 revoke execute on function public.live_visitors() from public, anon, authenticated;
 grant execute on function public.live_visitors() to service_role;
+
+
+-- ------------------------------------------------------------
+-- 14. ADMIN LOGIN ATTEMPTS (brute-force limit)
+--    One row per wrong admin password, written and read only by the
+--    admin-login Edge Function (service_role) — RLS on, no policies.
+--    `who` is a hash of the caller's IP address (never the address
+--    itself). admin-login refuses further tries for 15 minutes after 5
+--    wrong ones from the same `who`, or 30 across everyone (someone
+--    rotating addresses), and clears that `who`'s rows on a right one.
+--    Rows older than a day are pruned on each attempt.
+-- ------------------------------------------------------------
+create table if not exists public.admin_login_failures (
+  id  bigint generated always as identity primary key,
+  who text not null,
+  at  timestamptz not null default now()
+);
+create index if not exists admin_login_failures_at on public.admin_login_failures (at);
+alter table public.admin_login_failures enable row level security;
