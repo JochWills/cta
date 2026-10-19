@@ -829,35 +829,101 @@ details.faq p{margin:12px 0 0;color:var(--ink-soft);font-size:14px;max-width:66c
    portion of the last one blurred/faded so it's a taste of a note rather
    than a substitute for buying it.
    ============================================================ */
-.preview-frame{
-  overflow-y:auto;max-height:56vh;background:var(--cream);min-height:220px;
-  border-radius:var(--radius) var(--radius) 0 0;
+/* Two columns on wider screens: the pages on a soft "desk" on the left,
+   the details and buy button on the right. A bottom sheet on phones (see
+   the max-width:720px block). Opens with a rise and the pages fading in
+   one after another. */
+.preview-modal .modal-scrim{background:rgba(43,37,35,.55);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);animation:fade-in .25s ease;}
+.preview-panel{
+  width:min(920px,100%);max-height:min(640px,90vh);overflow:hidden;
+  display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);
+  border-radius:18px;animation:preview-in .4s cubic-bezier(.2,.8,.2,1);
 }
-.preview-page{position:relative;}
-.preview-page:not(:last-child){border-bottom:6px solid var(--rule);}
+@keyframes preview-in{from{opacity:0;transform:translateY(16px) scale(.98);}}
+.preview-panel .modal-close{top:16px;right:16px;}
+
+.preview-viewer{position:relative;min-height:0;background:#F3EDE8;}
+.preview-viewer::after{ /* soft fade where the pages scroll under the bottom edge */
+  content:"";position:absolute;left:0;right:0;bottom:0;height:28px;pointer-events:none;
+  background:linear-gradient(to bottom,rgba(243,237,232,0),#F3EDE8);
+}
+.preview-chip{
+  position:absolute;top:16px;left:16px;z-index:2;padding:6px 12px;border-radius:999px;
+  background:rgba(255,255,255,.92);box-shadow:0 2px 8px rgba(43,37,35,.10);
+  font-size:11px;letter-spacing:.06em;text-transform:uppercase;font-weight:600;color:var(--ink-soft);
+}
+.preview-chip[hidden]{display:none;}
+.preview-scroll-hint{
+  position:absolute;left:50%;bottom:18px;z-index:2;transform:translateX(-50%);
+  display:inline-flex;align-items:center;gap:8px;padding:8px 14px 8px 16px;border-radius:999px;
+  background:rgba(43,37,35,.82);color:#fff;font-size:12px;font-weight:500;white-space:nowrap;
+  box-shadow:0 6px 18px rgba(43,37,35,.25);pointer-events:none;
+  animation:hint-in .4s ease .9s backwards;
+}
+.preview-scroll-hint[hidden]{display:none;}
+.preview-scroll-hint svg{width:10px;height:12px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;animation:hint-bob 1.4s ease-in-out infinite;}
+@keyframes hint-in{from{opacity:0;transform:translate(-50%,8px);}}
+@keyframes hint-bob{50%{transform:translateY(3px);}}
+/* a scrollbar that's always visible on the pages, not just while scrolling */
+.preview-frame::-webkit-scrollbar{width:8px;}
+.preview-frame::-webkit-scrollbar-track{background:transparent;}
+.preview-frame::-webkit-scrollbar-thumb{background:rgba(43,37,35,.22);border-radius:8px;border:2px solid #F3EDE8;}
+.preview-frame{
+  height:100%;max-height:min(640px,90vh);overflow-y:auto;min-height:260px;
+  padding:58px 28px 34px;display:flex;flex-direction:column;gap:18px;
+  scrollbar-width:thin;scrollbar-color:rgba(43,37,35,.28) transparent;
+}
+.preview-page{
+  position:relative;flex-shrink:0;border-radius:3px;overflow:hidden;background:#fff;
+  box-shadow:0 1px 2px rgba(43,37,35,.08),0 8px 24px -6px rgba(43,37,35,.18);
+  animation:page-in .5s cubic-bezier(.2,.7,.2,1) backwards;animation-delay:calc(var(--i, 0) * 90ms + 120ms);
+}
+@keyframes page-in{from{opacity:0;transform:translateY(14px);}}
 .preview-img{display:block;width:100%;}
+.preview-frame .empty-state{margin:auto;text-align:center;}
 .preview-blur-panel{
   position:absolute;left:0;right:0;bottom:0;top:38%;
   backdrop-filter:blur(14px) saturate(120%);-webkit-backdrop-filter:blur(14px) saturate(120%);
   background:linear-gradient(to bottom, rgba(253,250,248,0) 0%, rgba(253,250,248,.55) 40%, rgba(253,250,248,.95) 85%);
-  display:flex;align-items:flex-end;justify-content:center;padding-bottom:22px;
+  display:flex;align-items:flex-end;justify-content:center;padding-bottom:26px;
 }
 .preview-blur-panel span{
+  display:inline-flex;align-items:center;gap:8px;
   font-size:11.5px;letter-spacing:.06em;text-transform:uppercase;font-weight:600;
-  color:var(--accent-deep);background:#fff;padding:8px 16px;border-radius:999px;box-shadow:var(--shadow);
+  color:var(--accent-deep);background:#fff;padding:9px 18px;border-radius:999px;box-shadow:var(--shadow);
 }
-.preview-info{padding:22px 26px 26px;text-align:center;}
-.preview-info h3{font-size:19px;margin:10px 0 0;}
-.preview-pages{margin:6px 0 0;font-size:13px;color:var(--ink-soft);}
-.preview-desc{margin:12px auto 0;max-width:46ch;font-size:13.5px;line-height:1.6;color:var(--ink-soft);}
+.preview-blur-panel span::before{ /* small padlock */
+  content:"";width:10px;height:8px;border:1.6px solid currentColor;border-radius:2px;margin-top:4px;
+  box-shadow:0 -5px 0 -3.4px var(--paper),0 -5px 0 -2px currentColor;
+}
+
+.preview-info{display:flex;flex-direction:column;min-height:0;overflow-y:auto;text-align:left;}
+.preview-details{padding:34px 34px 8px;}
+.preview-info h3{
+  font-family:'Newsreader','Playfair Display',Georgia,serif;font-weight:400;
+  font-size:30px;line-height:1.15;letter-spacing:-.015em;margin:14px 0 0;padding-right:28px;color:#2A2422;
+}
+.preview-pages{margin:10px 0 0;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-faint);font-weight:500;}
+.preview-pages:empty{display:none;}
+.preview-desc{margin:18px 0 0;font-size:14px;line-height:1.7;color:var(--ink-soft);}
 .preview-desc:empty{display:none;}
-.preview-info .btn{width:100%;margin-top:16px;}
-.preview-info .note{margin-top:10px;}
-/* A freebie shows the whole file in an iframe (src/freebies.js), so give it room. */
-.modal.is-wide .modal-panel{width:min(980px,100%);}
-.modal.is-wide .preview-frame{max-height:none;overflow:hidden;}
-.preview-doc{display:block;width:100%;height:62vh;border:0;background:#fff;}
-.modal.is-wide .preview-info .btn{width:auto;min-width:260px;}
+.preview-assure{list-style:none;margin:22px 0 0;padding:18px 0 0;border-top:1px solid var(--rule);display:grid;gap:10px;}
+.preview-assure li{display:flex;align-items:center;gap:11px;font-size:13px;color:var(--ink-soft);}
+.preview-assure svg{width:17px;height:17px;flex-shrink:0;fill:none;stroke:var(--accent);stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round;}
+.preview-buy{margin-top:auto;padding:20px 34px 28px;background:var(--paper);}
+.preview-price-row{display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:14px;}
+.preview-price{font-family:'Newsreader','Playfair Display',Georgia,serif;font-size:34px;line-height:1;color:#2A2422;}
+.preview-bundle{font-size:12px;color:var(--tax-ink);background:var(--tax-tint);padding:4px 10px;border-radius:999px;}
+.preview-bundle:empty{display:none;}
+.preview-buy .btn{width:100%;}
+.preview-buy .btn.is-in-cart{background:var(--paper);color:var(--accent-deep);border:1px solid var(--accent);}
+.preview-buy .note{margin:10px 0 0;text-align:center;}
+/* A freebie shows the whole file in an iframe (src/freebies.js), so the pages side gets more room. */
+.modal.is-wide .preview-panel{width:min(1100px,100%);max-height:min(760px,92vh);grid-template-columns:minmax(0,1.9fr) minmax(0,1fr);}
+.modal.is-wide .preview-frame{padding:0;max-height:none;overflow:hidden;}
+.modal.is-wide .preview-viewer::after{display:none;}
+.preview-doc{display:block;width:100%;height:min(760px,92vh);border:0;background:#fff;}
+.modal.is-wide .preview-assure{display:none;}
 
 /* ============================================================
    DOWNLOAD MODAL — the "get your notes" self-serve lookup.
@@ -1024,6 +1090,26 @@ details.faq p{margin:12px 0 0;color:var(--ink-soft);font-size:14px;max-width:66c
 }
 @media (max-width:520px){
   .filters{grid-template-columns:1fr 1fr;}
+}
+@media (max-width:720px){
+  /* Preview as a bottom sheet: pages on top, details below, price and
+     button pinned to the bottom edge */
+  .preview-modal{padding:0;align-items:end;}
+  .preview-panel,.modal.is-wide .preview-panel{
+    width:100%;max-height:92vh;display:flex;flex-direction:column;overflow-y:auto;
+    border-radius:20px 20px 0 0;animation:sheet-up .38s cubic-bezier(.2,.8,.2,1);
+  }
+  @keyframes sheet-up{from{transform:translateY(40px);opacity:0;}}
+  .preview-viewer{flex-shrink:0;}
+  .preview-frame{height:auto;max-height:48vh;padding:54px 18px 26px;gap:14px;}
+  .modal.is-wide .preview-frame{max-height:none;}
+  .preview-doc{height:56vh;}
+  .preview-info{overflow:visible;}
+  .preview-details{padding:24px 22px 4px;}
+  .preview-info h3{font-size:25px;}
+  .preview-buy{position:sticky;bottom:0;padding:14px 22px 18px;border-top:1px solid var(--rule);box-shadow:0 -8px 20px -12px rgba(43,37,35,.18);}
+  .preview-price-row{margin-bottom:10px;}
+  .preview-price{font-size:28px;}
 }
 @media (max-width:420px){
   /* Still two across on phones */

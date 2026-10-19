@@ -446,20 +446,40 @@
 </aside>
 
 <!-- ══════════════ PREVIEW MODAL ══════════════ -->
-<div class="modal" id="previewModal" hidden role="dialog" aria-modal="true" aria-label="Note preview">
+<div class="modal preview-modal" id="previewModal" hidden role="dialog" aria-modal="true" aria-label="Note preview">
   <div class="modal-scrim" id="previewScrim"></div>
-  <div class="modal-panel">
+  <div class="modal-panel preview-panel">
     <button class="icon-btn modal-close" id="closePreview" aria-label="Close preview">
       <svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg>
     </button>
-    <div class="preview-frame" id="previewFrame"></div>
+    <div class="preview-viewer">
+      <span class="preview-chip" id="previewChip" hidden></span>
+      <div class="preview-frame" id="previewFrame"></div>
+      <span class="preview-scroll-hint" id="previewScrollHint" aria-hidden="true" hidden>
+        Scroll for more pages
+        <svg viewBox="0 0 12 14"><path d="M6 1v11M1.5 7.5L6 12l4.5-4.5"/></svg>
+      </span>
+    </div>
     <div class="preview-info">
-      <span class="tag" id="previewTag"></span>
-      <h3 id="previewTitle"></h3>
-      <p class="preview-pages" id="previewPages"></p>
-      <p class="preview-desc" id="previewDesc"></p>
-      <button class="btn" id="previewAddBtn"></button>
-      <p class="note" id="previewNote">Preview only — the rest unlocks once you buy it.</p>
+      <div class="preview-details">
+        <span class="tag" id="previewTag"></span>
+        <h3 id="previewTitle"></h3>
+        <p class="preview-pages" id="previewPages"></p>
+        <p class="preview-desc" id="previewDesc"></p>
+        <ul class="preview-assure">
+          <li><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11M7 10.5l5 5 5-5M5 19.5h14"/></svg>Instant download after payment</li>
+          <li><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 7h6M9 11h6M9 15h3"/></svg>PDF for laptop, tablet, phone or print</li>
+          <li><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l7 3v5.5c0 4.3-2.9 8-7 9.5-4.1-1.5-7-5.2-7-9.5V6z"/><path d="M9 12.2l2.2 2.2 4-4.4"/></svg>Secure checkout with Paystack</li>
+        </ul>
+      </div>
+      <div class="preview-buy">
+        <div class="preview-price-row">
+          <span class="preview-price" id="previewPrice"></span>
+          <span class="preview-bundle" id="previewBundle"></span>
+        </div>
+        <button class="btn" id="previewAddBtn"></button>
+        <p class="note" id="previewNote">Preview only — the rest unlocks once you buy it.</p>
+      </div>
     </div>
   </div>
 </div>

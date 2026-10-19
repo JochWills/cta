@@ -478,7 +478,7 @@ export function openPreview(id) {
       const isLast = page === p.preview_pages;
       const url = previewPageUrl(p.module_slug, p.code, page);
       return `
-      <div class="preview-page">
+      <div class="preview-page" style="--i:${i}">
         <img class="preview-img" src="${esc(url)}" alt="Page ${page} of ${esc(p.title)}">
         ${isLast ? `<div class="preview-blur-panel"><span>Buy to see the rest</span></div>` : ""}
       </div>`;
@@ -495,23 +495,45 @@ export function openPreview(id) {
   $("#previewDesc").textContent = p.description || "";
   // A freebie may be a spreadsheet — freebies.js fills this in once it knows.
   $("#previewPages").textContent = free ? "" : p.page_count ? `PDF · ${pagesLabel(p.page_count)}` : "PDF";
+  // "Previewing 3 of 20 pages" over the pages, when there are page images.
+  const chip = $("#previewChip");
+  chip.hidden = free || !(p.preview_pages > 0);
+  chip.textContent = p.page_count ? `Previewing ${p.preview_pages} of ${pagesLabel(p.page_count)}` : `Previewing ${pagesLabel(p.preview_pages)}`;
+  $("#previewPrice").textContent = free ? "Free" : rands(p.price_cents);
+  const [big, small] = BUNDLE_TIERS;
+  $("#previewBundle").textContent = free ? "" : `Save ${small.percent}% on ${small.min}+ notes, ${big.percent}% on ${big.min}+`;
+  const inCart = !free && state.cart.some((c) => c.id === p.id);
   const btn = $("#previewAddBtn");
   delete btn.dataset.add;
   delete btn.dataset.freebie;
+  btn.classList.toggle("is-in-cart", inCart);
   if (free) {
     btn.dataset.freebie = p.id;
     btn.textContent = "Download for free";
   } else {
     btn.dataset.add = p.id;
-    btn.textContent = state.cart.some((c) => c.id === p.id) ? "Already in cart" : `Add to cart — ${rands(p.price_cents)}`;
+    btn.textContent = inCart ? "Already in your cart" : "Add to cart";
   }
   $("#previewNote").textContent = free
     ? "Free — just your name and email to download."
     : "Preview only — the rest unlocks once you buy it.";
 
   $("#previewModal").hidden = false;
+  $("#previewFrame").scrollTop = 0;
+  syncScrollHint();
   document.body.style.overflow = "hidden";
 }
+
+/* "Scroll for more pages" over the pages, while there's more below and the
+   visitor hasn't started scrolling. Re-checked as each page image loads,
+   since the frame only becomes scrollable once they have a height. */
+function syncScrollHint() {
+  const f = $("#previewFrame");
+  const more = f.scrollHeight - f.clientHeight > 40;
+  $("#previewScrollHint").hidden = !more || f.scrollTop > 24;
+}
+$("#previewFrame").addEventListener("scroll", syncScrollHint, { passive: true });
+$("#previewFrame").addEventListener("load", syncScrollHint, true); // img load events don't bubble, so capture
 
 export function closePreview() {
   $("#previewModal").hidden = true;
