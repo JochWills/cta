@@ -495,7 +495,7 @@ h1,h2,h3{font-family:'Playfair Display',Georgia,serif;font-weight:400;letter-spa
 /* Pinned on the card's top edge rather than beside .tag — at 5-across a
    long tag ("Financial Reporting") leaves no room for both on one line. */
 .new-badge{
-  position:absolute;top:0;left:20px;transform:translateY(-50%);
+  position:absolute;top:0;right:20px;transform:translateY(-50%);
   padding:3px 11px;border-radius:999px;
   /* Saturated, not a pastel — every module tag is a pastel tint, so any
      light colour here reads as just another module. */
@@ -1038,7 +1038,7 @@ details.faq p{margin:12px 0 0;color:var(--ink-soft);font-size:14px;max-width:66c
   .card .page-count{font-size:8px;letter-spacing:.14em;}
   .card .add-btn{width:36px;height:34px;border-radius:9px;}
   .card .add-btn svg{width:16px;height:16px;}
-  .new-badge{left:12px;}
+  .new-badge{right:12px;}
   .header-inner{gap:12px;}
   .logo .mark{font-size:28px;}
 }
