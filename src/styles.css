@@ -940,18 +940,8 @@ details.faq p{margin:12px 0 0;color:var(--ink-soft);font-size:14px;max-width:66c
   .trust-grid{grid-template-columns:1fr;}
 }
 @media (max-width:720px){
-  /* A strip under the hero instead of a fixed card, so it never covers anything */
-  .side-promo{animation:fade-in .8s ease 1s backwards;
-    position:static;transform:none;width:auto;border-radius:0;
-    flex-direction:row;gap:14px;text-align:left;padding:14px 26px;
-    box-shadow:inset 0 1px 0 rgba(255,255,255,.15);
-  }
-  .side-promo:hover{transform:none;box-shadow:inset 0 1px 0 rgba(255,255,255,.15);}
-  .side-promo-icon{width:34px;height:34px;flex-shrink:0;}
-  .side-promo-text{align-items:flex-start;flex:1;}
-  .side-promo strong{margin-top:0;}
-  .side-promo small{margin-top:2px;padding-top:0;border-top:0;}
-  .side-promo-arrow{margin-top:0;opacity:1;}
+  /* No EasyNotes promo on phones */
+  .side-promo{display:none;}
 }
 @media (max-width:520px){
   .filters{grid-template-columns:1fr 1fr;}
