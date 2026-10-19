@@ -482,6 +482,9 @@ h1,h2,h3{font-family:'Playfair Display',Georgia,serif;font-weight:400;letter-spa
 }
 .card:hover{transform:translateY(-3px);box-shadow:0 2px 4px rgba(43,37,35,.05),0 14px 30px rgba(43,37,35,.11);}
 .card[data-preview]{cursor:pointer;}
+/* After switching course (setCourse in render.js) */
+.card.is-entering{animation:card-in .8s cubic-bezier(.22,.61,.36,1) backwards;}
+@keyframes card-in{from{opacity:0;transform:translateY(14px);}}
 .tag,.new-badge{
   white-space:nowrap;font-size:9.5px;line-height:1.6;letter-spacing:.11em;text-transform:uppercase;
   padding:5px 9px;border-radius:5px;font-weight:600;

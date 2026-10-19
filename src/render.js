@@ -563,6 +563,7 @@ export function setFilter(slug) {
   renderModules();
   renderFilters();
   renderProducts();
+  animateCards();
   document.getElementById("shop").scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
@@ -575,4 +576,15 @@ export function setCourse(course) {
   renderModules();
   renderFilters();
   renderProducts();
+  animateCards();
+}
+
+/** After a course or module switch, the new cards rise in gently, one after
+ * another (first 12 only, so a long grid doesn't keep animating below the fold). */
+function animateCards() {
+  document.querySelectorAll("#productGrid .card").forEach((card, i) => {
+    card.style.animationDelay = `${Math.min(i, 12) * 70}ms`;
+    card.classList.add("is-entering");
+    card.addEventListener("animationend", () => card.classList.remove("is-entering"), { once: true });
+  });
 }
