@@ -1,4 +1,4 @@
-import { MODULES, MOD, isFreebie } from "../catalogue.js";
+import { COURSES, MODULES, MOD, isFreebie, modulesIn, moduleShort } from "../catalogue.js";
 import { $, esc, rands } from "../state.js";
 import { adminState } from "./state.js";
 import { starsHtml } from "../reviews.js";
@@ -218,7 +218,7 @@ function productRow(p) {
   return `
     <tr>
       <td>${esc(p.title)}</td>
-      <td><span class="tag" style="background:${m.tint};color:${m.ink}">${esc(m.short)}</span></td>
+      <td><span class="tag" style="background:${m.tint};color:${m.ink}">${esc(moduleShort(m))}</span></td>
       <td>${isFreebie(p) ? "Free" : rands(p.price_cents)}</td>
       <td>${p.page_count ? esc(p.page_count) : `<span class="meta">—</span>`}</td>
       <td>${p.is_active ? "Yes" : "No"}</td>
@@ -233,7 +233,11 @@ function productRow(p) {
 }
 
 function moduleOptions(selected) {
-  return MODULES.map((m) => `<option value="${m.slug}" ${m.slug === selected ? "selected" : ""}>${esc(m.name)}</option>`).join("");
+  return COURSES.map(
+    (c) => `<optgroup label="${esc(c.name)}">${modulesIn(c.slug)
+      .map((m) => `<option value="${m.slug}" ${m.slug === selected ? "selected" : ""}>${esc(m.name)}</option>`)
+      .join("")}</optgroup>`
+  ).join("");
 }
 
 /**
@@ -242,13 +246,13 @@ function moduleOptions(selected) {
  * price and says why; picking a paid module again puts back a real price.
  */
 export function syncFreebieFields() {
-  const free = $("#pf_module").value === "freebies";
+  const free = isFreebie({ module_slug: $("#pf_module").value });
   const price = $("#pf_price");
   if (free) price.value = "0.00";
   else if (!(parseFloat(price.value) > 0)) price.value = "25.00";
   price.disabled = free;
   $("#pf_free_hint").hidden = !free;
-  // Freebies can be a spreadsheet too (admin-upload only accepts one under freebies/).
+  // Freebies can be a spreadsheet too (admin-upload only accepts one under a freebies folder).
   $("#pf_file").accept = free ? "application/pdf,.xlsx,.xls" : "application/pdf";
   $("#pf_file_label").textContent = free ? "PDF or Excel file" : "PDF";
 }

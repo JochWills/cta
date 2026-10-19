@@ -7,6 +7,8 @@ import {
   openCart,
   closeCart,
   setFilter,
+  setCourse,
+  hasBridging,
   openPreview,
   closePreview,
   toggleSelectMenu,
@@ -75,6 +77,9 @@ document.addEventListener("click", (e) => {
     $("#nav").classList.remove("is-open"); // the header's "Free" link is one of these
     return setFilter(jump.dataset.jump);
   }
+
+  const course = e.target.closest("[data-course]");
+  if (course) return setCourse(course.dataset.course);
 
   const filter = e.target.closest("[data-filter]");
   if (filter) return setFilter(filter.dataset.filter);
@@ -242,7 +247,13 @@ updateCartCount();
 renderModules();
 renderFilters();
 renderDrawer();
-loadProducts();
+loadProducts().then(() => {
+  // pgdanotes.co.za/#bridging opens the shop on the bridging course — a link to share with bridging students.
+  if (location.hash === "#bridging" && hasBridging()) {
+    setCourse("bridging");
+    $("#shop").scrollIntoView({ block: "start" });
+  }
+});
 initFaqAccordions();
 initReviews();
 startPresence();

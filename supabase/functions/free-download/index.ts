@@ -6,7 +6,7 @@
  * shows on the admin page's Orders list next to sales (the dashboard's
  * stats only ever count "paid", so these never inflate them — see
  * supabase/schema.sql section 10), then returns a short-lived signed link
- * to the PDF. Only ever signs a note that's active and in the "freebies"
+ * to the PDF. Only ever signs a note that's active and in a freebies (PGDA or bridging)
  * module, so it can't be used to pull a paid note.
  *
  * Asking again for the same freebie with the same email reuses the first
@@ -67,7 +67,7 @@ Deno.serve(async (req) => {
       .from("products")
       .select("id,title,file_path")
       .eq("id", productId)
-      .eq("module_slug", "freebies")
+      .in("module_slug", ["freebies", "bridging-freebies"])
       .eq("is_active", true)
       .maybeSingle();
     if (!product?.file_path) return json({ ok: false, reason: "not_found" });

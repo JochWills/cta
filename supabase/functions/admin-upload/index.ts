@@ -4,7 +4,8 @@
  * supabase/schema.sql, section 5):
  *
  *   "notes"          private — the real PDF a customer pays for. A freebie
- *                     (path under "freebies/") may be an Excel file instead.
+ *                     (path under "freebies/" or "bridging-freebies/") may be
+ *                     an Excel file instead.
  *   "note-previews"  public  — a PNG of just its first page, rendered
  *                     client-side in the admin page (src/admin/pdfPreview.js)
  *                     and shown as a blurred preview in the shop. Public on
@@ -53,7 +54,7 @@ Deno.serve(async (req) => {
       return json({ error: "file and path are required" }, 400);
     }
     const ext = path.split(".").pop()!.toLowerCase();
-    const excelType = bucket === "notes" && path.startsWith("freebies/") ? EXCEL_TYPES[ext] : undefined;
+    const excelType = bucket === "notes" && /^(bridging-)?freebies\//.test(path) ? EXCEL_TYPES[ext] : undefined;
     const expectedType = excelType || BUCKETS[bucket];
     if (!expectedType) return json({ error: "Unknown bucket" }, 400);
     if (!excelType && file.type !== expectedType) {

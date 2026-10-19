@@ -1,5 +1,11 @@
 /**
- * The four CTA modules (plus Freebies) and the fallback section catalogue.
+ * The two courses, their modules (plus a Freebies group each) and the
+ * fallback section catalogue.
+ *
+ * COURSES is the shop's course switch: the PGDA itself, and the bridging
+ * course students do first when their BCom wasn't a BCom Accounting.
+ * Bridging uses the same four subject names, under its own slugs
+ * (bridging-...) and colours. A module's course is its `course` field.
  *
  * MODULES drives the module cards, filter chips, tag colours and cart swatches.
  * SEED is the same 28 rows that supabase/schema.sql inserts into `products`.
@@ -7,28 +13,55 @@
  * Once the database is connected, products come from there and SEED is unused.
  */
 
+export const COURSES = [
+  { slug:"pgda", name:"PGDA (CTA)" },
+  { slug:"bridging", name:"Bridging course" }
+];
+
 export const MODULES = [
-  { slug:"financial-reporting", name:"Financial Reporting", short:"Financial Reporting", tag:"Financial Reporting",
+  { slug:"financial-reporting", course:"pgda", name:"Financial Reporting", short:"Financial Reporting", tag:"Financial Reporting",
     tint:"var(--fr-tint)", ink:"var(--fr-ink)",
     icon:'<path d="M7 3h7l5 5v13a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z"/><path d="M14 3v5h5"/><path d="M9.5 17v-3M12.5 17v-5M15.5 17v-2"/>' },
-  { slug:"management-accounting-finance", name:"Management Accounting & Finance", short:"MA & Finance", tag:"MA & Finance",
+  { slug:"management-accounting-finance", course:"pgda", name:"Management Accounting & Finance", short:"MA & Finance", tag:"MA & Finance",
     tint:"var(--ma-tint)", ink:"var(--ma-ink)",
     icon:'<rect x="5" y="2.5" width="14" height="19" rx="2"/><rect x="8" y="5.5" width="8" height="3.5" rx="1"/><path d="M8.5 13h.01M12 13h.01M15.5 13h.01M8.5 16.5h.01M12 16.5h.01M15.5 16.5h.01"/>' },
-  { slug:"taxation", name:"Taxation", short:"Taxation", tag:"Taxation",
+  { slug:"taxation", course:"pgda", name:"Taxation", short:"Taxation", tag:"Taxation",
     tint:"var(--tax-tint)", ink:"var(--tax-ink)",
     icon:'<path d="M6 3h9l4 4v14a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z"/><path d="M15 3v4h4"/><path d="M8.5 15.5l4.5-4.5M9 11.2h.01M12.5 15.3h.01"/>' },
-  { slug:"corporate-governance-auditing", name:"Corporate Governance & Auditing", short:"CG & Auditing", tag:"CG & Auditing",
+  { slug:"corporate-governance-auditing", course:"pgda", name:"Corporate Governance & Auditing", short:"CG & Auditing", tag:"CG & Auditing",
     tint:"var(--cga-tint)", ink:"var(--cga-ink)",
     icon:'<path d="M12 2.8l7 2.9v5.6c0 4.3-2.9 8.1-7 9.9-4.1-1.8-7-5.6-7-9.9V5.7z"/><path d="M9 11.8l2.2 2.2 4.2-4.4"/>' },
   // Not a PGDA module: free notes, downloaded for a name and email instead
   // of bought (src/freebies.js). Gets a filter chip, but no module card, no
   // "Select" menu row, no cart and no preview — see isFreebie below.
-  { slug:"freebies", name:"Freebies", short:"Freebies", tag:"Free",
+  { slug:"freebies", course:"pgda", name:"Freebies", short:"Freebies", tag:"Free",
     tint:"var(--free-tint)", ink:"var(--free-ink)", free:true,
     icon:'<rect x="3.5" y="8" width="17" height="4" rx="1"/><path d="M5 12v8a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-8M12 8v13"/><path d="M12 8c-1.5-3.5-5.5-4-5.5-1.5S10 8 12 8zM12 8c1.5-3.5 5.5-4 5.5-1.5S14 8 12 8z"/>' }
 ];
+
+// The bridging course: the same subjects (and icons) as above, under their
+// own slugs and colours. Freebies are free:true in both courses — the
+// database's FREE_MODULES list (schema.sql section 10) must match.
+const BRIDGING_TINTS = {
+  "financial-reporting":           ["var(--bfr-tint)", "var(--bfr-ink)"],
+  "management-accounting-finance": ["var(--bma-tint)", "var(--bma-ink)"],
+  "taxation":                      ["var(--btax-tint)", "var(--btax-ink)"],
+  "corporate-governance-auditing": ["var(--bcga-tint)", "var(--bcga-ink)"],
+  "freebies":                      ["var(--free-tint)", "var(--free-ink)"]
+};
+MODULES.push(...MODULES.map((m) => ({
+  ...m, slug:"bridging-" + m.slug, course:"bridging",
+  tint:BRIDGING_TINTS[m.slug][0], ink:BRIDGING_TINTS[m.slug][1]
+})));
+
 export const MOD = Object.fromEntries(MODULES.map(m => [m.slug, m]));
-export const isFreebie = (p) => p?.module_slug === "freebies";
+export const isFreebie = (p) => Boolean(MOD[p?.module_slug]?.free);
+export const courseOf = (slug) => MOD[slug]?.course || "pgda";
+export const modulesIn = (course) => MODULES.filter((m) => m.course === course);
+/** Where both courses show side by side (cart, admin, dashboard), bridging
+ * modules say so: "Bridging · Taxation". */
+export const moduleName = (m) => (m.course === "bridging" ? `Bridging · ${m.name}` : m.name);
+export const moduleShort = (m) => (m.course === "bridging" ? `Bridging · ${m.short}` : m.short);
 
 export const PRICE = 2500; // cents → R25
 export const SEED = [

@@ -11,7 +11,7 @@
  */
 import { $, esc, rands } from "../state.js";
 import { adminState } from "./state.js";
-import { MODULES } from "../catalogue.js";
+import { MODULES, moduleShort } from "../catalogue.js";
 
 const RANGE_LABELS = { today: "today", "7": "last 7 days", "30": "last 30 days", "90": "last 90 days", all: "all time" };
 const PERIOD_NOUN = { today: "day", "7": "7 days", "30": "30 days", "90": "90 days" };
@@ -190,7 +190,7 @@ function computeDashboard(rangeKey) {
   const topNotes = [...noteMap.values()].sort((a, b) => b.revenueCents - a.revenueCents).slice(0, 5);
 
   const categoryTotal = [...categoryCents.values()].reduce((a, b) => a + b, 0);
-  const categories = MODULES.map((m) => ({ label: m.short, tint: m.tint, ink: m.ink, cents: categoryCents.get(m.slug) || 0 }))
+  const categories = MODULES.map((m) => ({ label: moduleShort(m), tint: m.tint, ink: m.ink, cents: categoryCents.get(m.slug) || 0 }))
     .concat(categoryCents.has("other") ? [{ label: "Other", tint: "var(--rule)", ink: "var(--ink-faint)", cents: categoryCents.get("other") }] : [])
     .filter((c) => c.cents > 0)
     .map((c) => ({ ...c, pct: categoryTotal ? Math.round((c.cents / categoryTotal) * 100) : 0 }))

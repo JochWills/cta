@@ -15,6 +15,19 @@ see each product's `price_cents`), grouped under four modules:
 | Taxation | `taxation` | TAX1–TAX7 |
 | Corporate Governance & Auditing | `corporate-governance-auditing` | CGA1–CGA6 |
 
+**Bridging course.** The same four modules exist a second time for the
+bridging course (for students whose BCom wasn't a BCom Accounting), with
+slugs prefixed `bridging-` (e.g. `bridging-taxation`) plus
+`bridging-freebies`. `modules.course` / `MODULES[].course` is `pgda` or
+`bridging`. The shop has a course switch above the grid (`renderCourses`
+in `render.js`), which, along with the bridging shelf and anything marked
+`data-bridging-only` in `index.html`, stays hidden until at least one
+active bridging note exists. `/#bridging` opens the shop on that course.
+One cart and checkout covers both, and bundle discounts count both. The
+freebie module list (`freebies`, `bridging-freebies`) is hard-coded in
+`schema.sql` (sections 8 and 10), `free-download` and `admin-upload`, so
+keep those in step with `free:true` in `catalogue.js`.
+
 Audience: SAICA PGDA/CTA students in South Africa. Single-seller shop run by one
 person (Courts), not a marketplace.
 

@@ -4,7 +4,9 @@ export const state = {
   products: [],
   /** Cart lines: { id, code, title, module_slug, price_cents }. One of each — no quantities. */
   cart: [],
-  /** Module slug currently filtering the grid, or "all". */
+  /** Course the shop is showing: "pgda" | "bridging" (COURSES in catalogue.js). */
+  course: "pgda",
+  /** Module slug currently filtering the grid, or "all" (all of `course`). */
   activeFilter: "all",
   /** Drawer step: "cart" | "details" | "done". */
   checkoutStep: "cart",

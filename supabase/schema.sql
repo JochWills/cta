@@ -4,21 +4,32 @@
 -- ============================================================
 
 -- ------------------------------------------------------------
--- 1. MODULES  (the 4 CTA modules)
+-- 1. MODULES  (the 4 CTA modules, for each course)
+--    course is 'pgda' or 'bridging' — the bridging course students do
+--    first when their BCom wasn't a BCom Accounting. Same subject names,
+--    slugs prefixed 'bridging-'. Mirrors MODULES in src/catalogue.js.
 -- ------------------------------------------------------------
 create table if not exists public.modules (
   slug        text primary key,
   name        text not null,
   blurb       text,
-  sort_order  int  not null default 0
+  sort_order  int  not null default 0,
+  course      text not null default 'pgda' check (course in ('pgda','bridging'))
 );
+alter table public.modules add column if not exists course text not null default 'pgda'
+  check (course in ('pgda','bridging'));
 
-insert into public.modules (slug, name, blurb, sort_order) values
-  ('financial-reporting',            'Financial Reporting',              'Comprehensive notes for all FR sections.', 1),
-  ('management-accounting-finance',  'Management Accounting & Finance',  'Detailed notes for all MA & F sections.',  2),
-  ('taxation',                       'Taxation',                         'In-depth notes for all Tax sections.',     3),
-  ('corporate-governance-auditing',  'Corporate Governance & Auditing',  'Complete notes for all CG & A sections.',  4),
-  ('freebies',                       'Freebies',                         'Free notes, no payment needed.',           5)
+insert into public.modules (slug, name, blurb, sort_order, course) values
+  ('financial-reporting',            'Financial Reporting',              'Comprehensive notes for all FR sections.', 1, 'pgda'),
+  ('management-accounting-finance',  'Management Accounting & Finance',  'Detailed notes for all MA & F sections.',  2, 'pgda'),
+  ('taxation',                       'Taxation',                         'In-depth notes for all Tax sections.',     3, 'pgda'),
+  ('corporate-governance-auditing',  'Corporate Governance & Auditing',  'Complete notes for all CG & A sections.',  4, 'pgda'),
+  ('freebies',                       'Freebies',                         'Free notes, no payment needed.',           5, 'pgda'),
+  ('bridging-financial-reporting',           'Financial Reporting',             'Bridging course notes for Financial Reporting.',  6, 'bridging'),
+  ('bridging-management-accounting-finance', 'Management Accounting & Finance', 'Bridging course notes for MA & Finance.',         7, 'bridging'),
+  ('bridging-taxation',                      'Taxation',                        'Bridging course notes for Taxation.',             8, 'bridging'),
+  ('bridging-corporate-governance-auditing', 'Corporate Governance & Auditing', 'Bridging course notes for CG & Auditing.',        9, 'bridging'),
+  ('bridging-freebies',                      'Freebies',                        'Free bridging notes, no payment needed.',        10, 'bridging')
 on conflict (slug) do nothing;
 
 
@@ -354,7 +365,7 @@ begin
     end if;
     -- A 'free' row (written only by free-download, see section 10) may
     -- only hold freebies, and a freebie never goes through checkout.
-    if (v_product.module_slug = 'freebies') <> (new.status = 'free') then
+    if (v_product.module_slug in ('freebies','bridging-freebies')) <> (new.status = 'free') then
       raise exception 'Free notes are downloaded, not bought';
     end if;
     v_items := v_items || jsonb_build_object(
@@ -461,7 +472,7 @@ where not exists (select 1 from public.reviews);
 
 -- ------------------------------------------------------------
 -- 10. FREEBIES
---    Notes in the 'freebies' module are free, have no preview images and
+--    Notes in the 'freebies' and 'bridging-freebies' modules are free, have no preview images and
 --    never go in the cart. The shop asks for a name and email, then the
 --    free-download Edge Function (service_role) writes an order row with
 --    status 'free' and total 0 and hands back a signed link to the PDF.
@@ -476,7 +487,7 @@ where not exists (select 1 from public.reviews);
 -- ------------------------------------------------------------
 alter table public.products drop constraint if exists products_free_price;
 alter table public.products add constraint products_free_price
-  check ((module_slug = 'freebies') = (price_cents = 0)) not valid;
+  check ((module_slug in ('freebies','bridging-freebies')) = (price_cents = 0)) not valid;
 
 
 -- ------------------------------------------------------------

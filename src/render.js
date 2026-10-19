@@ -1,4 +1,4 @@
-import { MODULES, MOD, isFreebie } from "./catalogue.js";
+import { COURSES, MODULES, MOD, isFreebie, courseOf, modulesIn, moduleName } from "./catalogue.js";
 import { state, rands, esc, $, slugifyCode } from "./state.js";
 import { publicStorageUrl } from "./supabase.js";
 import { loadFreebiePreview } from "./freebies.js";
@@ -14,12 +14,32 @@ function previewPageUrl(module_slug, code, page) {
 }
 
 /* ------------------------------------------------------------------
-   Module cards
+   Courses. The bridging course only shows (its switch, its shelf and
+   anything marked data-bridging-only in index.html) once it has at least
+   one live note, so the shop never offers an empty course.
 ------------------------------------------------------------------ */
-export function renderModules() {
-  $("#moduleGrid").innerHTML = MODULES.filter((m) => !m.free).map((m) => {
-    const count = state.products.filter((p) => p.module_slug === m.slug).length;
-    return `
+export const hasBridging = () => state.products.some((p) => courseOf(p.module_slug) === "bridging");
+
+export function renderCourses() {
+  const show = hasBridging();
+  if (!show && state.course !== "pgda") {
+    state.course = "pgda";
+    state.activeFilter = "all";
+  }
+  $("#courseSwitch").hidden = !show;
+  $("#courseSwitch").innerHTML = COURSES.map(
+    (c) => `<button type="button" role="tab" aria-selected="${state.course === c.slug}"
+      class="${state.course === c.slug ? "is-on" : ""}" data-course="${c.slug}">${esc(c.name)}</button>`
+  ).join("");
+  document.querySelectorAll("[data-bridging-only]").forEach((el) => (el.hidden = !show));
+}
+
+/* ------------------------------------------------------------------
+   Module cards — one shelf per course
+------------------------------------------------------------------ */
+function notebook(m) {
+  const count = state.products.filter((p) => p.module_slug === m.slug).length;
+  return `
     <div class="nb-slot">
     <button class="module-card" data-jump="${m.slug}" style="--m-tint:${m.tint};--m-ink:${m.ink}">
       <span class="nb-spine" aria-hidden="true"></span>
@@ -33,14 +53,25 @@ export function renderModules() {
       </span>
     </button>
     </div>`;
-  }).join("");
+}
+
+export function renderModules() {
+  const courses = hasBridging() ? COURSES : COURSES.slice(0, 1);
+  $("#moduleGrid").innerHTML = courses
+    .map(
+      (c) => `
+    ${courses.length > 1 ? `<p class="shelf-label">${esc(c.name)}</p>` : ""}
+    <div class="module-grid">${modulesIn(c.slug).filter((m) => !m.free).map(notebook).join("")}</div>`
+    )
+    .join("");
+  renderCourses();
 }
 
 /* ------------------------------------------------------------------
    Filter chips
 ------------------------------------------------------------------ */
 export function renderFilters() {
-  const items = [{ slug: "all", short: "All notes" }, ...MODULES];
+  const items = [{ slug: "all", short: "All notes" }, ...modulesIn(state.course)];
   $("#filters").innerHTML = items
     .map(
       (m) => `
@@ -63,7 +94,9 @@ const isNewProduct = (p) => p.created_at && Date.now() - new Date(p.created_at).
    Each option only counts what isn't in the cart yet.
 ------------------------------------------------------------------ */
 export const productsFor = (slug) =>
-  slug === "all" ? state.products : state.products.filter((p) => p.module_slug === slug);
+  slug === "all"
+    ? state.products.filter((p) => courseOf(p.module_slug) === state.course)
+    : state.products.filter((p) => p.module_slug === slug);
 
 /** productsFor, minus freebies — they're downloaded, never added to the cart. */
 export const buyableFor = (slug) => productsFor(slug).filter((p) => !isFreebie(p));
@@ -73,7 +106,7 @@ const ALL_ICON =
 const CHECK_ICON = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
 
 function renderSelectMenu() {
-  const options = [{ slug: "all", name: "All notes", tint: "var(--blush)", ink: "var(--accent)", icon: ALL_ICON }, ...MODULES]
+  const options = [{ slug: "all", name: "All notes", tint: "var(--blush)", ink: "var(--accent)", icon: ALL_ICON }, ...modulesIn(state.course)]
     .filter((m) => !m.free)
     .map((m) => ({ ...m, list: buyableFor(m.slug) }))
     .filter((m) => m.list.length);
@@ -278,7 +311,7 @@ export function renderDrawer() {
       </span>
       <div>
         <h4>${esc(i.title)}</h4>
-        <div class="meta">${esc(m.name)} · PDF</div>
+        <div class="meta">${esc(moduleName(m))} · PDF</div>
         <button class="rm" data-rm="${esc(i.id)}">Remove</button>
       </div>
       <span class="amt">${rands(i.price_cents)}</span>
@@ -410,7 +443,7 @@ export function openPreview(id) {
     $("#previewFrame").innerHTML = `<div class="empty-state">No preview available for this section yet.</div>`;
   }
 
-  $("#previewTag").textContent = m.name;
+  $("#previewTag").textContent = moduleName(m);
   $("#previewTag").style.background = m.tint;
   $("#previewTag").style.color = m.ink;
   $("#previewTitle").textContent = p.title;
@@ -454,10 +487,26 @@ export function toast(message) {
   toastTimer = setTimeout(() => el.classList.remove("is-on"), 2200);
 }
 
-/** Set the active module filter and scroll the shop into view. */
+/** Set the active module filter and scroll the shop into view. A module
+ * from the other course switches course too; "freebies" (the header's Free
+ * link) means the freebies of whichever course is showing. */
 export function setFilter(slug) {
+  if (slug === "freebies" && state.course !== "pgda") slug = `${state.course}-freebies`;
+  if (slug !== "all" && MOD[slug]) state.course = courseOf(slug);
   state.activeFilter = slug;
+  renderCourses();
   renderFilters();
   renderProducts();
   document.getElementById("shop").scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+/** Switch course from the shop's switch — shows all of it, no scrolling. */
+export function setCourse(course) {
+  if (course === state.course) return;
+  state.course = course;
+  state.activeFilter = "all";
+  toggleSelectMenu(false);
+  renderCourses();
+  renderFilters();
+  renderProducts();
 }

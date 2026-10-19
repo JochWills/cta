@@ -19,7 +19,7 @@
  */
 import { hasDB, sbRpc } from "./supabase.js";
 import { state } from "./state.js";
-import { MOD } from "./catalogue.js";
+import { MOD, moduleShort } from "./catalogue.js";
 
 const HEARTBEAT_MS = 20_000;
 // Minimum gap between beats sent early because what the visitor's doing
@@ -213,7 +213,7 @@ function visitDetails() {
       first_visit: visits?.first || null,
     };
   }
-  const filter = state.activeFilter === "all" ? "" : MOD[state.activeFilter]?.short || state.activeFilter;
+  const filter = state.activeFilter === "all" ? (state.course === "bridging" ? "Bridging course" : "") : (MOD[state.activeFilter] ? moduleShort(MOD[state.activeFilter]) : state.activeFilter);
   return {
     ...fixedDetails,
     cart: state.cart.map((i) => i.title),

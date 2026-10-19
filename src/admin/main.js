@@ -1,4 +1,5 @@
 import { $, rands, slugifyCode } from "../state.js";
+import { isFreebie } from "../catalogue.js";
 import { adminState, loadSession, saveSession, clearSession } from "./state.js";
 import {
   toast,
@@ -395,7 +396,7 @@ async function saveProductForm(e) {
 
   const id = $("#pf_id").value || null;
   const priceRands = parseFloat($("#pf_price").value);
-  const free = $("#pf_module").value === "freebies";
+  const free = isFreebie({ module_slug: $("#pf_module").value });
   const fields = {
     title: $("#pf_title").value.trim(),
     description: $("#pf_description").value.trim() || null,
