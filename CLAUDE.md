@@ -77,7 +77,8 @@ isn't built that way.
 ## Layout
 
 ```
-index.html                  All markup, including the hero SVG illustration
+index.html                  All markup, including the hero SVG illustration (also
+                             each note's page — see "Note pages" below)
 admin.html                  Second page: password-gated order view + note CRUD
 terms.html                  Terms and conditions — static content, no JS module
                              (served at /terms — see render.yaml's rewrite routes)
@@ -99,6 +100,7 @@ src/
   reviews.js                Homepage Student feedback section: loads published
                              reviews (the cards in index.html are only a fallback)
                              and adds "Read more" to long ones
+  note-page.js              /notes/<slug> pages, see "Note pages" below
   presence.js               startPresence — anonymous heartbeat behind the admin
                              page's live visitor count and visitor sources, plus
                              track() for the funnel steps, see Data model below
@@ -131,6 +133,25 @@ supabase/
 render.yaml                 Render Blueprint — build settings, cache headers, URL rewrites
 public/                     favicon, hero.png (the hero photo)
 ```
+
+## Note pages (/notes/<slug>)
+
+Each note also has its own page, for Google and shared links — browsing
+stays in the shop's popup. `notePages` in `vite.config.js` runs after the
+build: it fetches the active notes with the anon key and writes
+`dist/notes/<slug>/index.html` (a copy of the built `index.html` with that
+note's title, description, canonical, Open Graph cover image and Product
+structured data) plus `dist/sitemap.xml` listing them all. `<slug>` is
+`slugifyCode(code)`, so it never changes when a title is edited.
+`src/note-page.js` sees the `/notes/` path, hides the hero and shelf
+(`.is-note-page`), shows the note at the top and sets the shop below to
+its module. Card titles are real links to these pages (a plain click
+still opens the popup), and the popup puts the note's address in the
+address bar while open (pushState; closing or Back restores it). A note
+added after the last deploy has no page until the next build:
+`admin-products` calls Render's deploy hook (`RENDER_DEPLOY_HOOK` secret)
+after any update or delete. The build never fails if the database is
+unreachable — it just ships without note pages.
 
 ## Conventions that matter
 

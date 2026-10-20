@@ -9,7 +9,7 @@ import { track } from "./presence.js";
  * Must match previewPagePath in src/admin/main.js exactly — see the note
  * on slugifyCode in state.js.
  */
-function previewPageUrl(module_slug, code, page) {
+export function previewPageUrl(module_slug, code, page) {
   return publicStorageUrl("note-previews", `${module_slug}/${slugifyCode(code)}-p${page}.png`);
 }
 
@@ -127,7 +127,7 @@ export function toggleModuleMenu(open = $("#moduleList").hidden) {
 /* ------------------------------------------------------------------
    Product grid
 ------------------------------------------------------------------ */
-const pagesLabel = (n) => `${n} page${n === 1 ? "" : "s"}`;
+export const pagesLabel = (n) => `${n} page${n === 1 ? "" : "s"}`;
 
 const isNewProduct = (p) => p.created_at && Date.now() - new Date(p.created_at).getTime() < 24 * 60 * 60 * 1000;
 
@@ -223,7 +223,7 @@ export function renderProducts() {
           : ""
       }
       <span class="tag">${esc(m.tag)}</span>
-      <h3>${esc(p.title)}</h3>
+      <h3><a class="card-link" href="/notes/${esc(slugifyCode(p.code))}">${esc(p.title)}</a></h3>
       <p>${esc(p.description || "")}</p>
       <button class="card-more" type="button" data-more hidden>Read more</button>
       <div class="card-foot">
@@ -278,7 +278,7 @@ export const cartTotal = () => state.cart.reduce((sum, i) => sum + i.price_cents
 
 /** Mirrors price_order() in supabase/schema.sql — that's what actually
  * charges these; the cart only shows them. Highest tier first. */
-const BUNDLE_TIERS = [
+export const BUNDLE_TIERS = [
   { min: 10, percent: 15 },
   { min: 5, percent: 10 },
 ];
@@ -451,6 +451,7 @@ export function syncCart() {
   updateCartCount();
   renderProducts();
   renderDrawer();
+  document.dispatchEvent(new Event("cartchange")); // the note page's buy button (note-page.js)
 }
 
 /* ------------------------------------------------------------------
@@ -518,6 +519,16 @@ export function openPreview(id) {
     ? "Free — just your name and email to download."
     : "Preview only — the rest unlocks once you buy it.";
 
+  // The address bar shows the note's own page while the popup is open, so it
+  // can be copied and shared; closing (or Back) puts the old address back.
+  const url = `/notes/${slugifyCode(p.code)}`;
+  if (location.pathname !== url && !previewUrlPushed) {
+    history.pushState({ preview: p.id }, "", url);
+    previewUrlPushed = true;
+  } else if (previewUrlPushed) {
+    history.replaceState({ preview: p.id }, "", url);
+  }
+
   $("#previewModal").hidden = false;
   $("#previewFrame").scrollTop = 0;
   syncScrollHint();
@@ -535,7 +546,17 @@ function syncScrollHint() {
 $("#previewFrame").addEventListener("scroll", syncScrollHint, { passive: true });
 $("#previewFrame").addEventListener("load", syncScrollHint, true); // img load events don't bubble, so capture
 
+let previewUrlPushed = false;
+window.addEventListener("popstate", () => {
+  previewUrlPushed = false;
+  if (!$("#previewModal").hidden) closePreview();
+});
+
 export function closePreview() {
+  if (previewUrlPushed) {
+    previewUrlPushed = false;
+    if (history.state?.preview) history.back();
+  }
   $("#previewModal").hidden = true;
   $("#previewFrame").innerHTML = ""; // stops a freebie's viewer loading on behind a closed modal
   document.body.style.overflow = "";

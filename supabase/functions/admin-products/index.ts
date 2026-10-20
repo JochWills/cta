@@ -16,6 +16,20 @@ import { verifyToken, handlePreflight, json } from "../_shared/admin.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_ROLE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+// Render's deploy hook for the shop. Each note has its own page
+// (/notes/<slug>), written at build time from the live products (see
+// vite.config.js), so a change here only shows there after a rebuild —
+// this starts one. Optional: unset just means "on the next push".
+const RENDER_DEPLOY_HOOK = Deno.env.get("RENDER_DEPLOY_HOOK") ?? "";
+
+async function rebuildSite() {
+  if (!RENDER_DEPLOY_HOOK) return;
+  try {
+    await fetch(RENDER_DEPLOY_HOOK, { method: "POST", signal: AbortSignal.timeout(5000) });
+  } catch (err) {
+    console.error("Render deploy hook failed:", err);
+  }
+}
 
 const EDITABLE_FIELDS = [
   "code",
@@ -94,6 +108,7 @@ Deno.serve(async (req) => {
           .select()
           .single();
         if (error) throw error;
+        await rebuildSite(); // after "create", the admin page always follows with an update (the PDF)
         return json(data);
       }
 
@@ -101,6 +116,7 @@ Deno.serve(async (req) => {
         if (!body.id) return json({ error: "id is required" }, 400);
         const { error } = await supabase.from("products").delete().eq("id", body.id);
         if (error) throw error;
+        await rebuildSite();
         return json({ ok: true });
       }
 

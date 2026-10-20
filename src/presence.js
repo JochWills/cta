@@ -118,6 +118,11 @@ function currentActivity() {
     return state.checkoutStep === "details" ? "Checkout" : state.checkoutStep === "done" ? "Paying" : "Viewing cart";
   }
   const middle = innerHeight / 2;
+  const note = document.getElementById("noteDetail");
+  if (note && !note.hidden) {
+    const r = note.getBoundingClientRect();
+    if (r.top <= middle && r.bottom >= middle) return `Note page: ${note.querySelector("h1")?.textContent || "a note"}`;
+  }
   for (const [id, name] of Object.entries(SECTION_NAMES)) {
     const r = document.getElementById(id)?.getBoundingClientRect();
     if (r && r.top <= middle && r.bottom >= middle) return name;

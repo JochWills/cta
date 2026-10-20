@@ -337,6 +337,42 @@ h1,h2,h3{font-family:'Playfair Display',Georgia,serif;font-weight:400;letter-spa
 .module-card:hover .module-link svg{transform:translateX(4px);}
 
 /* ============================================================
+   NOTE PAGE — /notes/<slug> (src/note-page.js). The normal shop page,
+   minus the hero and notebook shelf, with one note shown in full on top.
+   Reuses the preview popup's page, price and reassurance styles.
+   ============================================================ */
+.is-note-page .hero,.is-note-page .modules{display:none;}
+.note-detail{padding:40px 0 56px;background:#FCFAF8;border-bottom:1px solid var(--rule);}
+.note-loading{height:520px;}
+.note-crumbs{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-bottom:24px;font-size:12.5px;color:var(--ink-faint);}
+.note-crumbs a{color:var(--ink-soft);}
+.note-crumbs a:hover{color:var(--accent-deep);}
+.note-crumbs [aria-current]{color:var(--ink);}
+.note-layout{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:48px;align-items:start;}
+.note-pages{
+  position:relative;display:flex;flex-direction:column;gap:20px;
+  padding:58px 32px 34px;border-radius:18px;background:#F3EDE8;
+}
+.note-pages .preview-chip{position:absolute;top:18px;left:18px;}
+.note-pages-empty{min-height:260px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;text-align:center;color:var(--ink-soft);}
+.note-pages-empty p{margin:0;}
+.note-side{position:sticky;top:96px;}
+.note-side h1{
+  font-family:'Newsreader','Playfair Display',Georgia,serif;font-weight:400;
+  font-size:40px;line-height:1.1;letter-spacing:-.015em;margin:14px 0 0;color:#2A2422;
+}
+.note-buy{margin-top:24px;padding:22px;border:1px solid var(--rule);border-radius:16px;background:var(--paper);box-shadow:var(--shadow);}
+.note-buy .btn{width:100%;}
+.note-buy .btn.is-in-cart{background:var(--paper);color:var(--accent-deep);border:1px solid var(--accent);}
+.note-buy .note{margin:10px 0 0;text-align:center;}
+.note-missing{max-width:520px;padding:60px 0;}
+.note-missing h1{font-size:34px;}
+.note-missing p{color:var(--ink-soft);margin:12px 0 24px;}
+/* a card's title links to its note page; it looks like the plain title */
+.card-link{color:inherit;}
+.card-link:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:2px;}
+
+/* ============================================================
    SHOP
    ============================================================ */
 .shop{padding:64px 0 76px;background:#FCFAF8;}
@@ -1113,6 +1149,14 @@ details.faq p{margin:12px 0 0;color:var(--ink-soft);font-size:14px;max-width:66c
   .preview-buy{position:sticky;bottom:0;padding:14px 22px 18px;border-top:1px solid var(--rule);box-shadow:0 -8px 20px -12px rgba(43,37,35,.18);}
   .preview-price-row{margin-bottom:10px;}
   .preview-price{font-size:28px;}
+}
+@media (max-width:860px){
+  .note-layout{grid-template-columns:1fr;gap:28px;}
+  .note-side{position:static;order:-1;} /* price and button before the pages on phones */
+  .note-pages-empty{min-height:150px;}
+  .note-pages{padding:52px 16px 22px;gap:14px;}
+  .note-side h1{font-size:30px;}
+  .note-detail{padding:28px 0 44px;}
 }
 @media (max-width:420px){
   /* Still two across on phones */

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Just the three real pages — this is a single-page shop, not a router,
-     so there's nothing per-product to list here. See CLAUDE.md if that
-     changes (e.g. individual module/section landing pages get added). -->
+<!-- Fallback only: the build replaces this with a sitemap that also lists
+     every note's own page (/notes/<slug>) — see notePages in vite.config.js.
+     This copy is what ships if the build can't reach the database. -->
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
     <loc>https://pgdanotes.co.za/</loc>

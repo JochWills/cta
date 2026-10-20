@@ -133,6 +133,14 @@
   </div>
 </header>
 
+<!-- ══════════════ NOTE PAGE ══════════════
+     Only on /notes/<slug> — one note shown in full, with the shop below.
+     Filled in by src/note-page.js; the build writes a copy of this page
+     per note (notePages in vite.config.js). -->
+<section class="note-detail" id="noteDetail" hidden>
+  <div class="wrap"><div class="note-loading" aria-hidden="true"></div></div>
+</section>
+
 <!-- ══════════════ HERO ══════════════ -->
 <section class="hero" id="top">
   <div class="hero-bg" aria-hidden="true">
@@ -260,7 +268,7 @@
     <div class="prose">
       <p class="eyebrow">About</p>
       <h2>Notes I actually use to get through PGDA</h2>
-      <p>Hi, I’m Courts. I’m doing the same PGDA/CTA year you are right now. Before this, I tutored accounting all through my undergrad, and I completed the Bridging to CTA through Milpark with two distinctions and a 70% average across all four modules. That came from a lot of trial and error in how I studied, and these notes are what I wish I’d had from the start.</p>
+      <p>Hi, I’m Courts. I’m doing the same PGDA/CTA year you are right now. Before this, I tutored accounting all through my undergrad, and I completed the Bridging to CTA through Milpark with two distinctions and an average of over 70% across all four modules. That came from a lot of trial and error in how I studied, and these notes are what I wish I’d had from the start.</p>
       <p>Each section is a standalone PDF: the principle, the standard or section of the Act, the calculation layout, and the traps that cost marks in tests. Everything is in plain language and readable on a laptop or printed. You don’t have to buy a whole module. If deferred tax is what’s keeping you up, buy deferred tax.</p>
       <p>Outside of studying, you’ll usually find me at the pool coaching swimming to younger kids. Helping people and giving back has always mattered to me, and this is my way of doing that for students going through the same year I am.</p>
     </div>

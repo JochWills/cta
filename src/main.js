@@ -22,6 +22,7 @@ import { initFaqAccordions } from "./faq.js";
 import { initReviews } from "./reviews.js";
 import { startPresence, track } from "./presence.js";
 import { hasDB, sbRpc } from "./supabase.js";
+import { initNotePage, renderNotePage } from "./note-page.js";
 
 /* ------------------------------------------------------------------
    Delegated click handling — the grid and drawer are re-rendered often,
@@ -64,8 +65,17 @@ document.addEventListener("click", (e) => {
     return;
   }
 
+  // A card's title is a real link to the note's own page (for Google and
+  // new-tab clicks); a plain click opens the popup instead.
+  const link = e.target.closest(".card-link");
+  if (link && (e.metaKey || e.ctrlKey || e.shiftKey || e.button !== 0)) return;
+
   const preview = e.target.closest("[data-preview]");
-  if (preview) return openPreview(preview.dataset.preview);
+  if (preview) {
+    if (link) e.preventDefault();
+    return openPreview(preview.dataset.preview);
+  }
+  if (e.target.closest("[data-open-cart]")) return openCart();
   if (e.target.closest("#closePreview") || e.target.closest("#previewScrim")) return closePreview();
 
   if (e.target.closest("#openDownload")) {
@@ -259,12 +269,14 @@ async function showNotesSold() {
    Init
 ------------------------------------------------------------------ */
 $("#yr").textContent = new Date().getFullYear();
+initNotePage(); // a /notes/<slug> page — before the first render, so the hero never shows
 loadCart(); // before the first render, so a restored cart shows immediately rather than popping in
 updateCartCount();
 renderModules();
 renderFilters();
 renderDrawer();
 loadProducts().then(() => {
+  renderNotePage();
   // pgdanotes.co.za/#bridging opens the shop on the bridging course — a link to share with bridging students.
   if (location.hash === "#bridging" && hasBridging()) {
     setCourse("bridging");
