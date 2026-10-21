@@ -55,9 +55,10 @@ export function renderPayouts() {
   const tile = (label, value, sub) => `
     <div class="customer-tile"><span class="stat-label">${label}</span><strong>${value}</strong>${sub ? `<span class="stat-sub">${sub}</span>` : ""}</div>`;
   $("#payoutSummary").innerHTML =
-    tile("Waiting to be paid out", rands(waitingCents),
-      [waiting.length ? `${waiting.length} sale${waiting.length === 1 ? "" : "s"}, before fees` : "Nothing waiting",
-        inFlight.length ? `${inFlight.length} payout${inFlight.length === 1 ? "" : "s"} on the way` : ""].filter(Boolean).join(" · ")) +
+    // Not paid out yet (before fees) plus payouts Paystack is still processing (after fees).
+    tile("Waiting to be paid out", rands(waitingCents + sum(inFlight, "paid_out_cents")),
+      [waiting.length ? `${rands(waitingCents)} not paid out yet` : "",
+        inFlight.length ? `${rands(sum(inFlight, "paid_out_cents"))} processing` : ""].filter(Boolean).join(" · ") || "Nothing waiting") +
     tile("Last payout", last ? rands(last.paid_out_cents) : "—", last ? day(last.date) : "None yet") +
     tile("Paid out this month", rands(sum(thisMonth, "paid_out_cents")), `${thisMonth.length} payout${thisMonth.length === 1 ? "" : "s"}`) +
     tile("Paid out all time", rands(sum(done, "paid_out_cents")), `${rands(sum(done, "fees_cents"))} in Paystack fees`);
