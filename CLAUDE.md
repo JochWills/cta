@@ -117,7 +117,7 @@ src/
 supabase/
   schema.sql                Tables, RLS policies, both storage buckets, 28 seed rows
   functions/
-    _shared/admin.ts        Token auth + CORS shared by the nine admin-* functions
+    _shared/admin.ts        Token auth + CORS shared by the ten admin-* functions
     admin-login/             ┐
     admin-orders/             } deployed — see docs/admin.md
     admin-products/           │
@@ -126,7 +126,8 @@ supabase/
     admin-reviews/           │
     admin-live/              │ who's online right now, see Data model's site_sessions
     admin-customers/         │ Customers tab: "ask for a review" emails, see Data model's review_requests
-    admin-health/            ┘ Health tab, see "Health tab" below
+    admin-health/            │ Health tab, see "Health tab" below
+    admin-payouts/           ┘ Payouts tab, see "Payouts tab" below
     paystack-initiate/        ┐ deployed — see docs/paystack.md
     paystack-webhook/         ┘
     order-download/          deployed — self-serve download links, see Data model below
@@ -173,6 +174,17 @@ description, reviews waiting, and wrong admin passwords. The sidebar
 badge counts checks that aren't green. If the hero image or preview
 images change size, or the estimate drifts from Render's dashboard,
 recalibrate the byte constants at the top of health.js.
+
+## Payouts tab
+
+The admin page's Payouts tab (`src/admin/payouts.js`, `admin-payouts`)
+shows Paystack's settlements — what was actually paid into the bank, with
+status, gross sales, fees and net — read live from Paystack's API with the
+secret key, never stored. Opening a payout fetches the sales it covered and
+matches them to orders by reference. "Waiting to be paid out" is the paid
+orders after the newest settled sale, gross (Paystack only works out fees at
+settlement). Paystack's field names are flattened in the function, so if
+Paystack changes them, fix `settlement()`/`transaction()` there.
 
 ## Conventions that matter
 

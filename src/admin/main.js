@@ -1,4 +1,4 @@
-import { $, rands, slugifyCode } from "../state.js";
+import { $, esc, rands, slugifyCode } from "../state.js";
 import { isFreebie } from "../catalogue.js";
 import { adminState, loadSession, saveSession, clearSession } from "./state.js";
 import {
@@ -47,8 +47,11 @@ import {
   listReviewRequests,
   requestReview,
   fetchHealth,
+  listPayouts,
+  listPayoutSales,
 } from "./api.js";
 import { renderHealth } from "./health.js";
+import { setPayouts, togglePayout } from "./payouts.js";
 import { renderPreviewPages, countPdfPages } from "./pdfPreview.js";
 import { renderDashboard } from "./dashboard.js";
 
@@ -87,6 +90,7 @@ async function enterDashboard() {
   showLoggedIn();
   setTab(adminState.tab);
   await Promise.all([loadOrders(), loadProducts(), loadDiscounts(), loadReviews(), loadReviewRequests(), loadDailyVisitors(), loadVisitorInsights()]);
+  if (adminState.tab === "payouts") loadPayouts();
   loadHealth(); // not awaited — it checks the live site and Paystack, which takes a few seconds
   startVisitorPoll();
 }
@@ -204,6 +208,22 @@ async function loadHealth() {
   } finally {
     healthRunning = false;
     $("#healthRefresh").disabled = false;
+  }
+}
+
+/** Payouts tab — fetched from Paystack the first time it's opened, and on "Refresh". */
+let payoutsLoaded = false;
+async function loadPayouts() {
+  $("#payoutsRefresh").disabled = true;
+  try {
+    setPayouts(await listPayouts());
+    payoutsLoaded = true;
+    $("#payoutsChecked").textContent = `What Paystack has paid into your bank. Checked at ${new Date().toLocaleTimeString("en-ZA", { hour: "2-digit", minute: "2-digit" })}.`;
+  } catch (err) {
+    if (err instanceof AuthError) return handleAuthError();
+    $("#payoutsTable").innerHTML = `<div class="empty-state">Couldn't load payouts just now. ${esc(err.message)}</div>`;
+  } finally {
+    $("#payoutsRefresh").disabled = false;
   }
 }
 
@@ -694,9 +714,16 @@ document.addEventListener("click", (e) => {
   if (tab) {
     e.preventDefault();
     if (tab.dataset.tab === "health") loadHealth();
+    if (tab.dataset.tab === "payouts" && !payoutsLoaded) loadPayouts();
     return setTab(tab.dataset.tab);
   }
   if (e.target.closest("#healthRefresh")) return loadHealth();
+  if (e.target.closest("#payoutsRefresh")) return loadPayouts();
+  const payout = e.target.closest("[data-payout-toggle]");
+  if (payout)
+    return togglePayout(payout.dataset.payoutToggle, listPayoutSales).catch((err) => {
+      if (err instanceof AuthError) handleAuthError();
+    });
 
   if (e.target.closest("#addNoteBtn")) return openProductForm(null);
   if (e.target.closest("#cancelForm") || e.target.closest("#closeModal")) return closeProductForm();

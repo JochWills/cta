@@ -667,3 +667,13 @@
   .health-grid{grid-template-columns:1fr;}
   .health-card:first-child{grid-row:auto;}
 }
+
+/* Payouts tab — reuses the Customers tab's tiles, rows and history cards. */
+.history-order.payout-sale{grid-template-columns:1fr auto;}
+.payout-sale-amounts{display:flex;flex-direction:column;align-items:flex-end;gap:2px;font-size:13.5px;white-space:nowrap;}
+.payout-table .health-pill{display:inline-block;}
+@media (max-width: 720px){
+  /* Date, status and what landed in the bank — fees are in each payout's sales. */
+  .payout-table th:nth-child(3),.payout-table th:nth-child(4),
+  .payout-table .customer-row td:nth-child(3),.payout-table .customer-row td:nth-child(4){display:none;}
+}

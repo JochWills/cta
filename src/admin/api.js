@@ -65,6 +65,11 @@ export const requestReview = (email) => call("admin-customers", { body: { action
 /** Everything the Health tab shows — see supabase/functions/admin-health. */
 export const fetchHealth = () => call("admin-health");
 
+/** Paystack's payouts (settlements) to the bank — see supabase/functions/admin-payouts. */
+export const listPayouts = () => call("admin-payouts", { body: { action: "list" } });
+/** The sales one payout covered. */
+export const listPayoutSales = (id) => call("admin-payouts", { body: { action: "transactions", id } });
+
 /** Short-lived signed URL for a note's current PDF, from the private "notes" bucket. */
 export const getSignedPdfUrl = (filePath) =>
   call("admin-products", { body: { action: "signed_url", file_path: filePath } });

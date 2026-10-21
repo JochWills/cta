@@ -43,6 +43,7 @@ export function setTab(tab) {
   $("#ordersView").hidden = tab !== "orders";
   $("#customersView").hidden = tab !== "customers";
   $("#healthView").hidden = tab !== "health";
+  $("#payoutsView").hidden = tab !== "payouts";
   $("#notesView").hidden = tab !== "notes";
   $("#discountsView").hidden = tab !== "discounts";
   $("#reviewsView").hidden = tab !== "reviews";
