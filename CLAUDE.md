@@ -159,16 +159,20 @@ unreachable — it just ships without note pages.
 
 The admin page's Health tab (`src/admin/health.js`, `admin-health`,
 `admin_health_stats()` in schema.sql section 16) checks: free-plan limits
-(Render and Supabase traffic are *projections* from the last 7 days of
-visitors/preview opens × measured page weights — neither service lets the
-site read its own usage; database and storage size are exact), the live
+(Render traffic is an *estimate* of this calendar month so far plus where
+it's heading — visitor-days × a per-visit figure calibrated against
+Render's real dashboard number, since bots, link previews and admin loads
+cost bandwidth but aren't visitors; Supabase traffic is projected from
+preview opens; neither service lets the site read its own usage; database
+and storage size are exact), the live
 site and sitemap (a note with no page yet), which secrets are set, every
 "pending" checkout from the last 7 days verified with Paystack (one that
 Paystack says succeeded means a missed webhook — a buyer who paid but
 can't get their notes), notes missing a PDF/preview/page count/
 description, reviews waiting, and wrong admin passwords. The sidebar
 badge counts checks that aren't green. If the hero image or preview
-images change size, update the byte constants at the top of health.js.
+images change size, or the estimate drifts from Render's dashboard,
+recalibrate the byte constants at the top of health.js.
 
 ## Conventions that matter
 

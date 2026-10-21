@@ -14,9 +14,16 @@ import { $, esc, rands } from "../state.js";
 // Free-plan allowances (as of 2026 — Render Hobby, Supabase Free).
 const GB = 1024 ** 3;
 const LIMITS = { renderTraffic: 5 * GB, supabaseTraffic: 5 * GB, db: 500 * 1024 ** 2, storage: 1 * GB };
-// What a visitor costs Render: the shop page with the WebP hero measured
-// ~180 KB; allow for a second page (a note page) now and then.
-const RENDER_BYTES_PER_VISITOR = 250 * 1024;
+// What a visitor costs Render, calibrated against Render's own figure rather
+// than page weight alone: on 21 Oct 2026 Render showed 3.5 GB for October
+// from 1,400 visitor-days, about 2.5 MB each. That's more than the page
+// itself (then ~1.35 MB with the old 1.2 MB PNG hero) because Render also
+// counts bots, link-preview fetches and admin page loads, which never show
+// up as visitors. The WebP hero (live 21 Oct) took ~1.15 MB off each visit.
+// Recalibrate both from Render's number now and then.
+const WEBP_HERO_FROM = "2026-10-21";
+const RENDER_BYTES_PER_VISIT_OLD = 2.5 * 1024 ** 2;
+const RENDER_BYTES_PER_VISIT = 1.35 * 1024 ** 2;
 // What a preview costs Supabase: three page images, ~180 KB each, and most
 // visitors who preview open about two notes.
 const SUPABASE_BYTES_PER_PREVIEWER = 1.1 * 1024 ** 2;
@@ -43,9 +50,10 @@ function ago(iso) {
 
 const pill = (state, text = LABEL[state]) => `<span class="health-pill is-${state}">${esc(text)}</span>`;
 
-function meter({ title, used, limit, note, link, linkLabel, projected }) {
+function meter({ title, used, limit, note, link, linkLabel, projected, soFar, heading }) {
   const share = used / limit;
-  const state = level(share);
+  // A month-to-date meter is judged by where the month is heading.
+  const state = level(Math.max(share, heading ? heading / limit : 0));
   return {
     state,
     html: `
@@ -56,7 +64,7 @@ function meter({ title, used, limit, note, link, linkLabel, projected }) {
       </div>
       <div class="health-bar is-${state}"><span style="width:${Math.min(100, Math.max(1.5, share * 100)).toFixed(1)}%"></span></div>
       <div class="health-meter-figures">
-        <span>${projected ? "About " : ""}<strong>${size(used)}</strong>${projected ? " a month" : ""} of ${size(limit)} free</span>
+        <span>${projected || soFar ? "About " : ""}<strong>${size(used)}</strong>${projected ? " a month" : soFar ? " so far this month" : ""} of ${size(limit)} free</span>
         <span>${Math.round(share * 100)}%</span>
       </div>
       <p class="health-note">${note}${link ? ` <a href="${link}" target="_blank" rel="noopener">${esc(linkLabel)} ↗</a>` : ""}</p>
@@ -99,13 +107,24 @@ export function renderHealth(h) {
   const previewersPerDay = avg("previews");
   const storageBytes = (h.storage || []).reduce((s, b) => s + b.bytes, 0);
 
+  // Render counts bandwidth per calendar month, so: this month so far, and
+  // where it's heading at the last week's pace.
+  const today = new Date();
+  const monthStart = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-01`;
+  const renderSoFar = days
+    .filter((d) => d.day >= monthStart)
+    .reduce((s, d) => s + d.visitors * (d.day < WEBP_HERO_FROM ? RENDER_BYTES_PER_VISIT_OLD : RENDER_BYTES_PER_VISIT), 0);
+  const daysLeft = new Date(today.getFullYear(), today.getMonth() + 1, 0).getDate() - today.getDate();
+  const renderHeading = renderSoFar + daysLeft * visitorsPerDay * RENDER_BYTES_PER_VISIT;
+
   const limits = [
     meter({
       title: "Render — website traffic",
-      used: visitorsPerDay * 30 * RENDER_BYTES_PER_VISITOR,
+      used: renderSoFar,
+      heading: renderHeading,
       limit: LIMITS.renderTraffic,
-      projected: true,
-      note: `Projected from ${Math.round(visitorsPerDay)} visitors a day. Render emails you at 70% and 90%; its own counter resets each billing month.`,
+      soFar: true,
+      note: `Heading for about ${size(renderHeading)} by the end of the month at ${Math.round(visitorsPerDay)} visitors a day. An estimate — Render's own figure is the real one, and it emails you at 70% and 90%.`,
       link: RENDER_URL,
       linkLabel: "Exact usage on Render",
     }),
