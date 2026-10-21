@@ -4,11 +4,12 @@
  * Paystack's API with the secret key, so it's never stored here.
  *
  * Body: { action: "list" | "transactions", ... }
- *   list:         -> { settlements, last_settled_paid_at }
+ *   list:         -> { settlements, settled_refs, window_from }
  *                    The latest 100 settlements, newest first. Amounts are
- *                    in cents. last_settled_paid_at is when the newest
- *                    settled sale was paid — any paid order after that is
- *                    still waiting to be paid out (the tab works that out).
+ *                    in cents. settled_refs is every sale reference in the
+ *                    payouts since window_from (14 days back), so the tab
+ *                    can list which recent paid orders haven't been paid
+ *                    out yet.
  *   transactions: { id } -> the sales one settlement paid out.
  *
  * Deploy:  supabase functions deploy admin-payouts
@@ -73,14 +74,18 @@ Deno.serve(async (req) => {
         const settlements = (await paystack("/settlement?perPage=100&page=1")).map(settlement);
         settlements.sort((a, b) => String(b.date).localeCompare(String(a.date)));
 
-        // The newest settled sale marks where "waiting for payout" starts.
-        let lastSettledPaidAt: string | null = null;
-        const newest = settlements.find((s) => s.status === "success");
-        if (newest) {
-          const txs = (await paystack(`/settlement/${newest.id}/transactions?perPage=100`)).map(transaction);
-          lastSettledPaidAt = txs.map((t) => String(t.paid_at ?? "")).sort().pop() || null;
-        }
-        return json({ settlements, last_settled_paid_at: lastSettledPaidAt });
+        // Which recent sales are already in a payout (any status but failed):
+        // the sales in every payout from the last 14 days.
+        const windowFrom = new Date(Date.now() - 14 * 86400000).toISOString();
+        const recent = settlements
+          .filter((s) => s.status !== "failed" && String(s.date ?? s.created_at) >= windowFrom.slice(0, 10))
+          .slice(0, 15);
+        const lists = await Promise.all(
+          recent.map((s) => paystack(`/settlement/${s.id}/transactions?perPage=100`).catch(() => []))
+        );
+        const settledRefs = [...new Set(lists.flat().map((t) => String(t.reference ?? "")).filter(Boolean))];
+        console.log(`payouts: ${settlements.length} settlements, ${recent.length} recent, ${settledRefs.length} settled refs`);
+        return json({ settlements, settled_refs: settledRefs, window_from: windowFrom });
       }
 
       case "transactions": {

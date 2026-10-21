@@ -181,9 +181,10 @@ The admin page's Payouts tab (`src/admin/payouts.js`, `admin-payouts`)
 shows Paystack's settlements — what was actually paid into the bank, with
 status, gross sales, fees and net — read live from Paystack's API with the
 secret key, never stored. Opening a payout fetches the sales it covered and
-matches them to orders by reference. "Waiting to be paid out" is the paid
-orders after the newest settled sale, gross (Paystack only works out fees at
-settlement). Paystack's field names are flattened in the function, so if
+matches them to orders by reference. The "Not paid out yet" row at the
+top lists every paid order from the last 14 days whose reference isn't in
+any of the last 14 days' payouts (the function returns those references),
+gross (Paystack only works out fees at payout). Paystack's field names are flattened in the function, so if
 Paystack changes them, fix `settlement()`/`transaction()` there.
 
 ## Conventions that matter

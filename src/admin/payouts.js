@@ -4,9 +4,10 @@ import { adminState } from "./state.js";
 /**
  * The Payouts tab — Paystack's settlements (what it actually paid into the
  * bank), read live from Paystack by admin-payouts. A row opens to show the
- * sales that payout covered, fetched when first opened. "Waiting to be paid
- * out" is the paid orders after the newest settled sale — gross, before
- * Paystack's fees, which it only works out at settlement.
+ * sales that payout covered, fetched when first opened. The "Not paid out
+ * yet" row at the top is every paid order from the last 14 days that isn't
+ * in any of those payouts (admin-payouts returns their references) — gross,
+ * before Paystack's fees, which it only works out at payout.
  */
 
 const STATUS = {
@@ -17,7 +18,7 @@ const STATUS = {
 };
 
 let data = null;
-const open = new Set();
+const open = new Set(["waiting"]); // sales not paid out yet start open
 const sales = new Map(); // settlement id -> transactions, or "loading" / an Error
 
 const day = (iso) =>
@@ -41,10 +42,11 @@ export function renderPayouts() {
     return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth();
   });
 
-  // Paid orders Paystack hasn't paid out yet.
-  const cutoff = data.last_settled_paid_at ? new Date(data.last_settled_paid_at).getTime() : 0;
+  // Recent paid orders that aren't in any payout yet.
+  const settled = new Set(data.settled_refs || []);
+  const from = new Date(data.window_from || 0).getTime();
   const waiting = adminState.orders.filter(
-    (o) => o.status === "paid" && new Date(o.paid_at || o.created_at).getTime() > cutoff
+    (o) => o.status === "paid" && !settled.has(o.reference) && new Date(o.paid_at || o.created_at).getTime() >= from
   );
   const inFlight = list.filter((s) => s.status !== "success" && s.status !== "failed");
   const waitingCents = waiting.reduce((t, o) => t + o.total_cents, 0);
@@ -61,7 +63,7 @@ export function renderPayouts() {
     tile("Paid out all time", rands(sum(done, "paid_out_cents")), `${rands(sum(done, "fees_cents"))} in Paystack fees`);
 
   const box = $("#payoutsTable");
-  if (!list.length) {
+  if (!list.length && !waiting.length) {
     box.innerHTML = `<div class="empty-state">No payouts yet. Paystack pays sales into your bank a day or two after they're made.</div>`;
     return;
   }
@@ -69,7 +71,7 @@ export function renderPayouts() {
     <div class="admin-table-wrap">
       <table class="admin-table customer-table payout-table">
         <thead><tr><th>Payout date</th><th>Status</th><th>Sales</th><th>Paystack fees</th><th>Paid to you</th></tr></thead>
-        <tbody>${list.map(row).join("")}</tbody>
+        <tbody>${waiting.length ? waitingRow(waiting, waitingCents) : ""}${list.map(row).join("")}</tbody>
       </table>
     </div>`;
 }
@@ -95,6 +97,52 @@ function row(s) {
     </tr>`;
 }
 
+function waitingRow(orders, cents) {
+  const isOpen = open.has("waiting");
+  const newest = orders.slice().sort((a, b) => String(b.paid_at || b.created_at).localeCompare(String(a.paid_at || a.created_at)));
+  return `
+    <tr class="customer-row${isOpen ? " is-open" : ""}" data-payout-toggle="waiting">
+      <td>
+        <div class="customer-name">
+          <svg class="customer-caret" viewBox="0 0 12 8" aria-hidden="true"><path d="M1 1.5l5 5 5-5"/></svg>
+          <span>Not paid out yet</span>
+        </div>
+      </td>
+      <td><span class="health-pill is-warn">Waiting</span></td>
+      <td>${rands(cents)}</td>
+      <td class="meta">At payout</td>
+      <td class="meta">${orders.length} sale${orders.length === 1 ? "" : "s"}</td>
+    </tr>
+    <tr class="customer-detail" ${isOpen ? "" : "hidden"}>
+      <td colspan="5">${isOpen ? `
+        <div class="customer-history">
+          <p class="customer-history-head">Paystack usually pays these out within one or two working days</p>
+          ${newest.map((o) => saleCard({
+            name: o.full_name || o.email,
+            reference: o.reference,
+            at: o.paid_at || o.created_at,
+            items: Array.isArray(o.items) ? o.items.map((i) => i.title).join(", ") : "",
+            amount: o.total_cents,
+          })).join("")}
+        </div>` : ""}</td>
+    </tr>`;
+}
+
+function saleCard({ name, reference, at, items, amount, fees }) {
+  return `
+        <div class="history-order payout-sale">
+          <div class="history-meta">
+            <strong>${esc(name || "—")}</strong>
+            <span class="meta">${esc(reference)} · ${esc(time(at))}</span>
+            ${items ? `<span class="meta">${esc(items)}</span>` : ""}
+          </div>
+          <div class="payout-sale-amounts">
+            <strong>${rands(amount)}</strong>
+            ${fees ? `<span class="meta">−${rands(fees)} fee</span>` : ""}
+          </div>
+        </div>`;
+}
+
 function detail(s) {
   const txs = sales.get(String(s.id));
   if (!txs || txs === "loading") return `<div class="customer-history"><p class="meta">Loading the sales in this payout…</p></div>`;
@@ -106,19 +154,14 @@ function detail(s) {
       <p class="customer-history-head">${txs.length} sale${txs.length === 1 ? "" : "s"} in this payout</p>
       ${txs.map((t) => {
         const o = byRef.get(t.reference);
-        const items = Array.isArray(o?.items) ? o.items.map((i) => i.title).join(", ") : "";
-        return `
-        <div class="history-order payout-sale">
-          <div class="history-meta">
-            <strong>${esc(o?.full_name || t.email || "—")}</strong>
-            <span class="meta">${esc(t.reference)} · ${esc(time(t.paid_at))}</span>
-            ${items ? `<span class="meta">${esc(items)}</span>` : ""}
-          </div>
-          <div class="payout-sale-amounts">
-            <strong>${rands(t.amount_cents)}</strong>
-            ${t.fees_cents ? `<span class="meta">−${rands(t.fees_cents)} fee</span>` : ""}
-          </div>
-        </div>`;
+        return saleCard({
+          name: o?.full_name || t.email,
+          reference: t.reference,
+          at: t.paid_at,
+          items: Array.isArray(o?.items) ? o.items.map((i) => i.title).join(", ") : "",
+          amount: t.amount_cents,
+          fees: t.fees_cents,
+        });
       }).join("")}
     </div>`;
 }
@@ -128,7 +171,7 @@ export async function togglePayout(id, fetchSales) {
   id = String(id);
   if (open.has(id)) open.delete(id);
   else open.add(id);
-  if (open.has(id) && (!sales.has(id) || sales.get(id) instanceof Error)) {
+  if (id !== "waiting" && open.has(id) && (!sales.has(id) || sales.get(id) instanceof Error)) {
     sales.set(id, "loading");
     renderPayouts();
     try {
