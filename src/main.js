@@ -28,6 +28,20 @@ import { initNotePage, renderNotePage } from "./note-page.js";
    Delegated click handling — the grid and drawer are re-rendered often,
    so listeners live on the document rather than on individual elements.
 ------------------------------------------------------------------ */
+/** The mobile menu (a dropdown card below 1024px; on desktop the links are
+ * always showing and this never runs). Dims and locks the page while open. */
+function setMenu(open) {
+  $("#nav").classList.toggle("is-open", open);
+  document.documentElement.classList.toggle("menu-open", open);
+  $("#menuBtn").setAttribute("aria-expanded", String(open));
+  $("#menuBtn").setAttribute("aria-label", open ? "Close menu" : "Open menu");
+}
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape" && $("#nav").classList.contains("is-open")) setMenu(false);
+});
+// Closes itself if the screen is widened past the mobile layout while open.
+matchMedia("(min-width: 1025px)").addEventListener("change", (e) => e.matches && setMenu(false));
+
 document.addEventListener("click", (e) => {
   const add = e.target.closest("[data-add]");
   if (add) {
@@ -78,7 +92,8 @@ document.addEventListener("click", (e) => {
   if (e.target.closest("[data-open-cart]")) return openCart();
   if (e.target.closest("#closePreview") || e.target.closest("#previewScrim")) return closePreview();
 
-  if (e.target.closest("#openDownload")) {
+  if (e.target.closest("#openDownload, [data-open-download]")) {
+    setMenu(false);
     e.preventDefault();
     return openDownloadModal();
   }
@@ -87,7 +102,7 @@ document.addEventListener("click", (e) => {
   const jump = e.target.closest("[data-jump]");
   if (jump) {
     e.preventDefault();
-    $("#nav").classList.remove("is-open"); // the header's "Free" link is one of these
+    setMenu(false); // the header's "Free" link is one of these
     return setFilter(jump.dataset.jump);
   }
 
@@ -124,13 +139,9 @@ document.addEventListener("click", (e) => {
   if (e.target.closest("#applyDiscount")) return applyDiscount();
   if (e.target.closest("#removeDiscount")) return removeDiscount();
 
-  if (e.target.closest("#menuBtn")) {
-    const nav = $("#nav");
-    const open = nav.classList.toggle("is-open");
-    $("#menuBtn").setAttribute("aria-expanded", String(open));
-    return;
-  }
-  if (e.target.closest("#nav a")) return $("#nav").classList.remove("is-open");
+  if (e.target.closest("#menuBtn")) return setMenu(!$("#nav").classList.contains("is-open"));
+  if (e.target.closest("#menuBackdrop")) return setMenu(false);
+  if (e.target.closest("#nav a")) return setMenu(false);
 });
 
 // Any [data-download-form] — the modal's and the Contact section's are the

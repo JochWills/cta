@@ -94,7 +94,8 @@ h1,h2,h3{font-family:'Playfair Display',Georgia,serif;font-weight:400;letter-spa
   border-radius:9px;background:var(--accent);color:#fff;font-size:10px;font-weight:600;
   display:grid;place-items:center;line-height:1;
 }
-.menu-btn{display:none;}
+/* Mobile menu pieces — all hidden on desktop, see the 1024px block. */
+.menu-btn,.nav-ico,.nav-chev,.nav-actions,.menu-backdrop{display:none;}
 
 /* ============================================================
    HERO
@@ -1061,13 +1062,64 @@ details.faq p{margin:0;padding:0 0 16px;max-width:66ch;color:var(--ink-soft);fon
      hidden below, header-inner needs to do that job itself instead, or
      the logo and header-actions just bunch up together on the left. */
   .header-inner{justify-content:space-between;}
-  .nav{display:none;}
-  .nav.is-open{
-    display:flex;flex-direction:column;position:absolute;top:80px;left:0;right:0;
-    background:var(--paper);border-bottom:1px solid var(--rule);padding:18px 26px 24px;gap:4px;
+  /* The menu: a floating card under the header that fades and drops in,
+     with the page dimmed behind it (.menu-backdrop) and scrolling locked.
+     main.js toggles .is-open on #nav and .menu-open on <html>. */
+  .menu-btn{
+    display:grid;place-items:center;width:44px;height:44px;margin-left:4px;border-radius:12px;
+    background:var(--cream);color:var(--ink);-webkit-tap-highlight-color:transparent;transition:background .15s ease,color .15s ease;
   }
-  .nav.is-open a{padding:11px 0;}
-  .menu-btn{display:grid;}
+  .menu-btn[aria-expanded="true"]{background:var(--blush);color:var(--accent-deep);}
+  .menu-bars{position:relative;width:20px;height:14px;}
+  .menu-bars i{
+    position:absolute;left:0;width:100%;height:1.6px;border-radius:2px;background:currentColor;
+    transition:transform .28s cubic-bezier(.2,.8,.2,1),opacity .18s ease,top .28s cubic-bezier(.2,.8,.2,1);
+  }
+  .menu-bars i:nth-child(1){top:0;}
+  .menu-bars i:nth-child(2){top:6px;}
+  .menu-bars i:nth-child(3){top:12px;}
+  .menu-btn[aria-expanded="true"] .menu-bars i:nth-child(1){top:6px;transform:rotate(45deg);}
+  .menu-btn[aria-expanded="true"] .menu-bars i:nth-child(2){opacity:0;transform:scaleX(.3);}
+  .menu-btn[aria-expanded="true"] .menu-bars i:nth-child(3){top:6px;transform:rotate(-45deg);}
+
+  .nav{
+    position:absolute;top:calc(100% + 8px);left:12px;right:12px;z-index:65;margin:0;
+    display:flex;flex-direction:column;align-items:stretch;gap:2px;
+    max-height:calc(100dvh - 100px);overflow-y:auto;overscroll-behavior:contain;padding:8px;
+    background:var(--paper);border:1px solid var(--rule);border-radius:18px;box-shadow:var(--shadow-lift);
+    visibility:hidden;opacity:0;transform:translateY(-10px) scale(.98);transform-origin:right top;
+    transition:opacity .2s ease,transform .26s cubic-bezier(.2,.8,.2,1),visibility 0s linear .26s;
+  }
+  .nav.is-open{visibility:visible;opacity:1;transform:none;transition:opacity .2s ease,transform .26s cubic-bezier(.2,.8,.2,1),visibility 0s;}
+  .nav > a{
+    display:flex;align-items:center;gap:12px;min-height:50px;padding:0 12px;border-radius:12px;
+    font-size:15.5px;font-weight:500;color:var(--ink);
+  }
+  .nav > a::after{display:none;}
+  .nav > a:hover,.nav > a:active{background:var(--cream);}
+  .nav > a.is-active{background:var(--blush);color:var(--accent-deep);}
+  .nav-ico{
+    display:grid;place-items:center;flex-shrink:0;width:36px;height:36px;border-radius:10px;
+    background:var(--cream);color:var(--ink-soft);
+  }
+  .nav > a.is-active .nav-ico{background:var(--paper);color:var(--accent);}
+  .nav-ico svg{width:19px;height:19px;stroke:currentColor;stroke-width:1.6;fill:none;stroke-linecap:round;stroke-linejoin:round;}
+  .nav-chev{display:block;width:16px;height:16px;margin-left:auto;stroke:var(--ink-faint);stroke-width:2;fill:none;stroke-linecap:round;stroke-linejoin:round;}
+  .nav-actions{
+    display:flex;flex-direction:column;gap:8px;margin-top:8px;padding:12px 4px 4px;border-top:1px solid var(--rule);
+  }
+  /* .nav a's desktop colour, padding and underline would otherwise win here. */
+  .nav-actions .btn{display:flex;align-items:center;justify-content:center;min-height:48px;padding:0 16px;border-radius:12px;font-size:12px;letter-spacing:.12em;}
+  .nav-actions .btn:not(.ghost){color:#fff;}
+  .nav-actions .btn.ghost{color:var(--accent-deep);}
+  .nav-actions .btn.ghost:hover{color:#fff;}
+  .nav-actions a::after{display:none;}
+  .menu-backdrop{
+    display:block;position:fixed;inset:0;z-index:55;background:rgba(43,37,35,.32);
+    opacity:0;visibility:hidden;transition:opacity .25s ease,visibility 0s linear .25s;-webkit-tap-highlight-color:transparent;
+  }
+  .menu-open .menu-backdrop{opacity:1;visibility:visible;transition:opacity .25s ease;}
+  html.menu-open{overflow:hidden;}
   /* Below the header breakpoint, no photo at all — just the copy on the
      plain hero background. Simpler than fitting the photo in somewhere
      small, and sidesteps the text-legibility issues chasing an overlaid
@@ -1216,10 +1268,14 @@ details.faq p{margin:0;padding:0 0 16px;max-width:66ch;color:var(--ink-soft);fon
   details.faq{padding:0 16px;}
   details.faq summary{font-size:15px;}
 }
+@media (min-width:600px) and (max-width:1024px){
+  .nav{left:auto;right:20px;width:360px;}
+}
 @media (pointer:coarse){
   :is(input,textarea,select):not([type="checkbox"]):not([type="radio"]){font-size:16px;}
 }
 @media (prefers-reduced-motion:reduce){
+  .nav,.menu-bars i,.menu-backdrop{transition:none !important;}
   .hero-stat{animation:none;}
   .hero-bg img,.hero-copy > *,.hero h1 .line2{animation:none;}
   *{animation-duration:.01ms !important;transition-duration:.01ms !important;}

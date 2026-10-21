@@ -109,26 +109,34 @@
       </span>
     </a>
 
-    <nav class="nav" id="nav">
-      <a href="#shop" class="is-active">Shop</a>
-      <a href="#shop" data-jump="freebies">Free</a>
-      <a href="#about">About</a>
-      <a href="#reviews">Reviews</a>
-      <a href="#faqs">FAQs</a>
-      <a href="#contact">Contact</a>
+    <!-- On desktop a plain row of links. Below 1024px it's a dropdown card
+         (the menu button opens it): an icon and an arrow per link, then the
+         two buttons in .nav-actions, which stay hidden on desktop. -->
+    <nav class="nav" id="nav" aria-label="Main">
+      <a href="#shop" class="is-active"><span class="nav-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 8h14l-1.2 11.2a1.5 1.5 0 0 1-1.5 1.3H7.7a1.5 1.5 0 0 1-1.5-1.3z"/><path d="M9 8V6.5a3 3 0 0 1 6 0V8"/></svg></span>Shop<svg class="nav-chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></a>
+      <a href="#shop" data-jump="freebies"><span class="nav-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="4" y="9" width="16" height="11" rx="1.5"/><path d="M3 9h18M12 9v11M12 9c-1.5-3.5-5.5-4-5.5-1.5S10 9 12 9zm0 0c1.5-3.5 5.5-4 5.5-1.5S14 9 12 9z"/></svg></span>Free<svg class="nav-chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></a>
+      <a href="#about"><span class="nav-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.6"/><path d="M4.5 20c.9-3.7 3.9-5.6 7.5-5.6s6.6 1.9 7.5 5.6"/></svg></span>About<svg class="nav-chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></a>
+      <a href="#reviews"><span class="nav-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 3.6l2.5 5.2 5.7.8-4.1 4 1 5.6L12 16.5l-5.1 2.7 1-5.6-4.1-4 5.7-.8z"/></svg></span>Reviews<svg class="nav-chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></a>
+      <a href="#faqs"><span class="nav-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M9.6 9.4a2.5 2.5 0 0 1 4.8.9c0 1.7-2.4 2.2-2.4 3.7"/><path d="M12 17h.01"/></svg></span>FAQs<svg class="nav-chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></a>
+      <a href="#contact"><span class="nav-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="3.5" y="5.5" width="17" height="13" rx="2"/><path d="M4 7l8 6 8-6"/></svg></span>Contact<svg class="nav-chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></a>
+      <div class="nav-actions">
+        <a class="btn ghost" href="#" data-open-download>Already paid? Get your notes</a>
+        <a class="btn" href="#shop">Browse notes</a>
+      </div>
     </nav>
 
     <div class="header-actions">
-      <button class="icon-btn menu-btn" id="menuBtn" aria-label="Open menu" aria-expanded="false">
-        <svg viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
-      </button>
       <button class="icon-btn" id="cartBtn" aria-label="Open cart">
         <svg viewBox="0 0 24 24"><path d="M3 4h2l2.4 11.2a2 2 0 0 0 2 1.6h7.7a2 2 0 0 0 2-1.55L20.5 8H6"/><circle cx="10" cy="20" r="1.3"/><circle cx="18" cy="20" r="1.3"/></svg>
         <span class="cart-count" id="cartCount">0</span>
       </button>
+      <button class="menu-btn" id="menuBtn" type="button" aria-label="Open menu" aria-expanded="false" aria-controls="nav">
+        <span class="menu-bars" aria-hidden="true"><i></i><i></i><i></i></span>
+      </button>
     </div>
   </div>
 </header>
+<div class="menu-backdrop" id="menuBackdrop" aria-hidden="true"></div>
 
 <!-- ══════════════ NOTE PAGE ══════════════
      Only on /notes/<slug> — one note shown in full, with the shop below.
