@@ -710,15 +710,55 @@ h1,h2,h3{font-family:'Playfair Display',Georgia,serif;font-weight:400;letter-spa
 .star-input input:focus-visible + label{outline:2px solid var(--accent);outline-offset:2px;border-radius:6px;}
 .hp-field{position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden;}
 
-details.faq{border-bottom:1px solid var(--rule);padding:20px 0;}
+/* FAQs — the heading and a small "still have a question?" card on the
+   left, the questions as one compact list on the right. Each <details> is
+   animated open and shut by src/faq.js, which measures its padding and
+   border, so keep the spacing on the row itself and the answer's padding
+   (not margins). */
+.faq-layout{
+  display:grid;grid-template-columns:minmax(0,4fr) minmax(0,7fr);
+  grid-template-areas:"head list" "help list";grid-template-rows:auto 1fr;
+  column-gap:64px;row-gap:24px;align-items:start;
+}
+.faq-head{grid-area:head;}
+.faq-head p:not(.eyebrow){margin:12px 0 0;max-width:34ch;color:var(--ink-soft);font-size:14.5px;}
+.faq-list{
+  grid-area:list;overflow:hidden;
+  background:var(--paper);border:1px solid var(--rule);border-radius:var(--radius);
+}
+.faq-help{
+  grid-area:help;align-self:start;display:grid;grid-template-columns:auto 1fr;column-gap:12px;align-items:center;
+  max-width:340px;padding:16px 18px;border-radius:12px;background:var(--cream);border:1px solid var(--rule);
+}
+.faq-help-icon{
+  grid-row:span 2;width:36px;height:36px;border-radius:50%;display:grid;place-items:center;
+  background:var(--blush);color:var(--accent);
+}
+.faq-help-icon svg{width:18px;height:18px;stroke:currentColor;stroke-width:1.6;fill:none;stroke-linecap:round;stroke-linejoin:round;}
+.faq-help strong{font-size:14px;font-weight:600;}
+.faq-help p{margin:0;font-size:13px;color:var(--ink-soft);}
+.faq-help a{color:var(--accent-deep);text-decoration:underline;text-underline-offset:3px;}
+
+details.faq{border-bottom:1px solid var(--rule);padding:0 20px;transition:background .2s ease;}
+details.faq:last-child{border-bottom:0;}
+details.faq:hover,details.faq[open]{background:var(--cream);}
 details.faq summary{
-  list-style:none;cursor:pointer;display:flex;justify-content:space-between;gap:20px;
-  font-size:16px;font-family:'Playfair Display',serif;
+  list-style:none;cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:16px;
+  padding:14px 0;font-family:'Playfair Display',Georgia,serif;font-size:15.5px;line-height:1.35;
 }
 details.faq summary::-webkit-details-marker{display:none;}
-details.faq summary::after{content:"+";color:var(--accent);font-size:20px;line-height:1;flex-shrink:0;}
-details.faq[open] summary::after{content:"–";}
-details.faq p{margin:12px 0 0;color:var(--ink-soft);font-size:14px;max-width:66ch;}
+/* A small round button with a plus that turns into a cross when open. */
+details.faq summary::after{
+  content:"";flex-shrink:0;width:24px;height:24px;border-radius:50%;
+  border:1px solid var(--rule);background-color:var(--paper);
+  background-image:linear-gradient(var(--accent),var(--accent)),linear-gradient(var(--accent),var(--accent));
+  background-size:9px 1.5px,1.5px 9px;background-position:center;background-repeat:no-repeat;
+  transition:transform .3s cubic-bezier(.2,.8,.2,1),background-color .2s ease,border-color .2s ease;
+}
+details.faq summary:hover::after{border-color:var(--accent);}
+details.faq[open] summary::after{transform:rotate(45deg);background-color:var(--blush);border-color:var(--blush);}
+details.faq summary:focus-visible{outline-offset:4px;}
+details.faq p{margin:0;padding:0 0 16px;max-width:66ch;color:var(--ink-soft);font-size:14px;line-height:1.65;}
 
 .contact-card{
   background:var(--paper);border:1px solid var(--rule);border-radius:var(--radius);
@@ -1169,6 +1209,12 @@ details.faq p{margin:12px 0 0;color:var(--ink-soft);font-size:14px;max-width:66c
   .about-story h2{font-size:30px;}
   .about-story .about-lead{font-size:19px;}
   .about-story p:not(.eyebrow){font-size:15px;}
+}
+@media (max-width:860px){
+  .faq-layout{grid-template-columns:1fr;grid-template-areas:"head" "list" "help";grid-template-rows:none;row-gap:20px;}
+  .faq-help{max-width:none;}
+  details.faq{padding:0 16px;}
+  details.faq summary{font-size:15px;}
 }
 @media (pointer:coarse){
   :is(input,textarea,select):not([type="checkbox"]):not([type="radio"]){font-size:16px;}
