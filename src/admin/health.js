@@ -50,10 +50,10 @@ function ago(iso) {
 
 const pill = (state, text = LABEL[state]) => `<span class="health-pill is-${state}">${esc(text)}</span>`;
 
-function meter({ title, used, limit, note, link, linkLabel, projected, soFar, heading }) {
+function meter({ title, used, limit, note, link, linkLabel, projected, soFar, alertAt }) {
   const share = used / limit;
-  // A month-to-date meter is judged by where the month is heading.
-  const state = level(Math.max(share, heading ? heading / limit : 0));
+  // alertAt: only flag it once actual use passes that share, and nothing in between.
+  const state = alertAt ? (share > alertAt ? "bad" : "ok") : level(share);
   return {
     state,
     html: `
@@ -121,7 +121,7 @@ export function renderHealth(h) {
     meter({
       title: "Render — website traffic",
       used: renderSoFar,
-      heading: renderHeading,
+      alertAt: 0.9, // Courts' call: only flag Render traffic past 90% actually used
       limit: LIMITS.renderTraffic,
       soFar: true,
       note: `Heading for about ${size(renderHeading)} by the end of the month at ${Math.round(visitorsPerDay)} visitors a day. An estimate — Render's own figure is the real one, and it emails you at 70% and 90%.`,
