@@ -183,8 +183,10 @@ status, gross sales, fees and net — read live from Paystack's API with the
 secret key, never stored. Opening a payout fetches the sales it covered and
 matches them to orders by reference. The "Not paid out yet" row at the
 top lists every paid order from the last 14 days whose reference isn't in
-any of the last 14 days' payouts (the function returns those references),
-gross (Paystack only works out fees at payout). Paystack's field names are flattened in the function, so if
+any of the last 14 days' payouts, each with the fee Paystack already
+charged on it (verified per transaction — Paystack sets a sale's fee when
+it's paid), so "Waiting to be paid out" is after fees: those sales plus
+any payouts still processing. Paystack's field names are flattened in the function, so if
 Paystack changes them, fix `settlement()`/`transaction()` there.
 
 ## Conventions that matter

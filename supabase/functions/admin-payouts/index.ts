@@ -4,20 +4,24 @@
  * Paystack's API with the secret key, so it's never stored here.
  *
  * Body: { action: "list" | "transactions", ... }
- *   list:         -> { settlements, settled_refs, window_from }
+ *   list:         -> { settlements, waiting }
  *                    The latest 100 settlements, newest first. Amounts are
- *                    in cents. settled_refs is every sale reference in the
- *                    payouts since window_from (14 days back), so the tab
- *                    can list which recent paid orders haven't been paid
- *                    out yet.
+ *                    in cents. waiting is every paid order from the last 14
+ *                    days that isn't in any payout yet (checked against the
+ *                    sales in the last 14 days' payouts), each with the fee
+ *                    Paystack has already charged on it — Paystack sets a
+ *                    sale's fee when it's paid, not at payout.
  *   transactions: { id } -> the sales one settlement paid out.
  *
  * Deploy:  supabase functions deploy admin-payouts
  */
 
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { verifyToken, handlePreflight, json } from "../_shared/admin.ts";
 
 const PAYSTACK_SECRET_KEY = Deno.env.get("PAYSTACK_SECRET_KEY") ?? "";
+const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
+const SERVICE_ROLE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
 async function paystack(path: string) {
   const res = await fetch(`https://api.paystack.co${path}`, {
@@ -83,9 +87,34 @@ Deno.serve(async (req) => {
         const lists = await Promise.all(
           recent.map((s) => paystack(`/settlement/${s.id}/transactions?perPage=100`).catch(() => []))
         );
-        const settledRefs = [...new Set(lists.flat().map((t) => String(t.reference ?? "")).filter(Boolean))];
-        console.log(`payouts: ${settlements.length} settlements, ${recent.length} recent, ${settledRefs.length} settled refs`);
-        return json({ settlements, settled_refs: settledRefs, window_from: windowFrom });
+        const settled = new Set(lists.flat().map((t) => String(t.reference ?? "")).filter(Boolean));
+
+        // Paid orders in that window that no payout includes yet, with
+        // Paystack's fee on each (from verifying the transaction).
+        const { data: paid, error } = await createClient(SUPABASE_URL, SERVICE_ROLE)
+          .from("orders")
+          .select("reference,email,full_name,total_cents,paid_at,created_at,items")
+          .eq("status", "paid")
+          .gte("paid_at", windowFrom)
+          .order("paid_at", { ascending: false });
+        if (error) throw error;
+        const waiting = await Promise.all(
+          (paid ?? [])
+            .filter((o) => !settled.has(o.reference))
+            .slice(0, 50)
+            .map(async (o) => {
+              let fees: number | null = null;
+              try {
+                const t = await paystack(`/transaction/verify/${encodeURIComponent(o.reference)}`);
+                fees = t?.fees == null ? null : num(t.fees);
+              } catch { /* shown without a fee */ }
+              return { ...o, fees_cents: fees };
+            })
+        );
+        console.log(`payouts: ${settlements.length} settlements, ${recent.length} recent, ${settled.size} settled refs, ${waiting.length} waiting`);
+        // settled_refs/window_from: what the tab used before `waiting` — kept
+        // so an admin page still on the old build keeps working.
+        return json({ settlements, waiting, settled_refs: [...settled], window_from: windowFrom });
       }
 
       case "transactions": {

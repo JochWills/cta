@@ -686,3 +686,4 @@
   .payout-table th:nth-child(3),.payout-table th:nth-child(4),
   .payout-table .customer-row td:nth-child(3),.payout-table .customer-row td:nth-child(4){display:none;}
 }
+.payout-net{font-size:12px;color:var(--ink-soft);}

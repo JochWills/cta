@@ -6,8 +6,8 @@ import { adminState } from "./state.js";
  * bank), read live from Paystack by admin-payouts. A row opens to show the
  * sales that payout covered, fetched when first opened. The "Not paid out
  * yet" row at the top is every paid order from the last 14 days that isn't
- * in any of those payouts (admin-payouts returns their references) — gross,
- * before Paystack's fees, which it only works out at payout.
+ * in a payout yet, with the fee Paystack already charged on each (both
+ * worked out by admin-payouts), so it shows what will actually land.
  */
 
 const STATUS = {
@@ -42,20 +42,18 @@ export function renderPayouts() {
     return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth();
   });
 
-  // Recent paid orders that aren't in any payout yet.
-  const settled = new Set(data.settled_refs || []);
-  const from = new Date(data.window_from || 0).getTime();
-  const waiting = adminState.orders.filter(
-    (o) => o.status === "paid" && !settled.has(o.reference) && new Date(o.paid_at || o.created_at).getTime() >= from
-  );
+  // Recent paid orders that aren't in any payout yet, and what they'll pay out after fees.
+  const waiting = data.waiting || [];
   const inFlight = list.filter((s) => s.status !== "success" && s.status !== "failed");
-  const waitingCents = waiting.reduce((t, o) => t + o.total_cents, 0);
+  const waitingGross = waiting.reduce((t, o) => t + o.total_cents, 0);
+  const waitingFees = waiting.reduce((t, o) => t + (o.fees_cents || 0), 0);
+  const waitingCents = waitingGross - waitingFees;
   const last = done[0];
 
   const tile = (label, value, sub) => `
     <div class="customer-tile"><span class="stat-label">${label}</span><strong>${value}</strong>${sub ? `<span class="stat-sub">${sub}</span>` : ""}</div>`;
   $("#payoutSummary").innerHTML =
-    // Not paid out yet (before fees) plus payouts Paystack is still processing (after fees).
+    // Both after Paystack's fees: sales not in a payout yet, plus payouts still processing.
     tile("Waiting to be paid out", rands(waitingCents + sum(inFlight, "paid_out_cents")),
       [waiting.length ? `${rands(waitingCents)} not paid out yet` : "",
         inFlight.length ? `${rands(sum(inFlight, "paid_out_cents"))} processing` : ""].filter(Boolean).join(" · ") || "Nothing waiting") +
@@ -72,7 +70,7 @@ export function renderPayouts() {
     <div class="admin-table-wrap">
       <table class="admin-table customer-table payout-table">
         <thead><tr><th>Payout date</th><th>Status</th><th>Sales</th><th>Paystack fees</th><th>Paid to you</th></tr></thead>
-        <tbody>${waiting.length ? waitingRow(waiting, waitingCents) : ""}${list.map(row).join("")}</tbody>
+        <tbody>${waiting.length ? waitingRow(waiting, waitingGross, waitingFees) : ""}${list.map(row).join("")}</tbody>
       </table>
     </div>`;
 }
@@ -98,7 +96,7 @@ function row(s) {
     </tr>`;
 }
 
-function waitingRow(orders, cents) {
+function waitingRow(orders, gross, fees) {
   const isOpen = open.has("waiting");
   const newest = orders.slice().sort((a, b) => String(b.paid_at || b.created_at).localeCompare(String(a.paid_at || a.created_at)));
   return `
@@ -110,9 +108,9 @@ function waitingRow(orders, cents) {
         </div>
       </td>
       <td><span class="health-pill is-warn">Waiting</span></td>
-      <td>${rands(cents)}</td>
-      <td class="meta">At payout</td>
-      <td class="meta">${orders.length} sale${orders.length === 1 ? "" : "s"}</td>
+      <td>${rands(gross)}</td>
+      <td class="meta">${fees ? `−${rands(fees)}` : "—"}</td>
+      <td><strong>${rands(gross - fees)}</strong><div class="meta">${orders.length} sale${orders.length === 1 ? "" : "s"}</div></td>
     </tr>
     <tr class="customer-detail" ${isOpen ? "" : "hidden"}>
       <td colspan="5">${isOpen ? `
@@ -124,6 +122,7 @@ function waitingRow(orders, cents) {
             at: o.paid_at || o.created_at,
             items: Array.isArray(o.items) ? o.items.map((i) => i.title).join(", ") : "",
             amount: o.total_cents,
+            fees: o.fees_cents,
           })).join("")}
         </div>` : ""}</td>
     </tr>`;
@@ -139,7 +138,7 @@ function saleCard({ name, reference, at, items, amount, fees }) {
           </div>
           <div class="payout-sale-amounts">
             <strong>${rands(amount)}</strong>
-            ${fees ? `<span class="meta">−${rands(fees)} fee</span>` : ""}
+            ${fees ? `<span class="meta">−${rands(fees)} fee</span><span class="payout-net">${rands(amount - fees)} to you</span>` : ""}
           </div>
         </div>`;
 }
