@@ -112,15 +112,23 @@
    three nav items and leaving a short floating box beside much taller
    content; the min-height below still reaches it near the bottom of the
    screen even on a short tab (Notes with one row, say). */
-.admin-shell{display:flex;align-items:stretch;}
+.admin-shell{
+  display:flex;align-items:stretch;
+  /* The sidebar's cream column and its hairline, drawn here so they run the
+     full page height while the sidebar itself stays pinned to the screen. */
+  background:linear-gradient(90deg,var(--cream) 0 219px,var(--rule) 219px 220px,transparent 220px);
+}
 .admin-content{flex:1;min-width:0;padding:44px 40px 100px;} /* min-width:0 so a wide table can still scroll inside it rather than push the sidebar off-screen; padding replaces what used to live on .admin-main */
 
 .admin-sidebar{
   width:220px;flex-shrink:0;display:flex;flex-direction:column;gap:3px;
   background:var(--cream);border-right:1px solid var(--rule);
   padding:20px 14px;
-  position:sticky;top:80px; /* .site-header's own height — sits flush under it */
-  min-height:calc(100vh - 80px);
+  /* Pinned under .site-header (80px) while the page scrolls: screen height,
+     not stretched to the page, or sticky has nowhere to stick. Scrolls on
+     its own if the screen is too short for every tab. */
+  position:sticky;top:80px;align-self:flex-start;
+  height:calc(100vh - 80px);overflow-y:auto;
 }
 .side-nav-item{
   display:flex;align-items:center;gap:12px;width:100%;padding:11px 14px;border-radius:10px;
@@ -582,9 +590,10 @@
      already sets it. min-height, though, DOES need resetting: full page
      height made sense for a vertical side panel, not for this same
      element turned into a short horizontal strip. */
-  .admin-shell{flex-direction:column;}
+  .admin-shell{flex-direction:column;background:none;}
   .admin-sidebar{
-    width:100%;min-height:0;flex-direction:row;overflow-x:auto;position:static;
+    width:100%;height:auto;align-self:stretch;flex-direction:row;overflow-x:auto;overflow-y:visible;
+    position:sticky;top:80px;z-index:50; /* pinned under the header, like the sidebar on desktop */
     gap:6px;padding:10px 16px;border-right:none;border-bottom:1px solid var(--rule);
   }
   .side-nav-item{width:auto;white-space:nowrap;flex-shrink:0;}
