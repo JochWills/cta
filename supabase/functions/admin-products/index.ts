@@ -14,6 +14,10 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { verifyToken, handlePreflight, json } from "../_shared/admin.ts";
 
+// Same as slugifyCode in src/state.js — how preview image file names are made.
+const slugifyCode = (code: string) =>
+  code.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_ROLE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 // Render's deploy hook for the shop. Each note has its own page
@@ -101,6 +105,11 @@ Deno.serve(async (req) => {
 
       case "update": {
         if (!body.id) return json({ error: "id is required" }, 400);
+        const { data: before } = await supabase
+          .from("products")
+          .select("module_slug,code,preview_pages")
+          .eq("id", body.id)
+          .single();
         const { data, error } = await supabase
           .from("products")
           .update(pickEditable(body))
@@ -108,6 +117,20 @@ Deno.serve(async (req) => {
           .select()
           .single();
         if (error) throw error;
+        // Preview image paths come from module_slug (see slugifyCode in
+        // src/state.js), so a note moved to another module (e.g. PGDA ->
+        // bridging) needs its images copied across or the shop shows none.
+        // Copied before the admin page uploads anything new, so a fresh
+        // upload in the same save still replaces them.
+        if (before && before.module_slug !== data.module_slug && before.preview_pages > 0) {
+          const slug = slugifyCode(before.code);
+          for (let i = 1; i <= before.preview_pages; i++) {
+            const { error: copyError } = await supabase.storage
+              .from("note-previews")
+              .copy(`${before.module_slug}/${slug}-p${i}.png`, `${data.module_slug}/${slug}-p${i}.png`);
+            if (copyError) console.error("preview copy failed:", copyError.message);
+          }
+        }
         await rebuildSite(); // after "create", the admin page always follows with an update (the PDF)
         return json(data);
       }

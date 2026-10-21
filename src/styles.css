@@ -616,18 +616,31 @@ h1,h2,h3{font-family:'Playfair Display',Georgia,serif;font-weight:400;letter-spa
 .prose p{color:var(--ink-soft);font-size:15px;margin:16px 0 0;max-width:56ch;}
 .prose p:first-of-type{margin-top:18px;}
 
-.steps{display:grid;gap:2px;background:var(--rule);border:1px solid var(--rule);border-radius:var(--radius);overflow:hidden;}
-.step{background:var(--paper);padding:24px 26px;display:flex;gap:20px;align-items:flex-start;}
-.step .num{
-  font-family:'Playfair Display',serif;font-size:26px;color:var(--accent);line-height:1;
-  width:34px;flex-shrink:0;
+/* About — Courts' photo in an arched frame,
+   the story beside it. */
+.about{overflow:hidden;}
+/* A centred column, so the small photo and the story sit together
+   instead of spreading across a wide screen. */
+.about > .wrap{max-width:1120px;}
+.about-intro{display:grid;grid-template-columns:300px minmax(0,1fr);gap:80px;align-items:center;}
+.about-photo{position:relative;margin:0;max-width:280px;width:100%;justify-self:start;}
+.about-photo::before{ /* the blush arch peeking out behind the frame */
+  content:"";position:absolute;inset:-12px 18px 110px -18px;z-index:0;
+  border-radius:999px 999px 24px 24px;background:linear-gradient(160deg,var(--hero-a),var(--blush));
 }
-.step strong{display:block;font-size:15.5px;margin-bottom:4px;}
-.step span{font-size:13.5px;color:var(--ink-soft);}
-.step-note{background:var(--cream);}
-.step-note strong{font-size:14px;}
-.step-note span{font-size:12.5px;line-height:1.6;}
-.step-note .num svg{width:22px;height:22px;stroke:var(--accent);stroke-width:1.5;fill:none;stroke-linecap:round;stroke-linejoin:round;}
+.about-frame{
+  position:relative;z-index:1;aspect-ratio:4/5;overflow:hidden;
+  border-radius:999px 999px 20px 20px;background:linear-gradient(170deg,var(--hero-b),var(--fr-tint));
+  box-shadow:var(--shadow-lift);display:grid;place-items:center;
+}
+.about-frame img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center top;}
+.about-sign{position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;gap:2px;margin-top:22px;text-align:center;font-size:12.5px;color:var(--ink-faint);}
+.about-sign-name{font-family:'Playfair Display',Georgia,serif;font-style:italic;font-size:26px;color:var(--ink);}
+
+.about-story h2{margin-top:10px;font-size:38px;line-height:1.15;max-width:18ch;}
+.about-story p:not(.eyebrow){color:var(--ink-soft);font-size:15.5px;line-height:1.75;margin:16px 0 0;}
+.about-story .about-lead{margin-top:24px;font-family:'Playfair Display',Georgia,serif;font-style:italic;font-size:21px;line-height:1.5;color:var(--ink);}
+
 
 /* Sections from About down alternate white / cream (.alt), so Reviews is on
    cream and its cards are white to stand off it. */
@@ -1066,6 +1079,9 @@ details.faq p{margin:12px 0 0;color:var(--ink-soft);font-size:14px;max-width:66c
   .modules{padding-top:44px;}
   .trust-grid{grid-template-columns:repeat(2,1fr);gap:26px;}
   .two-col{grid-template-columns:1fr;gap:40px;}
+  .about-intro{grid-template-columns:1fr;gap:48px;}
+  .about-story{max-width:640px;margin:0 auto;}
+  .about-photo{max-width:240px;justify-self:center;}
   .review{flex-basis:100%;}
   .review-page{padding:44px 26px 70px;}
   .review-form-card{padding:8px 20px 24px;}
@@ -1190,6 +1206,13 @@ details.faq p{margin:12px 0 0;color:var(--ink-soft);font-size:14px;max-width:66c
    off pinch-zoom for the whole page (maximum-scale would). The :not()s are
    also what lift this above .field input / .discount-row input and the
    admin page's own select rules, without needing !important. */
+@media (max-width:720px){
+  .about-photo{max-width:200px;}
+  .about-photo::before{inset:-10px 14px 120px -14px;}
+  .about-story h2{font-size:30px;}
+  .about-story .about-lead{font-size:19px;}
+  .about-story p:not(.eyebrow){font-size:15px;}
+}
 @media (pointer:coarse){
   :is(input,textarea,select):not([type="checkbox"]):not([type="radio"]){font-size:16px;}
 }
