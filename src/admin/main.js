@@ -46,7 +46,9 @@ import {
   deleteReview,
   listReviewRequests,
   requestReview,
+  fetchHealth,
 } from "./api.js";
+import { renderHealth } from "./health.js";
 import { renderPreviewPages, countPdfPages } from "./pdfPreview.js";
 import { renderDashboard } from "./dashboard.js";
 
@@ -85,6 +87,7 @@ async function enterDashboard() {
   showLoggedIn();
   setTab(adminState.tab);
   await Promise.all([loadOrders(), loadProducts(), loadDiscounts(), loadReviews(), loadReviewRequests(), loadDailyVisitors(), loadVisitorInsights()]);
+  loadHealth(); // not awaited — it checks the live site and Paystack, which takes a few seconds
   startVisitorPoll();
 }
 
@@ -185,6 +188,25 @@ function handleAuthError() {
 }
 
 /** `quiet` for the background refresh — a blip there isn't worth a toast every minute. */
+/** Health tab — run on login and whenever the tab is opened or "Check again" is clicked. */
+let healthRunning = false;
+async function loadHealth() {
+  if (healthRunning) return;
+  healthRunning = true;
+  $("#healthRefresh").disabled = true;
+  try {
+    const issues = renderHealth(await fetchHealth());
+    $("#healthAlertCount").hidden = !issues;
+    $("#healthAlertCount").textContent = issues;
+  } catch (err) {
+    if (err instanceof AuthError) return handleAuthError();
+    $("#healthBody").innerHTML = `<div class="empty-state">Couldn't run the checks just now. ${err.message}</div>`;
+  } finally {
+    healthRunning = false;
+    $("#healthRefresh").disabled = false;
+  }
+}
+
 async function loadReviewRequests() {
   try {
     adminState.reviewRequests = await listReviewRequests();
@@ -669,7 +691,12 @@ document.addEventListener("click", (e) => {
   if (e.target.closest("#logoutBtn")) return doLogout();
 
   const tab = e.target.closest("[data-tab]");
-  if (tab) return setTab(tab.dataset.tab);
+  if (tab) {
+    e.preventDefault();
+    if (tab.dataset.tab === "health") loadHealth();
+    return setTab(tab.dataset.tab);
+  }
+  if (e.target.closest("#healthRefresh")) return loadHealth();
 
   if (e.target.closest("#addNoteBtn")) return openProductForm(null);
   if (e.target.closest("#cancelForm") || e.target.closest("#closeModal")) return closeProductForm();

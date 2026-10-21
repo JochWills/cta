@@ -62,6 +62,9 @@ export const listReviewRequests = () => call("admin-customers", { body: { action
 /** Email one customer (must have a paid order) the /review link, from notes@pgdanotes.co.za. */
 export const requestReview = (email) => call("admin-customers", { body: { action: "request_review", email } });
 
+/** Everything the Health tab shows — see supabase/functions/admin-health. */
+export const fetchHealth = () => call("admin-health");
+
 /** Short-lived signed URL for a note's current PDF, from the private "notes" bucket. */
 export const getSignedPdfUrl = (filePath) =>
   call("admin-products", { body: { action: "signed_url", file_path: filePath } });

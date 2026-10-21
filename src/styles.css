@@ -354,6 +354,10 @@ h1,h2,h3{font-family:'Playfair Display',Georgia,serif;font-weight:400;letter-spa
   padding:58px 32px 34px;border-radius:18px;background:#F3EDE8;
 }
 .note-pages .preview-chip{position:absolute;top:18px;left:18px;}
+/* a freebie: the whole file in a viewer, filling the panel */
+.note-pages.is-doc{padding:0;overflow:hidden;background:#fff;border:1px solid var(--rule);}
+.note-pages.is-doc .preview-doc{height:min(720px,80vh);}
+.note-pages.is-doc .note-pages-empty{min-height:420px;background:#F3EDE8;}
 .note-pages-empty{min-height:260px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;text-align:center;color:var(--ink-soft);}
 .note-pages-empty p{margin:0;}
 .note-side{position:sticky;top:96px;}
@@ -363,7 +367,13 @@ h1,h2,h3{font-family:'Playfair Display',Georgia,serif;font-weight:400;letter-spa
 }
 .note-buy{margin-top:24px;padding:22px;border:1px solid var(--rule);border-radius:16px;background:var(--paper);box-shadow:var(--shadow);}
 .note-buy .btn{width:100%;}
-.note-buy .btn.is-in-cart{background:var(--paper);color:var(--accent-deep);border:1px solid var(--accent);}
+.note-buy-actions{display:flex;flex-direction:column;gap:10px;}
+.note-buy-actions .btn{display:block;text-align:center;}
+.note-added{
+  display:flex;align-items:center;justify-content:center;gap:8px;margin:0 0 12px;
+  font-size:13.5px;font-weight:500;color:var(--tax-ink);animation:fade-in .3s ease;
+}
+.note-added svg{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
 .note-buy .note{margin:10px 0 0;text-align:center;}
 .note-missing{max-width:520px;padding:60px 0;}
 .note-missing h1{font-size:34px;}

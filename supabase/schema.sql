@@ -842,3 +842,58 @@ create table if not exists public.review_requests (
 );
 create index if not exists review_requests_email on public.review_requests (email);
 alter table public.review_requests enable row level security;
+
+
+-- ------------------------------------------------------------
+-- 16. HEALTH (admin page's Health tab)
+--    Everything the Health tab reads from the database in one call:
+--    database and storage size (against the free plan's limits), daily
+--    visitors and preview opens for the last 30 days (to project hosting
+--    traffic), stuck/failed payments, notes missing a PDF/preview/page
+--    count/description, reviews waiting, and wrong admin passwords.
+--    service_role only — reached through the admin-health Edge Function.
+-- ------------------------------------------------------------
+create or replace function public.admin_health_stats()
+returns jsonb
+language sql
+security definer
+set search_path = public
+as $$
+  select jsonb_build_object(
+    'db_bytes', pg_database_size(current_database()),
+    'storage', coalesce((
+      select jsonb_agg(jsonb_build_object('bucket', bucket_id, 'files', n, 'bytes', b) order by bucket_id)
+      from (select bucket_id, count(*) n, coalesce(sum((metadata->>'size')::bigint), 0) b
+            from storage.objects group by bucket_id) s
+    ), '[]'::jsonb),
+    'days', coalesce((
+      select jsonb_agg(jsonb_build_object('day', d, 'visitors', v, 'previews', pv) order by d)
+      from (
+        select g::date d,
+               (select count(*) from daily_visits dv where dv.day = g::date) v,
+               (select count(*) from site_events se where se.day = g::date and se.event = 'preview') pv
+        from generate_series(current_date - 29, current_date, interval '1 day') g
+      ) x
+    ), '[]'::jsonb),
+    'orders', jsonb_build_object(
+      'stuck', (select count(*) from orders where status = 'pending' and created_at < now() - interval '1 hour' and created_at > now() - interval '7 days'),
+      'failed_7d', (select count(*) from orders where status = 'failed' and created_at > now() - interval '7 days'),
+      'paid_7d', (select count(*) from orders where status = 'paid' and created_at > now() - interval '7 days'),
+      'paid_items_30d', (select coalesce(sum(jsonb_array_length(items)), 0) from orders where status in ('paid','free') and created_at > now() - interval '30 days'),
+      'last_paid_at', (select max(coalesce(paid_at, created_at)) from orders where status = 'paid')
+    ),
+    'notes', jsonb_build_object(
+      'active', (select count(*) from products where is_active),
+      'hidden', (select count(*) from products where not is_active),
+      'no_pdf', coalesce((select jsonb_agg(title order by title) from products where is_active and file_path is null), '[]'::jsonb),
+      'no_preview', coalesce((select jsonb_agg(title order by title) from products where is_active and coalesce(preview_pages, 0) = 0 and module_slug not like '%freebies'), '[]'::jsonb),
+      'no_pages', coalesce((select jsonb_agg(title order by title) from products where is_active and page_count is null and module_slug not like '%freebies'), '[]'::jsonb),
+      'no_description', coalesce((select jsonb_agg(title order by title) from products where is_active and nullif(trim(description), '') is null), '[]'::jsonb),
+      'codes', coalesce((select jsonb_agg(jsonb_build_object('title', title, 'code', code)) from products where is_active), '[]'::jsonb)
+    ),
+    'reviews_waiting', (select count(*) from reviews where not is_published),
+    'login_failures_24h', (select count(*) from admin_login_failures where at > now() - interval '24 hours')
+  );
+$$;
+revoke execute on function public.admin_health_stats() from public, anon, authenticated;
+grant execute on function public.admin_health_stats() to service_role;

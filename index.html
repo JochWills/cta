@@ -144,7 +144,10 @@
 <!-- ══════════════ HERO ══════════════ -->
 <section class="hero" id="top">
   <div class="hero-bg" aria-hidden="true">
-    <img src="/hero.png" alt="" width="1728" height="910">
+    <!-- WebP, about 45 KB (20 KB on phones) — the old 1.2 MB hero.png was most of
+         the site's Render bandwidth. hero.png stays in public/ only for old link previews. -->
+    <img src="/hero.webp" srcset="/hero-900.webp 900w, /hero.webp 1728w" sizes="100vw"
+         alt="" width="1728" height="910" fetchpriority="high">
     <div class="hero-scrim"></div>
   </div>
 

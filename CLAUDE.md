@@ -117,7 +117,7 @@ src/
 supabase/
   schema.sql                Tables, RLS policies, both storage buckets, 28 seed rows
   functions/
-    _shared/admin.ts        Token auth + CORS shared by the eight admin-* functions
+    _shared/admin.ts        Token auth + CORS shared by the nine admin-* functions
     admin-login/             ┐
     admin-orders/             } deployed — see docs/admin.md
     admin-products/           │
@@ -125,13 +125,15 @@ supabase/
     admin-discounts/         │
     admin-reviews/           │
     admin-live/              │ who's online right now, see Data model's site_sessions
-    admin-customers/         ┘ Customers tab: "ask for a review" emails, see Data model's review_requests
+    admin-customers/         │ Customers tab: "ask for a review" emails, see Data model's review_requests
+    admin-health/            ┘ Health tab, see "Health tab" below
     paystack-initiate/        ┐ deployed — see docs/paystack.md
     paystack-webhook/         ┘
     order-download/          deployed — self-serve download links, see Data model below
     free-download/           freebie PDFs for a name + email, see Data model below
 render.yaml                 Render Blueprint — build settings, cache headers, URL rewrites
-public/                     favicon, hero.png (the hero photo)
+public/                     favicon, hero.webp + hero-900.webp (the hero photo — keep it WebP
+                             and small: it was most of the Render bandwidth as a 1.2 MB PNG)
 ```
 
 ## Note pages (/notes/<slug>)
@@ -152,6 +154,21 @@ added after the last deploy has no page until the next build:
 `admin-products` calls Render's deploy hook (`RENDER_DEPLOY_HOOK` secret)
 after any update or delete. The build never fails if the database is
 unreachable — it just ships without note pages.
+
+## Health tab
+
+The admin page's Health tab (`src/admin/health.js`, `admin-health`,
+`admin_health_stats()` in schema.sql section 16) checks: free-plan limits
+(Render and Supabase traffic are *projections* from the last 7 days of
+visitors/preview opens × measured page weights — neither service lets the
+site read its own usage; database and storage size are exact), the live
+site and sitemap (a note with no page yet), which secrets are set, every
+"pending" checkout from the last 7 days verified with Paystack (one that
+Paystack says succeeded means a missed webhook — a buyer who paid but
+can't get their notes), notes missing a PDF/preview/page count/
+description, reviews waiting, and wrong admin passwords. The sidebar
+badge counts checks that aren't green. If the hero image or preview
+images change size, update the byte constants at the top of health.js.
 
 ## Conventions that matter
 

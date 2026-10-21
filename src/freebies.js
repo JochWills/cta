@@ -24,29 +24,37 @@ export async function loadFreebiePreview(p) {
   const frame = $("#previewFrame");
   previewing = p.id;
   frame.innerHTML = `<div class="empty-state">Loading preview…</div>`;
-  if (!hasDB) {
-    frame.innerHTML = `<div class="empty-state">Previews only load on the live shop.</div>`;
+  const view = await freebieViewer(p);
+  if (previewing !== p.id || $("#previewModal").hidden) return;
+  if (!view) {
+    frame.innerHTML = `<div class="empty-state">${hasDB ? "Couldn't load the preview just now. You can still download it." : "Previews only load on the live shop."}</div>`;
     return;
   }
+  $("#previewPages").textContent = view.label;
+  frame.innerHTML = view.html;
+}
+
+/**
+ * The viewer for a freebie, shared by the preview modal and its own page
+ * (note-page.js): { html, label }, or null if it couldn't be loaded.
+ */
+export async function freebieViewer(p) {
+  if (!hasDB) return null;
   let res;
   try {
     res = await sbFunction("free-download", { action: "preview", product_id: p.id });
   } catch (err) {
     console.error(err);
-    res = { ok: false };
+    return null;
   }
-  if (previewing !== p.id || $("#previewModal").hidden) return;
-  if (!res.ok) {
-    frame.innerHTML = `<div class="empty-state">Couldn't load the preview just now. You can still download it.</div>`;
-    return;
-  }
-  $("#previewPages").textContent =
+  if (!res?.ok) return null;
+  const label =
     res.kind === "excel" ? "Excel spreadsheet" : p.page_count ? `PDF · ${p.page_count} page${p.page_count === 1 ? "" : "s"}` : "PDF";
   const src =
     res.kind === "excel"
       ? `https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(res.url)}`
       : res.url;
-  frame.innerHTML = `<iframe class="preview-doc" src="${esc(src)}" title="${esc(p.title)}"></iframe>`;
+  return { label, html: `<iframe class="preview-doc" src="${esc(src)}" title="${esc(p.title)}"></iframe>` };
 }
 
 function remembered(key) {

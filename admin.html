@@ -105,6 +105,11 @@
         <span>Reviews</span>
         <span class="side-nav-count" id="reviewsPendingCount" hidden></span>
       </button>
+      <button class="side-nav-item" data-tab="health">
+        <svg viewBox="0 0 24 24"><path d="M3 12h4l2.5-6 4 12 2.5-6H21"/></svg>
+        <span>Health</span>
+        <span class="side-nav-count is-alert" id="healthAlertCount" hidden></span>
+      </button>
     </nav>
 
     <div class="admin-content">
@@ -235,6 +240,19 @@
           <div id="discountFormError"></div>
         </form>
         <div id="discountsTable"></div>
+      </div>
+
+      <div id="healthView" hidden>
+        <div class="dash-header">
+          <div>
+            <h2>Health</h2>
+            <p class="dash-sub" id="healthChecked">Checks your site, payments, notes and free-plan limits.</p>
+          </div>
+          <div class="dash-header-actions">
+            <button type="button" class="btn ghost" id="healthRefresh">Check again</button>
+          </div>
+        </div>
+        <div id="healthBody"><div class="empty-state">Checking…</div></div>
       </div>
 
       <div id="reviewsView" hidden>

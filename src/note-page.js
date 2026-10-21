@@ -2,6 +2,7 @@ import { state, $, esc, rands, slugifyCode } from "./state.js";
 import { MOD, MODULES, isFreebie, courseOf, moduleName } from "./catalogue.js";
 import { previewPageUrl, pagesLabel, BUNDLE_TIERS, renderModules, renderFilters, renderProducts } from "./render.js";
 import { track } from "./presence.js";
+import { freebieViewer } from "./freebies.js";
 
 /**
  * A note's own page, /notes/<slug> — for Google and shared links, not for
@@ -72,8 +73,7 @@ export function renderNotePage() {
         </div>`;
       }).join("")
     : free
-      ? `<div class="note-pages-empty"><p>See the whole file before you download it.</p>
-           <button class="btn ghost" type="button" data-preview="${esc(p.id)}">Preview it</button></div>`
+      ? `<div class="note-pages-empty" id="noteFreebieView"><p>Loading preview…</p></div>`
       : `<div class="note-pages-empty"><p>No preview for this note yet.</p></div>`;
   const [big, small] = BUNDLE_TIERS;
 
@@ -84,7 +84,7 @@ export function renderNotePage() {
       <span aria-current="page">${esc(p.title)}</span>
     </nav>
     <div class="note-layout">
-      <div class="note-pages">
+      <div class="note-pages${free ? " is-doc" : ""}">
         ${!free && p.preview_pages > 0
           ? `<span class="preview-chip">Previewing ${p.preview_pages} of ${pagesLabel(p.page_count || p.preview_pages)}</span>`
           : ""}
@@ -112,6 +112,21 @@ export function renderNotePage() {
       </aside>
     </div>`;
   renderNoteBuy();
+  if (free) showFreebie(p);
+}
+
+/** A freebie shows the whole file in place (the same viewer as the popup). */
+async function showFreebie(p) {
+  const view = await freebieViewer(p);
+  const slot = document.getElementById("noteFreebieView");
+  if (!slot || current !== p) return;
+  if (!view) {
+    slot.innerHTML = `<p>Couldn't load the preview just now. You can still download it.</p>`;
+    return;
+  }
+  slot.outerHTML = view.html;
+  const label = document.querySelector("#noteDetail .preview-pages");
+  if (label) label.textContent = view.label;
 }
 
 /** The buy button, which changes once the note is in the cart. */
@@ -124,8 +139,13 @@ function renderNoteBuy() {
     return;
   }
   const inCart = state.cart.some((c) => c.id === p.id);
+  // Once it's in the cart: carry on browsing the module below, or go to the cart.
   slot.innerHTML = inCart
-    ? `<button class="btn is-in-cart" type="button" id="cartBtnNote" data-open-cart>Already in your cart — view cart</button>`
+    ? `<p class="note-added"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>Added to your cart</p>
+       <div class="note-buy-actions">
+         <a class="btn" href="#shop">Keep shopping</a>
+         <button class="btn ghost" type="button" data-open-cart>Go to cart</button>
+       </div>`
     : `<button class="btn" type="button" data-add="${esc(p.id)}">Add to cart</button>`;
 }
 
