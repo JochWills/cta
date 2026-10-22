@@ -106,7 +106,13 @@ function orderRow(o) {
         }
       </td>
       <td><span class="status-badge status-${esc(o.status)}">${esc(STATUS_LABEL[o.status] || o.status)}</span></td>
-      <td><div class="admin-row-actions"><button class="btn ghost" data-del-order="${esc(o.id)}">Delete</button></div></td>
+      <td><div class="admin-row-actions">${
+        o.status === "paid"
+          ? `<button class="btn ghost" data-refund-order="${esc(o.id)}">Mark refunded</button>`
+          : o.status === "refunded"
+            ? `<button class="btn ghost" data-unrefund-order="${esc(o.id)}">Undo refund</button>`
+            : ""
+      }<button class="btn ghost" data-del-order="${esc(o.id)}">Delete</button></div></td>
     </tr>`;
 }
 
@@ -448,12 +454,13 @@ let focusBeforeConfirm = null;
 
 const TRASH_ICON = $("#confirmModal .confirm-icon").innerHTML;
 const MAIL_ICON = '<svg viewBox="0 0 24 24"><rect x="3" y="5.5" width="18" height="13" rx="2"/><path d="M3.5 7l8.5 6.5L20.5 7"/></svg>';
+const UNDO_ICON = '<svg viewBox="0 0 24 24"><path d="M9 14L4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 010 11H11"/></svg>';
 
-/** tone "send" swaps the bin icon and red button for a mail icon and a normal one. */
+/** tone "send" swaps the bin icon and red button for a mail icon and a normal one; "refund" does the same with a back arrow. */
 export function confirmDelete({ title, message, confirmLabel = "Delete", tone = "danger" }) {
   resolveConfirm?.(false); // a second one opening cancels the first
-  const send = tone === "send";
-  $("#confirmModal .confirm-icon").innerHTML = send ? MAIL_ICON : TRASH_ICON;
+  const send = tone === "send" || tone === "refund";
+  $("#confirmModal .confirm-icon").innerHTML = tone === "refund" ? UNDO_ICON : send ? MAIL_ICON : TRASH_ICON;
   $("#confirmModal .confirm-icon").classList.toggle("is-send", send);
   $("#confirmOk").className = send ? "btn" : "btn danger";
   $("#confirmTitle").textContent = title;

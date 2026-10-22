@@ -59,8 +59,10 @@ Deno.serve(async (req) => {
       return json({ ok: false, reason: "not_found" });
     }
 
-    if (order.status !== "paid") {
-      // reason is "pending" | "failed" | "refunded" — the frontend has copy for each
+    // A refunded order keeps its links on purpose — marking one refunded on
+    // the admin page only takes it out of revenue (see admin-orders).
+    if (order.status !== "paid" && order.status !== "refunded") {
+      // reason is "pending" | "failed" — the frontend has copy for each
       return json({ ok: false, reason: order.status, reference: order.reference });
     }
 

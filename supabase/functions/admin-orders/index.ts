@@ -5,16 +5,18 @@
  * read, update or delete orders"). This function is the one sanctioned
  * exception, gated by the admin token instead.
  *
- * Body (optional): { action?: "list" | "delete", id? }. No body at all (the
+ * Body (optional): { action?: "list" | "delete" | "refund" | "unrefund", id? }. No body at all (the
  * page's original call, still used for the plain list) behaves the same as
  * { action: "list" }. "delete" needs { id } and is permanent — there's no
  * undo, and no separate refund: deleting a paid order only removes the
  * record, it doesn't touch Paystack or the buyer's money. The admin page
  * confirms before ever sending this (src/admin/main.js).
  *
- * Order status itself still isn't editable here on purpose — it only ever
- * changes via the Paystack webhook (or by hand in the Supabase table
- * editor) — this function adds delete, not a general write API.
+ * Order status otherwise isn't editable here on purpose — paid only ever
+ * comes from the Paystack webhook. The one exception is "refund"/"unrefund":
+ * paid <-> refunded only, for a refund already done on Paystack, so the
+ * order drops out of revenue (every stat counts "paid") without deleting it.
+ * order-download still serves a refunded order's links.
  *
  * Deploy:  supabase functions deploy admin-orders
  */
@@ -42,6 +44,15 @@ Deno.serve(async (req) => {
       if (!body.id) return json({ error: "id is required" }, 400);
       const { error } = await supabase.from("orders").delete().eq("id", body.id);
       if (error) throw error;
+      return json({ ok: true });
+    }
+
+    if (body.action === "refund" || body.action === "unrefund") {
+      if (!body.id) return json({ error: "id is required" }, 400);
+      const [from, to] = body.action === "refund" ? ["paid", "refunded"] : ["refunded", "paid"];
+      const { data, error } = await supabase.from("orders").update({ status: to }).eq("id", body.id).eq("status", from).select("id");
+      if (error) throw error;
+      if (!data?.length) return json({ error: `Only a ${from} order can be marked ${to}` }, 400);
       return json({ ok: true });
     }
 

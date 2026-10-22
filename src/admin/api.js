@@ -41,6 +41,7 @@ export const login = (password, remember) => call("admin-login", { body: { passw
 
 export const fetchOrders = () => call("admin-orders");
 export const deleteOrder = (id) => call("admin-orders", { body: { action: "delete", id } });
+export const setOrderRefunded = (id, refunded) => call("admin-orders", { body: { action: refunded ? "refund" : "unrefund", id } });
 
 export const listProducts = () => call("admin-products", { body: { action: "list" } });
 export const createProduct = (fields) => call("admin-products", { body: { action: "create", ...fields } });

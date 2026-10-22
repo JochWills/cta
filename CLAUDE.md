@@ -232,7 +232,10 @@ page at upload; any still missing are filled in by `backfillPageCounts` in
 reference), `email`, `full_name`, `items` (jsonb snapshot of the cart at
 purchase time — `product_id`/`code`/`title`/`price_cents`, no `file_path`;
 `order-download` looks that up live from `products` by `product_id`),
-`total_cents`, `status` (`pending` | `paid` | `failed` | `refunded` | `free`),
+`total_cents`, `status` (`pending` | `paid` | `failed` | `refunded` | `free`
+— `refunded` is set by hand from the Orders tab's "Mark refunded" after a
+refund on Paystack, and can be undone; it drops out of every revenue stat
+but keeps the record and the buyer's download links),
 `payment_ref` (Paystack's transaction id), `paid_at`, `terms_accepted_at`
 (not null — checkout won't submit without the "this purchase is final"
 checkbox ticked, and the column backs that with an actual record, not just

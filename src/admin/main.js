@@ -28,6 +28,7 @@ import {
   login,
   fetchOrders,
   deleteOrder,
+  setOrderRefunded,
   listProducts,
   createProduct,
   updateProduct,
@@ -589,6 +590,40 @@ async function doDeleteOrder(id) {
   }
 }
 
+/**
+ * Marking an order refunded keeps the record (and the buyer's download
+ * links) but takes it out of revenue — every stat counts "paid" only. It
+ * doesn't move any money: the refund itself is done on Paystack.
+ */
+async function doRefundOrder(id, refunded) {
+  const order = adminState.orders.find((o) => o.id === id);
+  if (!order) return;
+  const ok = await confirmDelete(
+    refunded
+      ? {
+          title: "Mark as refunded?",
+          message: `${order.reference} · ${rands(order.total_cents)} comes off your revenue. The order and its download links stay. This doesn't send the money back — do that on Paystack.`,
+          confirmLabel: "Mark refunded",
+          tone: "refund",
+        }
+      : {
+          title: "Undo the refund?",
+          message: `${order.reference} · ${rands(order.total_cents)} goes back to paid and counts in your revenue again.`,
+          confirmLabel: "Mark paid",
+          tone: "refund",
+        }
+  );
+  if (!ok) return;
+  try {
+    await setOrderRefunded(id, refunded);
+    toast(refunded ? "Marked refunded" : "Marked paid again");
+    await loadOrders();
+  } catch (err) {
+    if (err instanceof AuthError) return handleAuthError();
+    toast(err.message);
+  }
+}
+
 async function doDelete(id) {
   const product = adminState.products.find((p) => p.id === id);
   if (!product) return;
@@ -739,6 +774,11 @@ document.addEventListener("click", (e) => {
 
   const customer = e.target.closest("[data-customer-toggle]");
   if (customer) return toggleCustomer(customer.dataset.customerToggle);
+
+  const refundOrder = e.target.closest("[data-refund-order]");
+  if (refundOrder) return doRefundOrder(refundOrder.dataset.refundOrder, true);
+  const unrefundOrder = e.target.closest("[data-unrefund-order]");
+  if (unrefundOrder) return doRefundOrder(unrefundOrder.dataset.unrefundOrder, false);
 
   const delOrder = e.target.closest("[data-del-order]");
   if (delOrder) return doDeleteOrder(delOrder.dataset.delOrder);
