@@ -35,26 +35,48 @@ export function renderCourses() {
   renderShopMenu();
 }
 
-/** The header's Shop hover menu (desktop only): one card per course, each
- * with a little shelf of its modules' notebooks. */
+/** The header's Shop hover menu (desktop only): the courses down the left,
+ * and the modules of whichever one is hovered on the right, each a jump
+ * straight to that module (data-jump, handled like the footer's links). */
 function renderShopMenu() {
   const menu = $("#shopMenu");
   if (!menu || menu.hidden) return;
-  const cards = COURSES.map((c, i) => {
-    const mods = modulesIn(c.slug).filter((m) => !m.free);
-    const notes = state.products.filter((p) => courseOf(p.module_slug) === c.slug && !isFreebie(p)).length;
-    const books = mods
-      .map((m, j) => `<span style="--j:${j};--tint:${m.tint};--ink:${m.ink}"></span>`)
+  const paid = state.products.filter((p) => !isFreebie(p));
+  const count = (pred) => paid.filter(pred).length;
+  const arrow = `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>`;
+
+  const courses = COURSES.map(
+    (c) => `
+      <a href="#shop" class="shop-menu-course" data-shop-course="${esc(c.slug)}">
+        <span>${esc(c.name)}</span>
+        <span class="shop-menu-count">${count((p) => courseOf(p.module_slug) === c.slug)}</span>${arrow}
+      </a>`
+  ).join("");
+
+  const panels = COURSES.map((c) => {
+    const rows = modulesIn(c.slug)
+      .filter((m) => !m.free)
+      .map(
+        (m) => `
+        <a href="#shop" class="shop-menu-module" data-jump="${esc(m.slug)}" style="--tint:${m.tint};--mod-ink:${m.ink}">
+          <span class="shop-menu-ico"><svg viewBox="0 0 24 24" aria-hidden="true">${m.icon}</svg></span>
+          <span>${esc(m.short)}</span>
+          <span class="shop-menu-count">${count((p) => p.module_slug === m.slug)}</span>
+        </a>`
+      )
       .join("");
     return `
-      <a href="#shop" class="shop-course shop-course-${esc(c.slug)}" data-shop-course="${esc(c.slug)}" style="--d:${i}">
-        <span class="shop-books" aria-hidden="true">${books}</span>
-        <span class="shop-course-name">${esc(c.name)}</span>
-        <span class="shop-course-meta">${notes ? `${notes} note${notes === 1 ? "" : "s"} · ` : ""}${mods.length} modules
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
-      </a>`;
+      <div class="shop-menu-panel" data-panel="${esc(c.slug)}">
+        ${rows}
+        <a href="#shop" class="shop-menu-all" data-shop-course="${esc(c.slug)}">All ${esc(c.name)} notes
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+      </div>`;
   }).join("");
-  menu.innerHTML = `<p class="shop-menu-eyebrow">Shop by course</p><div class="shop-menu-grid">${cards}</div>`;
+
+  menu.dataset.course = state.course;
+  const free = `<a href="#shop" class="shop-menu-free" data-jump="freebies">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="9" width="16" height="11" rx="1.5"/><path d="M3 9h18M12 9v11M12 9c-1.5-3.5-5.5-4-5.5-1.5S10 9 12 9zm0 0c1.5-3.5 5.5-4 5.5-1.5S14 9 12 9z"/></svg>Free notes</a>`;
+  menu.innerHTML = `<div class="shop-menu-courses">${courses}${free}</div><div class="shop-menu-panels">${panels}</div>`;
 }
 
 /* ------------------------------------------------------------------

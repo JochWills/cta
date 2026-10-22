@@ -106,20 +106,9 @@ document.addEventListener("click", (e) => {
     return setFilter(jump.dataset.jump);
   }
 
-  // The header's Shop hover menu: switch course, then scroll to the shop.
-  // The menu stays shut until the pointer leaves it, so it doesn't sit
-  // open over the page it just scrolled to.
   const shopCourse = e.target.closest("[data-shop-course]");
   if (shopCourse) {
     e.preventDefault();
-    const menu = $("#shopMenu");
-    menu.classList.add("is-dismissed");
-    document.addEventListener("pointermove", function reopen(ev) {
-      if (ev.target.closest("#shopMenu, .nav > a[href='#shop']:not([data-jump])")) return;
-      menu.classList.remove("is-dismissed");
-      document.removeEventListener("pointermove", reopen);
-    });
-    document.activeElement?.blur();
     setCourse(shopCourse.dataset.shopCourse);
     return setFilter("all");
   }
@@ -198,6 +187,30 @@ document.addEventListener("keydown", (e) => {
   if (!$("#downloadModal").hidden) return closeDownloadModal();
   if (!$("#freebieModal").hidden) return closeFreebie();
   closeCart();
+});
+
+/* ------------------------------------------------------------------
+   Header Shop menu (desktop): hovering or focusing a course shows its
+   modules; picking anything shuts the menu until the pointer leaves it,
+   so it doesn't sit open over the shop it just scrolled to.
+------------------------------------------------------------------ */
+const shopMenu = $("#shopMenu");
+const showCourse = (e) => {
+  const c = e.target.closest(".shop-menu-course");
+  if (c) shopMenu.dataset.course = c.dataset.shopCourse;
+};
+shopMenu.addEventListener("pointerover", showCourse);
+shopMenu.addEventListener("focusin", showCourse);
+shopMenu.addEventListener("click", (e) => {
+  if (!e.target.closest("a")) return;
+  shopMenu.classList.add("is-dismissed");
+  document.activeElement?.blur();
+  document.addEventListener("pointermove", function reopen(ev) {
+    if (ev.target.closest("#shopMenu, .nav > a:first-child")) return;
+    shopMenu.classList.remove("is-dismissed");
+    shopMenu.dataset.course = state.course;
+    document.removeEventListener("pointermove", reopen);
+  });
 });
 
 /* ------------------------------------------------------------------

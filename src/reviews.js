@@ -218,13 +218,19 @@ function setUpCarousel() {
   };
   sync();
   carouselSync = sync;
-  carouselNext = () => goTo(page() + 1);
+  // Autoplay moves one card at a time (the arrows and dots still move a
+  // page), back to the start once the last card is in view.
+  carouselNext = () => {
+    const next = cards.find((c) => c.offsetLeft - track.offsetLeft > track.scrollLeft + 2);
+    const left = atEnd() || !next ? 0 : next.offsetLeft - track.offsetLeft;
+    track.scrollTo({ left, behavior: "smooth" });
+  };
 }
 let carouselSync = () => {};
 let carouselNext = () => {};
 addEventListener("resize", () => carouselSync());
 
-/* Auto-advance: the next page every AUTOPLAY_MS, looping back to the start.
+/* Auto-advance: the next card every AUTOPLAY_MS, looping back to the start.
    Holds still while the visitor is pointing at or reading the reviews, for a
    while after they last swiped or clicked, when the tab is in the
    background, and entirely for anyone who prefers reduced motion. */
