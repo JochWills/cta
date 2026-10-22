@@ -335,10 +335,6 @@ body.admin-page{
 }
 .customer-search input:focus{outline:none;border-color:var(--ink);}
 .customer-sort{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--ink-soft);}
-.customer-sort select{
-  height:40px;padding:0 14px;border:1px solid var(--rule);border-radius:999px;background:var(--paper);
-  font:inherit;font-size:13px;color:var(--ink);cursor:pointer;
-}
 .customer-row{cursor:pointer;transition:background .15s ease;}
 .customer-row:hover,.customer-row.is-open{background:#FCFAF8;}
 .customer-row.is-open td{border-bottom-color:transparent;}
@@ -391,22 +387,11 @@ body.admin-page{
    existing icon convention, rather than a CSS background-image data URI. */
 .dash-header-actions{display:flex;align-items:center;gap:10px;}
 .dash-range-select{position:relative;}
-.dash-range-select select{
-  appearance:none;-webkit-appearance:none;
-  padding:11px 38px 11px 16px;border:1px solid var(--rule);border-radius:10px;
-  background:var(--paper);font:inherit;font-size:13.5px;color:var(--ink);cursor:pointer;
-}
-.dash-range-select select:focus{outline:none;border-color:var(--accent);}
-.dash-range-chevron{
-  position:absolute;right:12px;top:50%;transform:translateY(-50%);
-  width:15px;height:15px;stroke:var(--ink-soft);stroke-width:1.8;fill:none;
-  stroke-linecap:round;stroke-linejoin:round;pointer-events:none;
-}
 
 /* Matches .dash-range-select select's own height/border/radius so the pair
    reads as one control cluster, not two unrelated widgets. */
 .dash-refresh-btn{
-  width:40px;height:40px;flex-shrink:0;border:1px solid var(--rule);border-radius:10px;
+  width:42px;height:42px;flex-shrink:0;border:1px solid var(--rule);border-radius:10px;
   background:var(--paper);display:grid;place-items:center;cursor:pointer;
   transition:border-color .15s ease;
 }
@@ -747,3 +732,106 @@ body.admin-page{
   .payout-table .customer-row td:nth-child(3),.payout-table .customer-row td:nth-child(4){display:none;}
 }
 .payout-net{font-size:12px;color:var(--ink-soft);}
+
+/* ── Dropdowns, checkboxes and the file picker ─────────────────
+   Still the browser's own <select>/<input> (keyboard, screen readers and
+   main.js's change handlers all untouched), restyled. The closed box is
+   styled everywhere; the open list is only styleable where the browser
+   supports appearance:base-select (Chrome/Edge) — Safari and phones keep
+   their native list, which is the better one on a phone anyway. */
+
+.admin-page .field select,
+.admin-page .customer-sort select,
+.admin-page .dash-range-select select{
+  appearance:none;-webkit-appearance:none;
+  height:42px;padding:0 40px 0 14px;border:1px solid var(--admin-line);border-radius:10px;
+  background:var(--paper) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236E6360' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E") no-repeat right 13px center/15px;
+  font:inherit;font-size:13.5px;font-weight:500;color:var(--ink);cursor:pointer;
+  box-shadow:0 1px 2px rgba(43,37,35,.04);
+  transition:border-color .15s ease,box-shadow .15s ease;
+}
+/* in the note form it matches the cream text fields around it */
+.admin-page .field select{width:100%;height:48px;background-color:var(--cream);border-color:var(--rule);box-shadow:none;}
+.admin-page .customer-sort select{border-radius:999px;padding-left:16px;}
+.admin-page .field select:hover,
+.admin-page .customer-sort select:hover,.admin-page .dash-range-select select:hover{border-color:#DCCFC8;}
+.admin-page .field select:focus,
+.admin-page .customer-sort select:focus-visible,.admin-page .dash-range-select select:focus-visible{
+  outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(180,117,109,.16);
+}
+/* the dashboard range picker's own chevron SVG is replaced by the one above */
+.dash-range-chevron{display:none;}
+
+@supports (appearance:base-select){
+  .admin-page .field select,
+  .admin-page .customer-sort select,
+  .admin-page .dash-range-select select,
+  .admin-page .field select::picker(select),
+  .admin-page .customer-sort select::picker(select),
+  .admin-page .dash-range-select select::picker(select){appearance:base-select;}
+  .admin-page .field select,.admin-page .customer-sort select,.admin-page .dash-range-select select{
+    display:flex;align-items:center;background-image:none;padding-right:12px;
+  }
+  .admin-page select::picker-icon{
+    content:"";width:15px;height:15px;margin-left:auto;padding-left:10px;background:var(--ink-soft);
+    mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E") center/contain no-repeat;
+    transition:transform .2s ease;
+  }
+  .admin-page select:open::picker-icon{transform:rotate(180deg);}
+  .admin-page select:open{border-color:var(--accent);box-shadow:0 0 0 3px rgba(180,117,109,.16);}
+  .admin-page select::picker(select){
+    margin-top:6px;padding:6px;min-width:anchor-size(width);max-height:min(360px,60vh);
+    border:1px solid var(--admin-line);border-radius:12px;background:var(--paper);
+    box-shadow:0 12px 32px -8px rgba(43,37,35,.22),0 2px 6px rgba(43,37,35,.06);
+    opacity:0;translate:0 -4px;
+    transition:opacity .15s ease,translate .15s ease,display .15s allow-discrete,overlay .15s allow-discrete;
+  }
+  .admin-page select:open::picker(select){opacity:1;translate:0 0;}
+  @starting-style{.admin-page select:open::picker(select){opacity:0;translate:0 -4px;}}
+  .admin-page select option{
+    display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:8px;
+    font-size:13.5px;color:var(--ink);cursor:pointer;
+  }
+  .admin-page select option:hover,.admin-page select option:focus-visible{background:var(--admin-canvas);outline:none;}
+  .admin-page select option:checked{background:var(--blush);color:var(--accent-deep);font-weight:600;}
+  .admin-page select option::checkmark{order:1;margin-left:auto;content:"✓";font-size:12px;color:var(--accent-deep);}
+  /* group labels (PGDA / Bridging to CTA in the note form) as quiet headings */
+  .admin-page select optgroup{
+    padding:10px 12px 4px;font-size:10.5px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-faint);
+  }
+  .admin-page select optgroup + optgroup{margin-top:4px;border-top:1px solid var(--admin-line);}
+  .admin-page select optgroup option{margin:0 -12px;font-weight:400;letter-spacing:0;text-transform:none;}
+  .admin-page select optgroup option:first-of-type{margin-top:4px;}
+  .admin-page select optgroup option:checked{font-weight:600;}
+}
+
+/* Checkboxes (Keep me signed in, Active) */
+.admin-page .remember-field input,
+.admin-page .admin-form-grid .checkbox-field input{
+  appearance:none;-webkit-appearance:none;flex-shrink:0;
+  width:18px;height:18px;margin:0;border:1.5px solid #D5C8C1;border-radius:5px;background:var(--paper);
+  display:inline-grid;place-items:center;cursor:pointer;
+  transition:background .15s ease,border-color .15s ease,box-shadow .15s ease;
+}
+.admin-page .remember-field input:hover,
+.admin-page .admin-form-grid .checkbox-field input:hover{border-color:var(--accent);}
+.admin-page .remember-field input:checked,
+.admin-page .admin-form-grid .checkbox-field input:checked{
+  border-color:var(--accent-deep);
+  background:var(--accent-deep) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='3.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 12.5l4.5 4.5L19 7.5'/%3E%3C/svg%3E") center/12px no-repeat;
+}
+.admin-page .remember-field input:focus-visible,
+.admin-page .admin-form-grid .checkbox-field input:focus-visible{outline:none;box-shadow:0 0 0 3px rgba(180,117,109,.2);}
+
+/* PDF / file picker: a dashed drop area with a small button */
+.admin-page .field input[type="file"]{
+  width:100%;padding:10px;border:1.5px dashed #DCCFC8;border-radius:12px;background:var(--admin-canvas);
+  font:inherit;font-size:13px;color:var(--ink-soft);cursor:pointer;transition:border-color .15s ease,background .15s ease;
+}
+.admin-page .field input[type="file"]:hover{border-color:var(--accent);background:#fff;}
+.admin-page .field input[type="file"]::file-selector-button{
+  margin-right:12px;padding:9px 16px;border:1px solid var(--accent);border-radius:8px;background:var(--paper);
+  font:inherit;font-size:11px;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:var(--accent-deep);cursor:pointer;
+  transition:background .15s ease,color .15s ease;
+}
+.admin-page .field input[type="file"]::file-selector-button:hover{background:var(--accent);color:#fff;}
