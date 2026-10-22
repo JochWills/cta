@@ -20,6 +20,8 @@ import {
   syncFreebieFields,
   productFormError,
   confirmDelete,
+  toggleOrderMenu,
+  closeOrderMenu,
   setLiveRows,
   toggleLiveRow,
 } from "./render.js";
@@ -743,6 +745,12 @@ $("#dashRange").addEventListener("change", (e) => {
 });
 
 document.addEventListener("click", (e) => {
+  // Any click closes an open order menu — after this handler has read which
+  // item (if any) was picked, since the item is inside the menu being removed.
+  const menuBtn = e.target.closest("[data-order-menu]");
+  if (menuBtn) return toggleOrderMenu(menuBtn, adminState.orders.find((o) => o.id === menuBtn.dataset.orderMenu));
+  queueMicrotask(closeOrderMenu);
+
   if (e.target.closest("#logoutBtn")) return doLogout();
 
   const tab = e.target.closest("[data-tab]");

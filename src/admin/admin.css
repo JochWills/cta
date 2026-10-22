@@ -182,6 +182,26 @@
 .admin-row-actions{display:flex;gap:8px;}
 .admin-row-actions .btn{padding:8px 16px;font-size:11px;}
 
+/* Order row ⋯ menu (toggleOrderMenu in render.js) */
+.row-menu-btn{
+  display:grid;place-items:center;width:34px;height:34px;border-radius:10px;
+  border:1px solid transparent;background:none;color:var(--ink-soft);cursor:pointer;
+}
+.row-menu-btn svg{width:18px;height:18px;fill:currentColor;}
+.row-menu-btn:hover,.row-menu-btn[aria-expanded="true"]{background:var(--blush);color:var(--accent-deep);}
+.row-menu-btn:focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
+.row-menu{
+  position:fixed;z-index:60;min-width:170px;padding:6px;
+  background:var(--paper);border:1px solid var(--rule);border-radius:12px;box-shadow:var(--shadow-lift);
+}
+.row-menu button{
+  display:block;width:100%;padding:9px 12px;border:none;border-radius:8px;background:none;
+  font:inherit;font-size:13.5px;text-align:left;color:var(--ink);cursor:pointer;
+}
+.row-menu button:hover,.row-menu button:focus-visible{background:var(--blush);outline:none;}
+.row-menu button.is-danger{color:#A6403A;}
+.row-menu button.is-danger:hover,.row-menu button.is-danger:focus-visible{background:#FBEAE8;}
+
 .admin-table details summary{cursor:pointer;list-style:none;color:var(--accent-deep);}
 .admin-table details summary::-webkit-details-marker{display:none;}
 /* white-space:normal lets a long item name wrap instead of overflowing —

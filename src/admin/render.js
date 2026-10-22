@@ -106,13 +106,9 @@ function orderRow(o) {
         }
       </td>
       <td><span class="status-badge status-${esc(o.status)}">${esc(STATUS_LABEL[o.status] || o.status)}</span></td>
-      <td><div class="admin-row-actions">${
-        o.status === "paid"
-          ? `<button class="btn ghost" data-refund-order="${esc(o.id)}">Mark refunded</button>`
-          : o.status === "refunded"
-            ? `<button class="btn ghost" data-unrefund-order="${esc(o.id)}">Undo refund</button>`
-            : ""
-      }<button class="btn ghost" data-del-order="${esc(o.id)}">Delete</button></div></td>
+      <td><button class="row-menu-btn" data-order-menu="${esc(o.id)}" aria-label="Order actions" aria-haspopup="menu" aria-expanded="false">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></svg>
+      </button></td>
     </tr>`;
 }
 
@@ -457,6 +453,57 @@ const MAIL_ICON = '<svg viewBox="0 0 24 24"><rect x="3" y="5.5" width="18" heigh
 const UNDO_ICON = '<svg viewBox="0 0 24 24"><path d="M9 14L4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 010 11H11"/></svg>';
 
 /** tone "send" swaps the bin icon and red button for a mail icon and a normal one; "refund" does the same with a back arrow. */
+/**
+ * The ⋯ menu on an order row. One menu element, fixed-positioned under the
+ * button — the table scrolls sideways (overflow-x), which would clip a menu
+ * positioned inside it. Its items carry the same data-* attributes the
+ * delegated click handler in main.js already acts on.
+ */
+let menuButton = null;
+
+export function closeOrderMenu() {
+  $("#orderMenu")?.remove();
+  menuButton?.setAttribute("aria-expanded", "false");
+  menuButton = null;
+}
+
+export function toggleOrderMenu(button, order) {
+  const wasOpen = menuButton === button;
+  closeOrderMenu();
+  if (wasOpen || !order) return;
+
+  const id = esc(order.id);
+  const menu = document.createElement("div");
+  menu.id = "orderMenu";
+  menu.className = "row-menu";
+  menu.setAttribute("role", "menu");
+  menu.innerHTML = [
+    order.status === "paid" ? `<button role="menuitem" data-refund-order="${id}">Mark refunded</button>` : "",
+    order.status === "refunded" ? `<button role="menuitem" data-unrefund-order="${id}">Undo refund</button>` : "",
+    `<button role="menuitem" class="is-danger" data-del-order="${id}">Delete</button>`,
+  ].join("");
+  document.body.append(menu);
+
+  const r = button.getBoundingClientRect();
+  const below = r.bottom + 6 + menu.offsetHeight < innerHeight;
+  menu.style.top = `${below ? r.bottom + 6 : r.top - 6 - menu.offsetHeight}px`;
+  menu.style.left = `${Math.max(8, r.right - menu.offsetWidth)}px`;
+
+  menuButton = button;
+  button.setAttribute("aria-expanded", "true");
+  menu.querySelector("button").focus();
+}
+
+addEventListener("scroll", closeOrderMenu, true);
+addEventListener("resize", closeOrderMenu);
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape" && menuButton) {
+    const button = menuButton;
+    closeOrderMenu();
+    button.focus();
+  }
+});
+
 export function confirmDelete({ title, message, confirmLabel = "Delete", tone = "danger" }) {
   resolveConfirm?.(false); // a second one opening cancels the first
   const send = tone === "send" || tone === "refund";
