@@ -18,7 +18,7 @@ const STATUS = {
 };
 
 let data = null;
-const open = new Set(["waiting"]); // sales not paid out yet start open
+const open = new Set(); // every row, "Not paid out yet" included, starts closed
 const sales = new Map(); // settlement id -> transactions, or "loading" / an Error
 
 const day = (iso) =>
