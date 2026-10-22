@@ -26,7 +26,7 @@
 <link rel="stylesheet" href="/src/styles.css">
 <link rel="stylesheet" href="/src/admin/admin.css">
 </head>
-<body>
+<body class="admin-page">
 
 <!-- ══════════════ HEADER ══════════════ -->
 <header class="site-header">
@@ -80,10 +80,12 @@
        the way everything else on this page does. See admin.css. -->
   <section id="dashboardView" class="admin-shell" hidden>
     <nav class="admin-sidebar" aria-label="Admin sections">
+      <p class="side-nav-label">Overview</p>
       <button class="side-nav-item is-on" data-tab="dashboard">
         <svg viewBox="0 0 24 24"><path d="M4 11l8-7 8 7"/><path d="M6 10v9a1 1 0 0 0 1 1h3v-6h4v6h3a1 1 0 0 0 1-1v-9"/></svg>
         <span>Dashboard</span>
       </button>
+      <p class="side-nav-label">Sales</p>
       <button class="side-nav-item" data-tab="orders">
         <svg viewBox="0 0 24 24"><path d="M3 4h2l2.4 11.2a2 2 0 0 0 2 1.6h7.7a2 2 0 0 0 2-1.55L20.5 8H6"/><circle cx="10" cy="20" r="1.3"/><circle cx="18" cy="20" r="1.3"/></svg>
         <span>Orders</span>
@@ -96,6 +98,7 @@
         <svg viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="13" rx="2"/><path d="M3 10h18M7 15h3"/></svg>
         <span>Payouts</span>
       </button>
+      <p class="side-nav-label">Shop</p>
       <button class="side-nav-item" data-tab="notes">
         <svg viewBox="0 0 24 24"><path d="M7 3.5h6.5L18 8v12a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V4.5a1 1 0 0 1 1-1z"/><path d="M13.5 3.5V8H18"/></svg>
         <span>Notes</span>
@@ -109,6 +112,7 @@
         <span>Reviews</span>
         <span class="side-nav-count" id="reviewsPendingCount" hidden></span>
       </button>
+      <p class="side-nav-label">Site</p>
       <button class="side-nav-item" data-tab="health">
         <svg viewBox="0 0 24 24"><path d="M3 12h4l2.5-6 4 12 2.5-6H21"/></svg>
         <span>Health</span>
@@ -208,10 +212,22 @@
       </div>
 
       <div id="ordersView" hidden>
+        <div class="dash-header">
+          <div>
+            <h2>Orders</h2>
+            <p class="dash-sub">Every checkout, newest first. Use ⋯ on a row to mark a refund or delete it.</p>
+          </div>
+        </div>
         <div id="ordersTable"></div>
       </div>
 
       <div id="customersView" hidden>
+        <div class="dash-header">
+          <div>
+            <h2>Customers</h2>
+            <p class="dash-sub">Everyone who has paid, with their orders. Open a row to see what they bought.</p>
+          </div>
+        </div>
         <div class="customer-summary" id="customerSummary"></div>
         <div class="customer-toolbar">
           <label class="customer-search">
@@ -247,13 +263,25 @@
       </div>
 
       <div id="notesView" hidden>
-        <div class="admin-toolbar">
-          <button class="btn" id="addNoteBtn">Add note</button>
+        <div class="dash-header">
+          <div>
+            <h2>Notes</h2>
+            <p class="dash-sub">What's in the shop. Hidden notes stay here but don't show to buyers.</p>
+          </div>
+          <div class="dash-header-actions">
+            <button class="btn" id="addNoteBtn">Add note</button>
+          </div>
         </div>
         <div id="productsTable"></div>
       </div>
 
       <div id="discountsView" hidden>
+        <div class="dash-header">
+          <div>
+            <h2>Discounts</h2>
+            <p class="dash-sub">Codes buyers can enter at checkout. They don't stack with the bundle discount.</p>
+          </div>
+        </div>
         <form class="discount-form" id="discountForm">
           <label class="field"><span>Code</span>
             <input id="df_code" required minlength="3" maxlength="32" pattern="[A-Za-z0-9_\-]{3,32}"
@@ -282,6 +310,12 @@
       </div>
 
       <div id="reviewsView" hidden>
+        <div class="dash-header">
+          <div>
+            <h2>Reviews</h2>
+            <p class="dash-sub">Reviews from the /review link. Nothing shows on the site until you publish it.</p>
+          </div>
+        </div>
         <div class="review-link-bar">
           <div>
             <strong>Review link</strong>

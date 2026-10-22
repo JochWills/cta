@@ -1,7 +1,9 @@
 /* ============================================================
-   ADMIN — layout only. Colour/spacing tokens come from styles.css'
-   :root; nothing here redefines a token, it only arranges
-   admin-specific structure.
+   ADMIN — colour/spacing tokens come from styles.css' :root; nothing
+   here redefines one. The admin page adds a few of its own (--admin-*,
+   on body.admin-page below) for the canvas and card edges, and every
+   override of a shared class (.btn, .site-header, h3…) is prefixed with
+   .admin-page so it wins whatever order the two files load in.
 
    Don't rely on this file loading after styles.css to win a
    same-specificity tie against a shared class like .field. Source
@@ -34,9 +36,27 @@
    .admin-main itself carries no padding of its own. See .admin-content. */
 .admin-main{padding:0;}
 
+/* ── page canvas + shared overrides ─────────────────────────── */
+body.admin-page{
+  --admin-canvas:#F8F4F1;
+  --admin-line:#EFE7E2;
+  --admin-card-shadow:0 1px 2px rgba(43,37,35,.04),0 4px 14px -6px rgba(43,37,35,.06);
+  --admin-radius:18px;
+  background:var(--admin-canvas);
+}
+.admin-page .site-header{background:rgba(255,255,255,.94);}
+/* The shop's square, wide-tracked buttons read loud on a dense admin
+   screen — softer corners and less padding here. */
+.admin-page .btn{border-radius:10px;padding:12px 22px;font-size:11.5px;letter-spacing:.1em;}
+.admin-page .btn:hover{transform:none;}
+/* Card titles in the body sans (page titles keep the serif) */
+.admin-page .admin-card h3,.admin-page .dash-card h3{
+  font-family:'Inter',system-ui,sans-serif;font-size:15px;font-weight:600;letter-spacing:-.005em;color:var(--ink);
+}
+
 .admin-card{
-  background:var(--paper);border:1px solid var(--rule);border-radius:var(--radius);
-  padding:32px;box-shadow:var(--shadow);
+  background:var(--paper);border:1px solid var(--admin-line);border-radius:var(--admin-radius);
+  padding:26px 28px;box-shadow:var(--admin-card-shadow);
 }
 /* #loginView carries both .login-card and .wrap (added so it keeps a
    side gutter now that <main> no longer has one — see .admin-main).
@@ -116,42 +136,52 @@
   display:flex;align-items:stretch;
   /* The sidebar's cream column and its hairline, drawn here so they run the
      full page height while the sidebar itself stays pinned to the screen. */
-  background:linear-gradient(90deg,var(--cream) 0 219px,var(--rule) 219px 220px,transparent 220px);
+  background:linear-gradient(90deg,var(--paper) 0 239px,var(--admin-line) 239px 240px,transparent 240px);
 }
-.admin-content{flex:1;min-width:0;padding:44px 40px 100px;} /* min-width:0 so a wide table can still scroll inside it rather than push the sidebar off-screen; padding replaces what used to live on .admin-main */
+/* Every tab shares one column width, centred on big screens */
+.admin-content > div{max-width:1280px;margin:0 auto;}
+.admin-content{flex:1;min-width:0;padding:36px 44px 100px;} /* min-width:0 so a wide table can still scroll inside it rather than push the sidebar off-screen; padding replaces what used to live on .admin-main */
 
 .admin-sidebar{
-  width:220px;flex-shrink:0;display:flex;flex-direction:column;gap:3px;
-  background:var(--cream);border-right:1px solid var(--rule);
-  padding:20px 14px;
+  width:240px;flex-shrink:0;display:flex;flex-direction:column;gap:2px;
+  background:var(--paper);border-right:1px solid var(--admin-line);
+  padding:12px 16px 24px;
   /* Pinned under .site-header (80px) while the page scrolls: screen height,
      not stretched to the page, or sticky has nowhere to stick. Scrolls on
      its own if the screen is too short for every tab. */
   position:sticky;top:80px;align-self:flex-start;
   height:calc(100vh - 80px);overflow-y:auto;
 }
-.side-nav-item{
-  display:flex;align-items:center;gap:12px;width:100%;padding:11px 14px;border-radius:10px;
-  font-size:14px;color:var(--ink-soft);text-align:left;transition:background .15s ease,color .15s ease;
+.side-nav-label{
+  margin:18px 12px 6px;font-size:10.5px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-faint);
 }
-.side-nav-item svg{width:19px;height:19px;stroke:currentColor;stroke-width:1.6;fill:none;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0;}
-/* Hover needs to read against the sidebar's own cream background now,
-   not the page's white — cream-on-cream (the old hover colour) would have
-   been invisible. */
-.side-nav-item:hover{background:var(--paper);color:var(--ink);}
+.side-nav-item{
+  position:relative;display:flex;align-items:center;gap:12px;width:100%;padding:10px 12px;border-radius:10px;
+  font-size:13.5px;font-weight:500;color:var(--ink-soft);text-align:left;transition:background .15s ease,color .15s ease;
+}
+.side-nav-item svg{width:18px;height:18px;stroke:currentColor;stroke-width:1.7;fill:none;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0;}
+.side-nav-item:hover{background:var(--admin-canvas);color:var(--ink);}
 .side-nav-item.is-on{background:var(--blush);color:var(--accent-deep);font-weight:600;}
+/* a short accent bar on the sidebar's edge beside the open tab */
+.side-nav-item.is-on::before{
+  content:"";position:absolute;left:-16px;top:9px;bottom:9px;width:3px;border-radius:0 3px 3px 0;background:var(--accent-deep);
+}
 
 .admin-toolbar{display:flex;justify-content:flex-end;margin-bottom:16px;}
 
 .admin-table-wrap{
-  overflow-x:auto;border:1px solid var(--rule);border-radius:var(--radius);background:var(--paper);
+  overflow-x:auto;border:1px solid var(--admin-line);border-radius:var(--admin-radius);background:var(--paper);
+  box-shadow:var(--admin-card-shadow);
 }
-.admin-table{width:100%;border-collapse:collapse;font-size:13.5px;white-space:nowrap;}
-.admin-table th,.admin-table td{padding:14px 16px;text-align:left;border-bottom:1px solid var(--rule);}
+.admin-table{width:100%;border-collapse:collapse;font-size:13.5px;white-space:nowrap;font-variant-numeric:tabular-nums;}
+.admin-table th,.admin-table td{padding:14px 18px;text-align:left;border-bottom:1px solid var(--admin-line);vertical-align:middle;}
 .admin-table thead th{
-  font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-soft);
-  background:var(--cream);font-weight:500;
+  padding-top:13px;padding-bottom:13px;
+  font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-faint);
+  background:#FCFAF8;font-weight:600;
 }
+.admin-table tbody tr{transition:background .15s ease;}
+.admin-table tbody tr:hover{background:#FCFAF8;}
 .admin-table tbody tr:last-child td{border-bottom:none;}
 /* Recent Orders on the Dashboard tab — same table, tighter padding/type so
    five columns actually fit a half-width dashboard card instead of forcing
@@ -172,6 +202,10 @@
    fixed width plus .order-items' own wrapping (below) keeps every column
    still while a row opens or closes. */
 #ordersTable .admin-table th:nth-child(4){width:260px;}
+/* Notes: let long titles wrap so Edit/Delete stay on screen instead of
+   pushing the table into a sideways scroll on a laptop. */
+#productsTable .admin-table td:first-child{white-space:normal;min-width:200px;line-height:1.45;font-weight:500;}
+#productsTable .admin-table .tag{letter-spacing:.04em;}
 /* This must land on a <div> wrapping a row's action button(s), never on
    the <td> itself — display:flex on a table-cell pulls it out of normal
    row-height sizing, so its border-bottom stops lining up with the rest
@@ -179,8 +213,8 @@
    box was ~12px shorter than its siblings, every row, only ever on this
    column). A td with default display:table-cell around it sizes to the
    row like every other cell; the div inside is free to be a flex row. */
-.admin-row-actions{display:flex;gap:8px;}
-.admin-row-actions .btn{padding:8px 16px;font-size:11px;}
+.admin-row-actions{display:flex;gap:6px;}
+.admin-page .admin-row-actions .btn{padding:7px 12px;font-size:10.5px;letter-spacing:.08em;border-radius:8px;}
 
 /* Order row ⋯ menu (toggleOrderMenu in render.js) */
 .row-menu-btn{
@@ -214,9 +248,10 @@
 .order-items li{margin-top:3px;}
 
 .status-badge{
-  display:inline-block;padding:5px 12px;border-radius:999px;font-size:11px;
-  font-weight:600;letter-spacing:.03em;
+  display:inline-flex;align-items:center;gap:6px;padding:4px 10px 4px 9px;border-radius:999px;font-size:11px;
+  font-weight:600;letter-spacing:.02em;
 }
+.status-badge::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor;opacity:.85;}
 .status-pending{background:var(--ma-tint);color:var(--ma-ink);}
 .status-paid{background:var(--tax-tint);color:var(--tax-ink);}
 .status-failed{background:#FBEDEC;color:#A6403A;}
@@ -226,8 +261,8 @@
 /* ── discounts tab ─────────────────────────────────────────── */
 .discount-form{
   display:grid;grid-template-columns:1fr 160px auto;gap:0 14px;align-items:end;
-  background:var(--paper);border:1px solid var(--rule);border-radius:var(--radius);
-  padding:4px 20px 20px;margin-bottom:20px;
+  background:var(--paper);border:1px solid var(--admin-line);border-radius:var(--admin-radius);
+  padding:4px 24px 22px;margin-bottom:20px;box-shadow:var(--admin-card-shadow);
 }
 .discount-form .field input{text-transform:uppercase;}
 .discount-form .btn{height:50.4px;} /* .field input's rendered height, so the three line up */
@@ -241,11 +276,12 @@
 /* ── reviews tab ───────────────────────────────────────────── */
 .side-nav-count{
   margin-left:auto;min-width:20px;padding:1px 7px;border-radius:999px;
-  background:var(--accent);color:#fff;font-size:11px;font-weight:600;text-align:center;
+  background:var(--accent);color:#fff;font-size:10.5px;font-weight:600;text-align:center;line-height:18px;
 }
 .review-link-bar{
   display:flex;align-items:center;gap:16px;flex-wrap:wrap;margin-bottom:20px;
-  background:var(--paper);border:1px solid var(--rule);border-radius:var(--radius);padding:16px 20px;
+  background:var(--paper);border:1px solid var(--admin-line);border-radius:var(--admin-radius);padding:18px 22px;
+  box-shadow:var(--admin-card-shadow);
 }
 .review-link-bar > div{flex:1 1 240px;}
 .review-link-bar strong{display:block;font-size:14px;}
@@ -285,10 +321,11 @@
 /* Customers tab (renderCustomers in render.js) */
 .customer-summary{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:20px;}
 .customer-tile{
-  display:flex;flex-direction:column;gap:4px;padding:16px 18px;min-width:0;
-  background:var(--paper);border:1px solid var(--rule);border-radius:var(--radius);box-shadow:var(--shadow);
+  display:flex;flex-direction:column;gap:4px;padding:18px 20px;min-width:0;
+  background:var(--paper);border:1px solid var(--admin-line);border-radius:var(--admin-radius);box-shadow:var(--admin-card-shadow);
 }
-.customer-tile strong{font-size:22px;font-weight:600;color:var(--ink);line-height:1.2;}
+.customer-tile .stat-label{font-size:10.5px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-faint);}
+.customer-tile strong{font-size:24px;font-weight:600;color:var(--ink);line-height:1.25;letter-spacing:-.01em;font-variant-numeric:tabular-nums;}
 .customer-toolbar{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:14px;}
 .customer-search{position:relative;flex:1;max-width:340px;min-width:200px;}
 .customer-search svg{position:absolute;left:13px;top:50%;width:16px;height:16px;margin-top:-8px;stroke:var(--ink-faint);stroke-width:1.7;fill:none;stroke-linecap:round;pointer-events:none;}
@@ -303,7 +340,7 @@
   font:inherit;font-size:13px;color:var(--ink);cursor:pointer;
 }
 .customer-row{cursor:pointer;transition:background .15s ease;}
-.customer-row:hover,.customer-row.is-open{background:var(--cream);}
+.customer-row:hover,.customer-row.is-open{background:#FCFAF8;}
 .customer-row.is-open td{border-bottom-color:transparent;}
 .customer-name{display:flex;align-items:center;gap:10px;}
 .customer-name > span{display:flex;flex-direction:column;}
@@ -314,7 +351,7 @@
   background:var(--tax-tint);color:var(--tax-ink);
 }
 .asked-badge{margin-left:0;background:var(--blush);color:var(--accent-deep);}
-.customer-detail td{background:var(--cream);padding-top:0;white-space:normal;}
+.customer-detail td{background:#FCFAF8;padding-top:0;white-space:normal;}
 .customer-history{display:flex;flex-direction:column;gap:10px;padding:2px 0 6px 20px;}
 .customer-history-head{margin:0;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-faint);font-weight:500;}
 .history-order{
@@ -344,9 +381,9 @@
 .btn.danger:hover{background:#8E3530;border-color:#8E3530;}
 
 /* ── dashboard tab ─────────────────────────────────────────── */
-.dash-header{display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:16px;margin-bottom:24px;}
-.dash-header h2{font-size:26px;}
-.dash-sub{color:var(--ink-soft);font-size:14px;margin:6px 0 0;}
+.dash-header{display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:16px;margin-bottom:26px;}
+.dash-header h2{font-size:30px;letter-spacing:-.01em;}
+.dash-sub{color:var(--ink-soft);font-size:13.5px;margin:6px 0 0;}
 
 /* A native <select> (real keyboard/screen-reader support, no custom popover
    to build and maintain) styled to read as a pill-shaped dropdown — the
@@ -382,17 +419,17 @@
 
 .dash-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px;}
 .stat-tile{
-  background:var(--paper);border:1px solid var(--rule);border-radius:var(--radius);
-  padding:20px 22px;box-shadow:var(--shadow);display:flex;flex-direction:column;gap:16px;
+  background:var(--paper);border:1px solid var(--admin-line);border-radius:var(--admin-radius);
+  padding:20px 22px;box-shadow:var(--admin-card-shadow);display:flex;flex-direction:column;gap:14px;
   min-width:0; /* same grid-item trap as .dash-card — the icon/label row and
     value+sparkline row don't shrink below their own content's width by
     default, so at some widths (700px, say — 4 columns of ~165px each) the
     grid track was forced wider than the page instead of wrapping/shrinking. */
 }
 .stat-tile-top{display:flex;align-items:center;gap:12px;}
-.stat-icon{width:38px;height:38px;border-radius:11px;display:grid;place-items:center;flex-shrink:0;}
-.stat-icon svg{width:19px;height:19px;stroke:currentColor;stroke-width:1.7;fill:none;stroke-linecap:round;stroke-linejoin:round;}
-.stat-label{font-size:13px;color:var(--ink-soft);}
+.stat-icon{width:36px;height:36px;border-radius:10px;display:grid;place-items:center;flex-shrink:0;}
+.stat-icon svg{width:18px;height:18px;stroke:currentColor;stroke-width:1.7;fill:none;stroke-linecap:round;stroke-linejoin:round;}
+.stat-label{font-size:12.5px;font-weight:500;color:var(--ink-soft);}
 /* flex-wrap:wrap is the actual fix for a real bug: min-width:0 above lets
    the tile shrink to its grid column properly, but the value+delta text
    (e.g. "vs previous 30 days") has its own minimum width it won't shrink
@@ -406,7 +443,7 @@
 /* Deliberately not an h-tag: h1/h2/h3 above are set to Playfair Display
    (styles.css), which reads as off-brand decoration on a hero number —
    this stays in the body's own sans, just bigger and heavier. */
-.stat-value{font-size:26px;font-weight:600;color:var(--ink);line-height:1.2;}
+.stat-value{font-size:28px;font-weight:600;color:var(--ink);line-height:1.15;letter-spacing:-.015em;font-variant-numeric:tabular-nums;}
 .stat-sub-row{margin-top:4px;}
 .stat-sub{font-size:11.5px;color:var(--ink-faint);}
 .stat-delta{font-size:12px;font-weight:600;}
@@ -429,9 +466,9 @@
 .dash-grid-even{grid-template-columns:1fr 1fr;}
 .dash-card h3{font-size:16px;}
 .dash-card-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:16px;}
-.dash-card-sub{font-size:12.5px;color:var(--ink-soft);margin:4px 0 0;}
+.dash-card-sub{font-size:12.5px;color:var(--ink-faint);margin:4px 0 0;}
 .dash-figure{text-align:right;flex-shrink:0;}
-.dash-figure-value{display:block;font-size:22px;font-weight:600;color:var(--ink);}
+.dash-figure-value{display:block;font-size:24px;font-weight:600;color:var(--ink);letter-spacing:-.01em;font-variant-numeric:tabular-nums;}
 .dash-figure-sub{display:block;margin-top:2px;}
 .dash-view-all{font-size:12.5px;color:var(--accent-deep);font-weight:600;white-space:nowrap;}
 .dash-view-all:hover{color:var(--accent);}
@@ -446,7 +483,7 @@
    scroll it at its real pixel size — overridden here on purpose. overflow:
    hidden clips each bar's rounded top flush at the baseline (see dashboard.js). */
 .dash-chart{display:block;overflow:hidden;max-width:none;}
-.bar-gridline{stroke:var(--rule);stroke-width:1;}
+.bar-gridline{stroke:var(--admin-line);stroke-width:1;stroke-dasharray:3 4;}
 .bar-fill{fill:var(--accent-deep);}
 .bar-hit{fill:transparent;cursor:pointer;}
 .bar-hit:hover,.bar-hit:focus{fill:rgba(43,37,35,.05);outline:none;}
@@ -454,7 +491,7 @@
 
 .dash-tooltip{
   position:absolute;transform:translate(-50%,calc(-100% - 8px));
-  background:var(--ink);color:#fff;padding:6px 10px;border-radius:8px;
+  background:var(--ink);color:#fff;padding:7px 11px;border-radius:9px;box-shadow:0 8px 20px -8px rgba(43,37,35,.45);
   display:flex;flex-direction:column;align-items:center;gap:1px;
   white-space:nowrap;pointer-events:none;z-index:5;
 }
@@ -492,21 +529,21 @@
   background:var(--tax-tint);color:var(--tax-ink);font-size:10.5px;font-weight:600;letter-spacing:.02em;
 }
 .src-count span{font-weight:500;color:var(--ink-faint);font-size:12px;margin-left:4px;}
-.src-bar{grid-column:1/-1;height:6px;border-radius:99px;background:var(--cream);overflow:hidden;}
-.src-bar span{display:block;height:100%;border-radius:inherit;background:var(--accent-deep);}
+.src-bar{grid-column:1/-1;height:6px;border-radius:99px;background:var(--admin-canvas);overflow:hidden;}
+.src-bar span{display:block;height:100%;border-radius:inherit;background:linear-gradient(90deg,var(--accent),var(--accent-deep));}
 .src-foot{margin:14px 0 0;font-size:12px;color:var(--ink-soft);line-height:1.5;}
 .src-foot + .src-foot{margin-top:6px;color:var(--ink-faint);}
 
 /* ── top selling notes — ranked list ──────────────────────── */
 .rank-list{display:flex;flex-direction:column;}
 .rank-row{
-  display:flex;align-items:center;gap:12px;padding:11px 0;
-  border-bottom:1px solid var(--rule);
+  display:flex;align-items:center;gap:12px;padding:12px 0;
+  border-bottom:1px solid var(--admin-line);
 }
 .rank-row:last-child{border-bottom:none;}
 .rank-badge{
-  width:24px;height:24px;border-radius:50%;flex-shrink:0;display:grid;place-items:center;
-  background:var(--cream);color:var(--ink-soft);font-size:11.5px;font-weight:600;
+  width:26px;height:26px;border-radius:8px;flex-shrink:0;display:grid;place-items:center;
+  background:var(--admin-canvas);color:var(--ink-soft);font-size:11.5px;font-weight:600;
 }
 .rank-row:first-child .rank-badge{background:var(--accent-deep);color:#fff;}
 .rank-title{flex:1;font-size:13.5px;color:var(--ink);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
@@ -611,13 +648,16 @@
      height made sense for a vertical side panel, not for this same
      element turned into a short horizontal strip. */
   .admin-shell{flex-direction:column;background:none;}
+  .side-nav-label{display:none;}
+  .side-nav-item.is-on::before{display:none;}
   .admin-sidebar{
     width:100%;height:auto;align-self:stretch;flex-direction:row;overflow-x:auto;overflow-y:visible;
     position:sticky;top:80px;z-index:50; /* pinned under the header, like the sidebar on desktop */
-    gap:6px;padding:10px 16px;border-right:none;border-bottom:1px solid var(--rule);
+    gap:6px;padding:10px 16px;border-right:none;border-bottom:1px solid var(--admin-line);
   }
   .side-nav-item{width:auto;white-space:nowrap;flex-shrink:0;}
-  .admin-content{padding:24px 20px 100px;}
+  .admin-content{padding:26px 20px 100px;}
+  .dash-header h2{font-size:26px;}
   .dash-grid-2{grid-template-columns:1fr;}
 }
 
@@ -660,7 +700,7 @@
 
 /* Health tab (src/admin/health.js) */
 .side-nav-count.is-alert{background:#A6403A;color:#fff;}
-.health-summary{margin-bottom:20px;padding:14px 18px;border-radius:var(--radius);font-size:14px;font-weight:500;}
+.health-summary{margin-bottom:20px;padding:15px 20px;border-radius:var(--admin-radius);font-size:14px;font-weight:500;}
 .health-summary.is-ok{background:var(--tax-tint);color:var(--tax-ink);}
 .health-summary.is-warn{background:var(--ma-tint);color:var(--ma-ink);}
 .health-summary.is-bad{background:#FBEDEC;color:#A6403A;}
