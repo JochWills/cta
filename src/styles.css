@@ -85,12 +85,7 @@ h1,h2,h3{font-family:'Playfair Display',Georgia,serif;font-weight:400;letter-spa
    hovering the Shop link or tabbing into it; ::before bridges the gap
    between the two so the pointer can travel down without it closing. */
 .nav{position:relative;}
-.nav-caret{
-  display:inline-block;width:13px;height:13px;margin-left:3px;vertical-align:-2px;
-  stroke:currentColor;stroke-width:2;fill:none;stroke-linecap:round;stroke-linejoin:round;
-  transition:transform .25s ease;
-}
-.nav:has(.shop-menu[hidden]) .nav-caret{display:none;}
+
 .shop-menu{
   position:absolute;top:calc(100% + 22px);left:-20px;z-index:70;width:510px;padding:8px;
   background:var(--paper);border:1px solid var(--rule);border-radius:20px;box-shadow:var(--shadow-lift);
@@ -111,7 +106,6 @@ h1,h2,h3{font-family:'Playfair Display',Georgia,serif;font-weight:400;letter-spa
   transition:opacity .2s ease,transform .3s cubic-bezier(.2,.8,.2,1),visibility 0s;
 }
 .shop-menu.is-dismissed{visibility:hidden;opacity:0;transition:opacity .15s ease,visibility 0s linear .15s;}
-.nav > a:first-child:hover .nav-caret,.nav:has(.shop-menu:hover:not(.is-dismissed)) .nav-caret{transform:rotate(180deg);}
 
 .shop-menu{display:grid;grid-template-columns:200px 1fr;gap:6px;}
 .shop-menu-courses{display:flex;flex-direction:column;gap:2px;padding-right:6px;border-right:1px solid var(--rule);}
@@ -1178,7 +1172,7 @@ details.faq p{margin:0;padding:0 0 16px;max-width:66ch;color:var(--ink-soft);fon
   .nav > a::after{display:none;}
   .nav > a:hover,.nav > a:active{background:var(--cream);}
   .nav > a.is-active{background:var(--blush);color:var(--accent-deep);}
-  .shop-menu,.nav-caret{display:none !important;}
+  .shop-menu{display:none !important;}
   .nav-ico{
     display:grid;place-items:center;flex-shrink:0;width:36px;height:36px;border-radius:10px;
     background:var(--cream);color:var(--ink-soft);

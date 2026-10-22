@@ -74,7 +74,7 @@ function notePages() {
         const mod = moduleName(p.module_slug);
         const title = `${p.title} — ${free ? "free" : mod} notes | PGDA Notes by Courts`;
         const desc =
-          (p.description || `${p.title}: ${mod} notes for PGDA/CTA students.`).slice(0, 155) +
+          (p.description || `${p.title}: ${mod} notes for ${p.module_slug.startsWith("bridging-") ? "Bridging to CTA" : "PGDA/CTA"} students.`).slice(0, 155) +
           (p.description?.length > 155 ? "…" : "");
         const image =
           p.preview_pages > 0

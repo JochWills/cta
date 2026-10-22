@@ -15,7 +15,7 @@
 
 export const COURSES = [
   { slug:"pgda", name:"PGDA (CTA)" },
-  { slug:"bridging", name:"Bridging course" }
+  { slug:"bridging", name:"Bridging to CTA" }
 ];
 
 export const MODULES = [

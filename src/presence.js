@@ -218,7 +218,7 @@ function visitDetails() {
       first_visit: visits?.first || null,
     };
   }
-  const filter = state.activeFilter === "all" ? (state.course === "bridging" ? "Bridging course" : "") : (MOD[state.activeFilter] ? moduleShort(MOD[state.activeFilter]) : state.activeFilter);
+  const filter = state.activeFilter === "all" ? (state.course === "bridging" ? "Bridging to CTA" : "") : (MOD[state.activeFilter] ? moduleShort(MOD[state.activeFilter]) : state.activeFilter);
   return {
     ...fixedDetails,
     cart: state.cart.map((i) => i.title),

@@ -75,7 +75,7 @@ function renderShopMenu() {
 
   menu.dataset.course = state.course;
   const free = `<a href="#shop" class="shop-menu-free" data-jump="freebies">
-      <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="9" width="16" height="11" rx="1.5"/><path d="M3 9h18M12 9v11M12 9c-1.5-3.5-5.5-4-5.5-1.5S10 9 12 9zm0 0c1.5-3.5 5.5-4 5.5-1.5S14 9 12 9z"/></svg>Free notes</a>`;
+      <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="9" width="16" height="11" rx="1.5"/><path d="M3 9h18M12 9v11M12 9c-1.5-3.5-5.5-4-5.5-1.5S10 9 12 9zm0 0c1.5-3.5 5.5-4 5.5-1.5S14 9 12 9z"/></svg>Freebies</a>`;
   menu.innerHTML = `<div class="shop-menu-courses">${courses}${free}</div><div class="shop-menu-panels">${panels}</div>`;
 }
 
