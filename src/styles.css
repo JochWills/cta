@@ -140,7 +140,7 @@ h1,h2,h3{font-family:'Playfair Display',Georgia,serif;font-weight:400;letter-spa
 .shop-menu-panel{grid-area:1/1;display:flex;flex-direction:column;gap:1px;
   visibility:hidden;opacity:0;transform:translateX(6px);transition:opacity .2s ease,transform .25s ease,visibility 0s linear .25s;}
 .shop-menu[data-course="pgda"] [data-panel="pgda"],
-.shop-menu[data-course="bridging"] [data-panel="bridging"]{visibility:visible;opacity:1;transform:none;transition:opacity .2s ease,transform .25s ease,visibility 0s;}
+.shop-menu[data-course="bridging"] [data-panel="bridging"]{visibility:inherit;opacity:1;transform:none;transition:opacity .2s ease,transform .25s ease,visibility 0s;}
 .nav .shop-menu-module:hover,.nav .shop-menu-module:focus-visible,
 .nav .shop-menu-course:hover,.nav .shop-menu-course:focus-visible{background:var(--cream);outline:none;}
 .shop-menu-module > span:nth-child(2){flex:1;}
@@ -1035,7 +1035,10 @@ details.faq p{margin:0;padding:0 0 16px;max-width:66ch;color:var(--ink-soft);fon
   box-shadow:0 -5px 0 -3.4px var(--paper),0 -5px 0 -2px currentColor;
 }
 
-.preview-info{display:flex;flex-direction:column;min-height:0;overflow-y:auto;text-align:left;}
+/* Capped at the panel's own max height so it scrolls inside the panel —
+   otherwise, on a short screen (a phone on its side), the grid row grows
+   to fit it and the panel's overflow:hidden cuts off the price and button. */
+.preview-info{display:flex;flex-direction:column;min-height:0;max-height:min(640px,90vh);overflow-y:auto;text-align:left;}
 .preview-details{padding:34px 34px 8px;}
 .preview-info h3{
   font-family:'Newsreader','Playfair Display',Georgia,serif;font-weight:400;
@@ -1059,6 +1062,15 @@ details.faq p{margin:0;padding:0 0 16px;max-width:66ch;color:var(--ink-soft);fon
 /* A freebie shows the whole file in an iframe (src/freebies.js), so the pages side gets more room. */
 .modal.is-wide .preview-panel{width:min(1100px,100%);max-height:min(760px,92vh);grid-template-columns:minmax(0,1.9fr) minmax(0,1fr);}
 .modal.is-wide .preview-frame{padding:0;max-height:none;overflow:hidden;}
+.modal.is-wide .preview-info{max-height:min(760px,92vh);}
+/* Short, wide screens (a phone on its side): keep the price and button
+   pinned to the bottom of the details while the rest scrolls under it. */
+@media (max-height:600px) and (min-width:721px){
+  .preview-buy{position:sticky;bottom:0;padding:14px 28px 16px;border-top:1px solid var(--rule);box-shadow:0 -8px 20px -12px rgba(43,37,35,.18);}
+  .preview-details{padding:26px 28px 8px;}
+  .preview-info h3{font-size:24px;}
+  .preview-price{font-size:28px;}
+}
 .modal.is-wide .preview-viewer::after{display:none;}
 .preview-doc{display:block;width:100%;height:min(760px,92vh);border:0;background:#fff;}
 .modal.is-wide .preview-assure{display:none;}
@@ -1293,7 +1305,7 @@ details.faq p{margin:0;padding:0 0 16px;max-width:66ch;color:var(--ink-soft);fon
   .preview-frame{height:auto;max-height:48vh;padding:54px 18px 26px;gap:14px;}
   .modal.is-wide .preview-frame{max-height:none;}
   .preview-doc{height:56vh;}
-  .preview-info{overflow:visible;}
+  .preview-info,.modal.is-wide .preview-info{overflow:visible;max-height:none;}
   .preview-details{padding:24px 22px 4px;}
   .preview-info h3{font-size:25px;}
   .preview-buy{position:sticky;bottom:0;padding:14px 22px 18px;border-top:1px solid var(--rule);box-shadow:0 -8px 20px -12px rgba(43,37,35,.18);}
@@ -1324,6 +1336,12 @@ details.faq p{margin:0;padding:0 0 16px;max-width:66ch;color:var(--ink-soft);fon
   .new-badge{right:12px;}
   .header-inner{gap:12px;}
   .logo .mark{font-size:28px;}
+}
+/* Smallest phones (iPhone SE 1st gen and similar): the Module and Bundles
+   pickers no longer fit side by side, so Module takes the full row. */
+@media (max-width:360px){
+  .shop-bar{flex-wrap:wrap;}
+  .module-menu{flex-basis:100%;}
 }
 /* iOS zooms the page in on any text field under 16px when it's tapped, and
    doesn't zoom back out. 16px on touch screens stops that without turning
