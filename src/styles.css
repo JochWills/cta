@@ -81,6 +81,85 @@ h1,h2,h3{font-family:'Playfair Display',Georgia,serif;font-weight:400;letter-spa
 }
 .nav a:hover::after,.nav a.is-active::after{transform:scaleX(1);}
 
+/* Shop hover menu (desktop only — hidden in the 1024px block). Opens on
+   hovering the Shop link or tabbing into it; ::before bridges the gap
+   between the two so the pointer can travel down without it closing. */
+.nav{position:relative;}
+.nav-caret{
+  display:inline-block;width:13px;height:13px;margin-left:3px;vertical-align:-2px;
+  stroke:currentColor;stroke-width:2;fill:none;stroke-linecap:round;stroke-linejoin:round;
+  transition:transform .25s ease;
+}
+.nav:has(.shop-menu[hidden]) .nav-caret{display:none;}
+.shop-menu{
+  position:absolute;top:calc(100% + 22px);left:-28px;z-index:70;width:520px;padding:18px;
+  background:var(--paper);border:1px solid var(--rule);border-radius:20px;box-shadow:var(--shadow-lift);
+  visibility:hidden;opacity:0;transform:translateY(-8px) scale(.98);transform-origin:40px top;
+  transition:opacity .2s ease,transform .3s cubic-bezier(.2,.8,.2,1),visibility 0s linear .3s;
+}
+.shop-menu[hidden]{display:none;}
+.shop-menu::before{content:"";position:absolute;left:0;right:0;top:-26px;height:26px;}
+/* little notch pointing up at "Shop" */
+.shop-menu::after{
+  content:"";position:absolute;top:-7px;left:52px;width:12px;height:12px;background:var(--paper);
+  border-left:1px solid var(--rule);border-top:1px solid var(--rule);transform:rotate(45deg);border-radius:3px 0 0 0;
+}
+.nav > a:first-child:hover + .shop-menu,
+.nav > a:first-child:focus-visible + .shop-menu,
+.shop-menu:hover,.shop-menu:focus-within{
+  visibility:visible;opacity:1;transform:none;
+  transition:opacity .2s ease,transform .3s cubic-bezier(.2,.8,.2,1),visibility 0s;
+}
+.shop-menu.is-dismissed{visibility:hidden;opacity:0;transition:opacity .15s ease,visibility 0s linear .15s;}
+.nav > a:first-child:hover .nav-caret,.nav:has(.shop-menu:hover:not(.is-dismissed)) .nav-caret{transform:rotate(180deg);}
+
+.shop-menu-eyebrow{
+  margin:0 4px 12px;font-size:11px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-faint);
+}
+.shop-menu-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.nav .shop-course{
+  display:flex;flex-direction:column;gap:4px;padding:16px 16px 14px;border-radius:14px;
+  background:linear-gradient(160deg,var(--blush),var(--cream) 70%);border:1px solid transparent;
+  opacity:0;transform:translateY(6px);
+  transition:border-color .2s ease,box-shadow .25s ease,transform .3s cubic-bezier(.2,.8,.2,1),opacity .3s ease;
+}
+.nav .shop-course-bridging{background:linear-gradient(160deg,#F3EEF6,var(--cream) 70%);}
+.nav .shop-course::after{display:none;}
+.shop-menu:hover .shop-course,.nav > a:first-child:hover + .shop-menu .shop-course,
+.nav > a:first-child:focus-visible + .shop-menu .shop-course,.shop-menu:focus-within .shop-course{
+  opacity:1;transform:none;transition-delay:calc(.05s + var(--d) * .06s);
+}
+.nav .shop-course:hover,.nav .shop-course:focus-visible{
+  border-color:var(--rule);box-shadow:var(--shadow);transform:translateY(-2px);transition-delay:0s;outline:none;
+}
+
+/* a tiny shelf of the course's module notebooks; they hop up on hover */
+.shop-books{display:flex;align-items:flex-end;gap:5px;height:50px;margin-bottom:10px;padding-left:2px;
+  border-bottom:2px solid rgba(43,37,35,.08);}
+.shop-books span{
+  display:block;width:15px;height:40px;border-radius:3px 3px 1px 1px;
+  background:var(--tint);border:1px solid color-mix(in srgb,var(--ink) 35%,transparent);position:relative;
+  transform-origin:bottom center;transition:transform .35s cubic-bezier(.3,1.6,.5,1);
+}
+.shop-books span::before{
+  content:"";position:absolute;left:3px;right:3px;top:7px;height:3px;border-radius:2px;background:var(--ink);opacity:.55;
+}
+.shop-books span:nth-child(2){height:47px;}
+.shop-books span:nth-child(3){height:36px;}
+.shop-books span:nth-child(4){height:43px;}
+.shop-books span:last-child{transform:rotate(14deg);transform-origin:bottom right;}
+.shop-course:hover .shop-books span{transform:translateY(-6px);transition-delay:calc(var(--j) * .05s);}
+.shop-course:hover .shop-books span:last-child{transform:translateY(-6px) rotate(0deg);}
+
+.shop-course-name{font-family:'Playfair Display',Georgia,serif;font-size:20px;line-height:1.2;color:var(--ink);}
+.shop-course-desc{font-size:12.5px;line-height:1.45;color:var(--ink-soft);}
+.shop-course-meta{
+  display:flex;align-items:center;gap:6px;margin-top:8px;font-size:12px;font-weight:600;color:var(--accent-deep);
+}
+.shop-course-meta svg{width:14px;height:14px;stroke:currentColor;stroke-width:2;fill:none;stroke-linecap:round;stroke-linejoin:round;
+  transition:transform .25s ease;}
+.shop-course:hover .shop-course-meta svg{transform:translateX(4px);}
+
 .header-actions{display:flex;align-items:center;gap:6px;flex-shrink:0;}
 .icon-btn{
   width:42px;height:42px;border-radius:50%;display:grid;place-items:center;
@@ -1098,6 +1177,7 @@ details.faq p{margin:0;padding:0 0 16px;max-width:66ch;color:var(--ink-soft);fon
   .nav > a::after{display:none;}
   .nav > a:hover,.nav > a:active{background:var(--cream);}
   .nav > a.is-active{background:var(--blush);color:var(--accent-deep);}
+  .shop-menu,.nav-caret{display:none !important;}
   .nav-ico{
     display:grid;place-items:center;flex-shrink:0;width:36px;height:36px;border-radius:10px;
     background:var(--cream);color:var(--ink-soft);

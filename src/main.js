@@ -106,6 +106,24 @@ document.addEventListener("click", (e) => {
     return setFilter(jump.dataset.jump);
   }
 
+  // The header's Shop hover menu: switch course, then scroll to the shop.
+  // The menu stays shut until the pointer leaves it, so it doesn't sit
+  // open over the page it just scrolled to.
+  const shopCourse = e.target.closest("[data-shop-course]");
+  if (shopCourse) {
+    e.preventDefault();
+    const menu = $("#shopMenu");
+    menu.classList.add("is-dismissed");
+    document.addEventListener("pointermove", function reopen(ev) {
+      if (ev.target.closest("#shopMenu, .nav > a[href='#shop']:not([data-jump])")) return;
+      menu.classList.remove("is-dismissed");
+      document.removeEventListener("pointermove", reopen);
+    });
+    document.activeElement?.blur();
+    setCourse(shopCourse.dataset.shopCourse);
+    return setFilter("all");
+  }
+
   const course = e.target.closest("[data-course]");
   if (course) return setCourse(course.dataset.course);
 
@@ -190,7 +208,7 @@ const observer = new IntersectionObserver(
     entries.forEach((entry) => {
       if (!entry.isIntersecting) return;
       // Not "Free" — it also points at #shop, and Shop is the one to underline there.
-      document.querySelectorAll(".nav a:not([data-jump])").forEach((a) => {
+      document.querySelectorAll(".nav > a:not([data-jump])").forEach((a) => {
         a.classList.toggle("is-active", a.getAttribute("href") === `#${entry.target.id}`);
       });
     });

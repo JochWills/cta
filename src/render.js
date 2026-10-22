@@ -32,6 +32,35 @@ export function renderCourses() {
       class="${state.course === c.slug ? "is-on" : ""}" data-course="${c.slug}">${esc(c.name)}</button>`
   ).join("");
   document.querySelectorAll("[data-bridging-only]").forEach((el) => (el.hidden = !show));
+  renderShopMenu();
+}
+
+const COURSE_BLURBS = {
+  pgda: "The CTA year, straight after a BCom Accounting.",
+  bridging: "For when your BCom wasn't a BCom Accounting.",
+};
+
+/** The header's Shop hover menu (desktop only): one card per course, each
+ * with a little shelf of its modules' notebooks. */
+function renderShopMenu() {
+  const menu = $("#shopMenu");
+  if (!menu || menu.hidden) return;
+  const cards = COURSES.map((c, i) => {
+    const mods = modulesIn(c.slug).filter((m) => !m.free);
+    const notes = state.products.filter((p) => courseOf(p.module_slug) === c.slug && !isFreebie(p)).length;
+    const books = mods
+      .map((m, j) => `<span style="--j:${j};--tint:${m.tint};--ink:${m.ink}"></span>`)
+      .join("");
+    return `
+      <a href="#shop" class="shop-course shop-course-${esc(c.slug)}" data-shop-course="${esc(c.slug)}" style="--d:${i}">
+        <span class="shop-books" aria-hidden="true">${books}</span>
+        <span class="shop-course-name">${esc(c.name)}</span>
+        <span class="shop-course-desc">${esc(COURSE_BLURBS[c.slug] || "")}</span>
+        <span class="shop-course-meta">${notes ? `${notes} note${notes === 1 ? "" : "s"} · ` : ""}${mods.length} modules
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
+      </a>`;
+  }).join("");
+  menu.innerHTML = `<p class="shop-menu-eyebrow">Shop by course</p><div class="shop-menu-grid">${cards}</div>`;
 }
 
 /* ------------------------------------------------------------------
