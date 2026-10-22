@@ -73,7 +73,58 @@ export function renderOrders() {
           ${adminState.orders.map(orderRow).join("")}
         </tbody>
       </table>
-    </div>`;
+    </div>
+    <div class="order-cards">${adminState.orders.map(orderCard).join("")}</div>`;
+}
+
+/** "22 Oct, 22:53" — with the year only when it isn't this year. */
+function shortDateTime(iso) {
+  const d = new Date(iso);
+  const opts = { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" };
+  if (d.getFullYear() !== new Date().getFullYear()) opts.year = "numeric";
+  return d.toLocaleString("en-ZA", opts);
+}
+
+/**
+ * Phones get a card per order instead of the table (CSS swaps them at
+ * 720px): who, how much, when and the status up top; tap to open the
+ * reference, items, source and the refund/delete buttons. Those buttons
+ * carry the same data-* attributes as the desktop ⋯ menu, so main.js's
+ * delegated click handler does the rest.
+ */
+function orderCard(o) {
+  const items = Array.isArray(o.items) ? o.items : [];
+  const free = o.status === "free";
+  const id = esc(o.id);
+  const source = o.source
+    ? `${esc(o.source)}${o.first_source && o.first_source !== o.source ? ` (first: ${esc(o.first_source)})` : ""}${o.campaign ? ` · ${esc(o.campaign)}` : ""}`
+    : "";
+  return `
+    <details class="order-card">
+      <summary>
+        <span class="oc-name">${esc(o.full_name || "No name given")}</span>
+        <span class="oc-amount">${free ? "Free" : rands(o.total_cents)}</span>
+        <span class="oc-email">${esc(o.email)}</span>
+        <span class="oc-date">${esc(shortDateTime(o.created_at))}</span>
+        <span class="oc-status"><span class="status-badge status-${esc(o.status)}">${esc(STATUS_LABEL[o.status] || o.status)}</span>
+          <svg class="oc-caret" viewBox="0 0 12 8" aria-hidden="true"><path d="M1 1.5l5 5 5-5"/></svg></span>
+      </summary>
+      <div class="oc-body">
+        <dl class="oc-facts">
+          <dt>Reference</dt><dd><span class="ref">${esc(o.reference)}</span></dd>
+          ${source ? `<dt>From</dt><dd>${source}</dd>` : ""}
+          ${o.discount_percent ? `<dt>Discount</dt><dd>${o.discount_code ? esc(o.discount_code) : "Bundle"} · ${esc(o.discount_percent)}% off</dd>` : ""}
+        </dl>
+        <ul class="oc-items">
+          ${items.map((i) => `<li><span>${esc(i.title)}</span>${free ? "" : `<span>${rands(i.price_cents)}</span>`}</li>`).join("")}
+        </ul>
+        <div class="oc-actions">
+          ${o.status === "paid" ? `<button class="btn ghost" data-refund-order="${id}">Mark refunded</button>` : ""}
+          ${o.status === "refunded" ? `<button class="btn ghost" data-unrefund-order="${id}">Undo refund</button>` : ""}
+          <button class="btn ghost oc-delete" data-del-order="${id}">Delete</button>
+        </div>
+      </div>
+    </details>`;
 }
 
 function orderRow(o) {
