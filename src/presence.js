@@ -241,6 +241,26 @@ function isBot() {
   );
 }
 
+/**
+ * Where this buyer came from, for checkout.js to save on the order: this
+ * visit's source and campaign (the same per-tab labels the heartbeat
+ * sends), plus the source of the very first visit from this browser, kept
+ * in localStorage — so someone who found the site on Instagram and came
+ * back days later by typing the address still shows both. Works without
+ * startPresence having run (a bot check, say): it just works them out now.
+ */
+export function orderSource() {
+  const source = stored("cta_source", sourceLabel);
+  let first_source = source;
+  try {
+    first_source = localStorage.getItem("cta_first_source") || source;
+    localStorage.setItem("cta_first_source", first_source);
+  } catch {
+    // no localStorage — first visit is this visit as far as we can tell
+  }
+  return { source, first_source, campaign: stored("cta_campaign", campaignLabel) || null };
+}
+
 export function startPresence() {
   if (!hasDB || isBot()) return;
 
@@ -248,6 +268,7 @@ export function startPresence() {
   // Kept for the whole tab, so moving to /terms and back doesn't turn a
   // Google visit into one "from" this site.
   const source = stored("cta_source", sourceLabel);
+  orderSource(); // pin the first-visit source and campaign now, before navigating drops the utm tags
   const device = deviceType();
 
   let lastSent = "";

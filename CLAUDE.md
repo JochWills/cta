@@ -237,7 +237,12 @@ purchase time — `product_id`/`code`/`title`/`price_cents`, no `file_path`;
 (not null — checkout won't submit without the "this purchase is final"
 checkbox ticked, and the column backs that with an actual record, not just
 a client-side gate), `discount_code`/`discount_percent` (null unless a code
-was used — a snapshot, so deleting the code later changes nothing here).
+was used — a snapshot, so deleting the code later changes nothing here),
+`source`/`first_source`/`campaign` (where the buyer came from — this
+visit's source label, their first visit's from `localStorage`'s
+`cta_first_source`, and the utm campaign; sent by `checkout.js` via
+`orderSource()` in `presence.js`, shown on the dashboard's "Where buyers
+come from" card and the Orders list — schema.sql section 17).
 
 **Orders are priced by the database, not the browser.** A `before insert`
 trigger, `price_order()` (`supabase/schema.sql` section 8), rebuilds

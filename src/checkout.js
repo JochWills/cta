@@ -3,6 +3,7 @@ import { hasDB, sbInsert, sbFunction, sbRpc } from "./supabase.js";
 import { totalDue, syncCart, renderDiscount, closeCart } from "./render.js";
 import { saveCart } from "./cart.js";
 import { openDownloadModal } from "./downloads.js";
+import { orderSource } from "./presence.js";
 
 /** Human-readable order reference, e.g. CTA-M4K2P9. Also used as the Paystack transaction reference. */
 function makeReference() {
@@ -107,6 +108,9 @@ export async function placeOrder() {
     // comment in supabase/schema.sql. Only reachable once termsInput.checked
     // is confirmed true above.
     terms_accepted_at: new Date().toISOString(),
+    // Where the buyer came from (source, first_source, campaign) — the
+    // admin dashboard's "Where buyers come from". See orderSource().
+    ...orderSource(),
   };
 
   try {

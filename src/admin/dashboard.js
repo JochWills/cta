@@ -197,7 +197,7 @@ function computeDashboard(rangeKey) {
     .sort((a, b) => b.cents - a.cents);
 
 
-  return { ...current, rangeStart: cfg.rangeStart, deltas, series, paidCountSeries, avgSeries, customerSeries, topNotes, categories, categoryTotal };
+  return { ...current, rangeStart: cfg.rangeStart, paidInRange, deltas, series, paidCountSeries, avgSeries, customerSeries, topNotes, categories, categoryTotal };
 }
 
 /* ------------------------------------------------------------------
@@ -680,6 +680,44 @@ function renderJourney(rangeStart) {
 }
 
 /* ------------------------------------------------------------------
+   Where buyers come from — paid orders in the range by the source
+   checkout saved on them (schema.sql section 17): this visit's, and the
+   one the buyer first found the site through. Orders from before that
+   existed have none and are counted as "Not tracked".
+------------------------------------------------------------------ */
+function sourceRows(paid, key) {
+  const by = new Map();
+  for (const o of paid) {
+    const label = o[key] || "Not tracked";
+    const row = by.get(label) || { label, count: 0, cents: 0 };
+    row.count += 1;
+    row.cents += o.total_cents;
+    by.set(label, row);
+  }
+  return [...by.values()].sort((a, b) => b.cents - a.cents || b.count - a.count);
+}
+
+function sourceList(paid, key) {
+  return `<div class="src-list">${sourceRows(paid, key)
+    .map((r) => barRow(r.label, r.count, paid.length, `${rands(r.cents)} · ${pct(r.count, paid.length)}%`))
+    .join("")}</div>`;
+}
+
+function renderBuyerSources(paid) {
+  if (!paid.length) return `<div class="empty-state">No paid orders in this range yet.</div>`;
+  const campaigns = sourceRows(paid.filter((o) => o.campaign), "campaign")
+    .map((r) => `${esc(r.label)} ${r.count}`)
+    .join(" · ");
+  return `
+    <div class="dash-grid-2 dash-grid-even" style="margin-bottom:0">
+      <div><p class="dash-card-sub" style="margin:0 0 10px">This visit</p>${sourceList(paid, "source")}</div>
+      <div><p class="dash-card-sub" style="margin:0 0 10px">First found the site</p>${sourceList(paid, "first_source")}</div>
+    </div>
+    ${campaigns ? `<p class="src-foot">Campaigns: ${campaigns}</p>` : ""}
+    <p class="src-foot">"This visit" is where they came from on the visit they paid; "First found the site" is their first visit on that browser.</p>`;
+}
+
+/* ------------------------------------------------------------------
    Top Selling Notes
 ------------------------------------------------------------------ */
 function renderTopNotesList(topNotes) {
@@ -774,6 +812,9 @@ export function renderDashboard() {
   $("#dashSourcesSub").textContent = `Unique visitors, ${RANGE_LABELS[range]}`;
   $("#dashSources").innerHTML = renderSources();
   $("#dashJourney").innerHTML = renderJourney(data.rangeStart);
+
+  $("#dashBuyerSourcesSub").textContent = `Paid orders, ${RANGE_LABELS[range]}`;
+  $("#dashBuyerSources").innerHTML = renderBuyerSources(data.paidInRange);
 
   $("#dashTopNotes").innerHTML = renderTopNotesList(data.topNotes);
 }

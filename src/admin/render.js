@@ -81,7 +81,10 @@ function orderRow(o) {
   return `
     <tr>
       <td><span class="ref">${esc(o.reference)}</span></td>
-      <td>${esc(new Date(o.created_at).toLocaleString("en-ZA"))}</td>
+      <td>
+        <div>${esc(new Date(o.created_at).toLocaleString("en-ZA"))}</div>
+        ${o.source ? `<div class="meta">From ${esc(o.source)}${o.first_source && o.first_source !== o.source ? ` (first: ${esc(o.first_source)})` : ""}${o.campaign ? ` · ${esc(o.campaign)}` : ""}</div>` : ""}
+      </td>
       <td>
         <div>${esc(o.full_name || "—")}</div>
         <div class="meta">${esc(o.email)}</div>

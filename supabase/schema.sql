@@ -394,6 +394,12 @@ begin
     new.discount_percent := nullif(v_bundle_pct, 0);
   end if;
 
+  -- Where the buyer came from (section 17) — the browser's word, only
+  -- ever used for the admin dashboard, so just tidied and capped here.
+  new.source       := left(nullif(trim(new.source), ''), 60);
+  new.first_source := left(nullif(trim(new.first_source), ''), 60);
+  new.campaign     := left(nullif(trim(new.campaign), ''), 100);
+
   new.items := v_items;
   -- Same rounding as discountCents() in src/render.js, so the total the
   -- buyer sees is the total Paystack charges.
@@ -897,3 +903,17 @@ as $$
 $$;
 revoke execute on function public.admin_health_stats() from public, anon, authenticated;
 grant execute on function public.admin_health_stats() to service_role;
+
+
+-- ------------------------------------------------------------
+-- 17. ORDER SOURCES (admin dashboard's "Where buyers come from")
+--    checkout.js sends the same source label presence.js gives the
+--    visit (Instagram, Google, Direct, …), the source of the browser's
+--    first-ever visit, and the utm campaign, so a sale can be traced back
+--    to where the buyer found the site. Set by the browser, so it's a
+--    guide, not a record — price_order() (section 8) trims and caps them.
+--    Earlier orders stay null and show as "Not tracked".
+-- ------------------------------------------------------------
+alter table public.orders add column if not exists source       text;
+alter table public.orders add column if not exists first_source text;
+alter table public.orders add column if not exists campaign     text;
