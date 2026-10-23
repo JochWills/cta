@@ -324,6 +324,13 @@ create table if not exists public.discount_codes (
 alter table public.discount_codes enable row level security;
 -- deliberately no policies on discount_codes (see above)
 
+-- Optional expiry, set on the admin page's Discounts tab. Null = never
+-- expires. Past it, discount_percent() and price_order() below both treat
+-- the code as if it didn't exist — so a buyer who applied it before it
+-- expired but checks out after gets the "no longer valid" message rather
+-- than the discount.
+alter table public.discount_codes add column if not exists expires_at timestamptz;
+
 -- Snapshotted on the order, like items: deleting or re-creating a code
 -- later doesn't rewrite what an old order was actually charged.
 alter table public.orders add column if not exists discount_code    text;
@@ -331,7 +338,8 @@ alter table public.orders add column if not exists discount_percent int;
 
 create or replace function public.discount_percent(p_code text) returns int
 language sql stable security definer set search_path = public as $$
-  select percent_off from public.discount_codes where code = upper(trim(p_code));
+  select percent_off from public.discount_codes
+   where code = upper(trim(p_code)) and (expires_at is null or expires_at > now());
 $$;
 
 grant execute on function public.discount_percent(text) to anon, authenticated;
@@ -381,7 +389,8 @@ begin
     new.discount_code := null;
   else
     new.discount_code := upper(trim(new.discount_code));
-    select percent_off into v_code_pct from public.discount_codes where code = new.discount_code;
+    select percent_off into v_code_pct from public.discount_codes
+     where code = new.discount_code and (expires_at is null or expires_at > now());
     if v_code_pct is null then
       raise exception 'Invalid discount code';
     end if;

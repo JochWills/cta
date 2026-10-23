@@ -49,8 +49,10 @@ export const updateProduct = (id, fields) => call("admin-products", { body: { ac
 export const deleteProduct = (id) => call("admin-products", { body: { action: "delete", id } });
 
 export const listDiscounts = () => call("admin-discounts", { body: { action: "list" } });
-export const createDiscount = (code, percent_off) =>
-  call("admin-discounts", { body: { action: "create", code, percent_off } });
+export const createDiscount = (code, percent_off, expires_at = null) =>
+  call("admin-discounts", { body: { action: "create", code, percent_off, expires_at } });
+export const setDiscountExpiry = (id, expires_at) =>
+  call("admin-discounts", { body: { action: "set_expiry", id, expires_at } });
 export const deleteDiscount = (id) => call("admin-discounts", { body: { action: "delete", id } });
 
 export const listReviews = () => call("admin-reviews", { body: { action: "list" } });

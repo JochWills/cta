@@ -279,7 +279,7 @@
         <div class="dash-header">
           <div>
             <h2>Discounts</h2>
-            <p class="dash-sub">Codes buyers can enter at checkout. They don't stack with the bundle discount.</p>
+            <p class="dash-sub">Codes buyers can enter at checkout. They don't stack with the bundle discount, and stop working at their expiry time.</p>
           </div>
         </div>
         <form class="discount-form" id="discountForm">
@@ -289,6 +289,9 @@
           </label>
           <label class="field"><span>% off</span>
             <input type="number" id="df_percent" required min="1" max="99" step="1" placeholder="20">
+          </label>
+          <label class="field"><span>Expires <em class="field-optional">optional</em></span>
+            <input type="datetime-local" id="df_expires">
           </label>
           <button class="btn" id="addDiscountBtn" type="submit">Add code</button>
           <div id="discountFormError"></div>

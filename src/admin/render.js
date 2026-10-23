@@ -320,14 +320,15 @@ export function renderDiscounts() {
   box.innerHTML = `
     <div class="admin-table-wrap">
       <table class="admin-table">
-        <thead><tr><th>Code</th><th>Discount</th><th>Created</th><th></th></tr></thead>
+        <thead><tr><th>Code</th><th>Discount</th><th>Expires</th><th>Created</th><th></th></tr></thead>
         <tbody>
           ${adminState.discounts
             .map(
               (d) => `
-            <tr>
+            <tr${isExpired(d) ? ` class="is-expired"` : ""}>
               <td><span class="discount-code">${esc(d.code)}</span></td>
               <td>${esc(d.percent_off)}% off</td>
+              <td>${expiryCell(d)}</td>
               <td>${esc(new Date(d.created_at).toLocaleDateString("en-ZA", { day: "numeric", month: "short", year: "numeric" }))}</td>
               <td><div class="admin-row-actions"><button class="btn ghost" data-del-discount="${esc(d.id)}">Delete</button></div></td>
             </tr>`
@@ -385,6 +386,51 @@ export function renderReviews() {
         </tbody>
       </table>
     </div>`;
+}
+
+const isExpired = (d) => Boolean(d.expires_at) && Date.parse(d.expires_at) <= Date.now();
+
+/** An ISO time as the value a datetime-local input wants, in this device's own time zone. */
+export function toLocalInput(iso) {
+  if (!iso) return "";
+  const d = new Date(iso);
+  const pad = (n) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
+/** "In 3 days" / "In 5 hours" / "In 20 min" — how long a code has left. */
+function timeLeft(iso) {
+  const mins = Math.round((Date.parse(iso) - Date.now()) / 60000);
+  if (mins < 60) return `In ${Math.max(mins, 1)} min`;
+  const hours = Math.round(mins / 60);
+  if (hours < 48) return `In ${hours} hour${hours === 1 ? "" : "s"}`;
+  return `In ${Math.round(hours / 24)} days`;
+}
+
+/** Which code's expiry is being edited in place (one at a time). */
+let editingExpiry = null;
+export function setEditingExpiry(id) {
+  editingExpiry = id;
+  renderDiscounts();
+  if (id) document.querySelector(`[data-expiry-input="${CSS.escape(id)}"]`)?.focus();
+}
+
+function expiryCell(d) {
+  const id = esc(d.id);
+  if (editingExpiry === d.id) {
+    return `
+      <div class="expiry-edit">
+        <input type="datetime-local" class="expiry-input" data-expiry-input="${id}" value="${esc(toLocalInput(d.expires_at))}">
+        <button type="button" class="btn" data-save-expiry="${id}">Save</button>
+        ${d.expires_at ? `<button type="button" class="btn ghost" data-clear-expiry="${id}">No expiry</button>` : ""}
+        <button type="button" class="expiry-cancel" data-cancel-expiry aria-label="Cancel">Cancel</button>
+      </div>`;
+  }
+  const when = d.expires_at
+    ? `<div>${esc(new Date(d.expires_at).toLocaleString("en-ZA", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" }))}</div>
+       <div class="meta">${isExpired(d) ? `<span class="expiry-badge is-expired">Expired</span>` : `<span class="expiry-badge">${esc(timeLeft(d.expires_at))}</span>`}</div>`
+    : `<div class="meta">No expiry</div>`;
+  return `<div class="expiry-cell">${when}<button type="button" class="field-link" data-edit-expiry="${id}">${d.expires_at ? "Change" : "Set expiry"}</button></div>`;
 }
 
 export function discountFormError(message) {

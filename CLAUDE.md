@@ -272,7 +272,9 @@ hold a paid note, or a paid order hold a freebie.
 
 `discount_codes` — `code` (upper-case, 3-32 of A-Z/0-9/`-`/`_`, unique),
 `percent_off` (1-99 — a 100% order would be R0, which Paystack can't
-charge). RLS on, no policies: the shop checks one code at a time through
+charge), `expires_at` (optional; set or changed on the Discounts tab —
+once it passes, `discount_percent()` and `price_order()` both reject the
+code, so it can't be used even if a buyer applied it earlier). RLS on, no policies: the shop checks one code at a time through
 the `discount_percent(code)` security definer function (returns the % or
 null, so the list itself isn't readable with the anon key), and the admin
 page manages codes through `admin-discounts`.

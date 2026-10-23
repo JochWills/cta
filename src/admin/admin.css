@@ -260,16 +260,29 @@ body.admin-page{
 
 /* ── discounts tab ─────────────────────────────────────────── */
 .discount-form{
-  display:grid;grid-template-columns:1fr 160px auto;gap:0 14px;align-items:end;
+  display:grid;grid-template-columns:1fr 130px 230px auto;gap:0 14px;align-items:end;
   background:var(--paper);border:1px solid var(--admin-line);border-radius:var(--admin-radius);
   padding:4px 24px 22px;margin-bottom:20px;box-shadow:var(--admin-card-shadow);
 }
-.discount-form .field input{text-transform:uppercase;}
+.discount-form #df_code{text-transform:uppercase;}
+.field-optional{font-style:normal;text-transform:none;letter-spacing:0;color:var(--ink-faint);font-size:11px;}
+/* Expires column (expiryCell in render.js) */
+.expiry-cell{display:flex;flex-direction:column;gap:2px;align-items:flex-start;}
+.expiry-cell .field-link{margin-top:4px;font-size:12px;}
+.expiry-badge{display:inline-block;padding:2px 8px;border-radius:999px;background:var(--tax-tint);color:var(--tax-ink);font-size:10.5px;font-weight:600;}
+.expiry-badge.is-expired{background:#FBEDEC;color:#A6403A;}
+.admin-table tr.is-expired .discount-code{color:var(--ink-faint);text-decoration:line-through;}
+.expiry-edit{display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
+.expiry-input{height:36px;padding:0 10px;border:1px solid var(--admin-line);border-radius:8px;background:var(--paper);font:inherit;font-size:13px;color:var(--ink);}
+.expiry-input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(180,117,109,.16);}
+.admin-page .expiry-edit .btn{padding:8px 12px;font-size:10.5px;}
+.expiry-cancel{font-size:12px;color:var(--ink-soft);text-decoration:underline;padding:4px;}
 .discount-form .btn{height:50.4px;} /* .field input's rendered height, so the three line up */
 #discountFormError{grid-column:1/-1;}
 .discount-code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-weight:600;letter-spacing:.04em;}
 @media (max-width:640px){
   .discount-form{grid-template-columns:1fr 1fr;}
+  .discount-form .field:nth-of-type(3){grid-column:1/-1;}
   .discount-form .btn{grid-column:1/-1;margin-top:14px;}
 }
 
@@ -871,4 +884,27 @@ body.admin-page{
   .admin-page .oc-actions .btn{flex:1;padding:10px 12px;font-size:10.5px;}
   .admin-page .oc-actions .oc-delete{color:#A6403A;border-color:#E4B9B5;}
   .admin-page .oc-actions .oc-delete:hover{background:#A6403A;border-color:#A6403A;color:#fff;}
+}
+
+/* Discount codes on phones: each row stacks into a small card (CSS only —
+   same markup as the desktop table), so the expiry editor fits. */
+@media (max-width:720px){
+  #discountsTable .admin-table-wrap{overflow:visible;}
+  #discountsTable thead{display:none;}
+  #discountsTable table,#discountsTable tbody{display:block;}
+  #discountsTable tr{
+    display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px 12px;align-items:center;
+    padding:14px 16px;border-bottom:1px solid var(--admin-line);
+  }
+  #discountsTable tr:last-child{border-bottom:none;}
+  #discountsTable td{display:block;padding:0;border:0;white-space:normal;width:auto;}
+  #discountsTable td:nth-child(2){justify-self:end;font-weight:600;}
+  #discountsTable td:nth-child(3){grid-column:1/-1;}
+  #discountsTable td:nth-child(3)::before{
+    content:"Expires";display:block;margin-bottom:3px;font-size:10.5px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-faint);
+  }
+  #discountsTable td:nth-child(4){font-size:12px;color:var(--ink-faint);}
+  #discountsTable td:nth-child(4)::before{content:"Created ";}
+  #discountsTable td:nth-child(5){justify-self:end;}
+  .expiry-input{flex:1 1 100%;height:42px;}
 }

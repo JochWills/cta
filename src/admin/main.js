@@ -15,6 +15,7 @@ import {
   renderDiscounts,
   renderReviews,
   discountFormError,
+  setEditingExpiry,
   openProductForm,
   closeProductForm,
   syncFreebieFields,
@@ -44,6 +45,7 @@ import {
   listDiscounts,
   createDiscount,
   deleteDiscount,
+  setDiscountExpiry,
   listReviews,
   publishReview,
   deleteReview,
@@ -310,13 +312,16 @@ async function saveDiscountForm(e) {
   const btn = $("#addDiscountBtn");
   const code = $("#df_code").value.trim().toUpperCase();
   const percent = parseInt($("#df_percent").value, 10);
+  // datetime-local is this device's local time (SA for Courts); toISOString makes it exact.
+  const expiresValue = $("#df_expires").value;
+  const expires = expiresValue ? new Date(expiresValue).toISOString() : null;
   discountFormError("");
   btn.disabled = true;
   btn.textContent = "Adding…";
   try {
-    await createDiscount(code, percent);
+    await createDiscount(code, percent, expires);
     $("#discountForm").reset();
-    toast(`${code} added — ${percent}% off`);
+    toast(`${code} added — ${percent}% off${expires ? ", with an expiry" : ""}`);
     await loadDiscounts();
   } catch (err) {
     if (err instanceof AuthError) return handleAuthError();
@@ -324,6 +329,19 @@ async function saveDiscountForm(e) {
   } finally {
     btn.disabled = false;
     btn.textContent = "Add code";
+  }
+}
+
+/** Save (or clear, with null) a code's expiry from the inline editor in its row. */
+async function saveExpiry(id, value) {
+  try {
+    await setDiscountExpiry(id, value ? new Date(value).toISOString() : null);
+    toast(value ? "Expiry saved" : "Expiry removed — the code won't expire");
+    setEditingExpiry(null);
+    await loadDiscounts();
+  } catch (err) {
+    if (err instanceof AuthError) return handleAuthError();
+    toast(err.message);
   }
 }
 
@@ -790,6 +808,18 @@ document.addEventListener("click", (e) => {
 
   const delOrder = e.target.closest("[data-del-order]");
   if (delOrder) return doDeleteOrder(delOrder.dataset.delOrder);
+
+  const editExpiry = e.target.closest("[data-edit-expiry]");
+  if (editExpiry) return setEditingExpiry(editExpiry.dataset.editExpiry);
+  const saveExp = e.target.closest("[data-save-expiry]");
+  if (saveExp) {
+    const input = document.querySelector(`[data-expiry-input="${CSS.escape(saveExp.dataset.saveExpiry)}"]`);
+    if (!input?.value) return toast("Pick a date and time, or choose No expiry");
+    return saveExpiry(saveExp.dataset.saveExpiry, input.value);
+  }
+  const clearExp = e.target.closest("[data-clear-expiry]");
+  if (clearExp) return saveExpiry(clearExp.dataset.clearExpiry, null);
+  if (e.target.closest("[data-cancel-expiry]")) return setEditingExpiry(null);
 
   const delDiscount = e.target.closest("[data-del-discount]");
   if (delDiscount) return doDeleteDiscount(delDiscount.dataset.delDiscount);
