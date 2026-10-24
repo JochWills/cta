@@ -1082,6 +1082,13 @@ details.faq p{margin:0;padding:0 0 16px;max-width:66ch;color:var(--ink-soft);fon
 .download-body h3{font-size:19px;margin:0;}
 .download-body .line{align-items:center;}
 .download-body .line .btn{width:auto;margin-left:auto;padding:9px 18px;font-size:12.5px;}
+/* "Download all" — one zip of the whole order (downloadAll in src/downloads.js) */
+.zip-all{margin:16px 0 4px;padding:16px;border-radius:12px;background:var(--blush);}
+.zip-all .zip-all-btn{width:100%;gap:10px;}
+.zip-all-btn svg{width:17px;height:17px;flex-shrink:0;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;}
+.zip-all-btn[disabled]{opacity:.7;cursor:progress;transform:none;}
+.zip-all .zip-all-note{margin:10px 0 0;text-align:center;font-size:12.5px;}
+.zip-err{color:#A6403A;}
 
 .line{display:flex;gap:14px;padding:18px 0;border-bottom:1px solid var(--rule);}
 .line>div{flex:1;min-width:0;}

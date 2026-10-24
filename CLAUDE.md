@@ -55,7 +55,13 @@ Supabase is the only backend. It is called over its PostgREST endpoint with
 `fetch` rather than `@supabase/supabase-js`, because the shop only ever reads
 products and inserts orders.
 
-One real npm dependency: `pdfjs-dist`, used only from `src/admin/` (see
+Two real npm dependencies. `fflate` (~8 KB) builds the "Download all
+notes" zip in the buyer's browser (`downloadAll` in `src/downloads.js`),
+from the same signed links order-download returns, so the server does
+nothing extra. It's imported dynamically, only when that button is
+tapped, so it's its own small chunk and never part of `main-*.js`.
+
+The other is `pdfjs-dist`, used only from `src/admin/` (see
 `pdfPreview.js`) to render a PDF's first page to PNG at upload time. It is
 not imported by anything the shop bundle touches — `npm run build`'s
 `main-*.js` output should stay a few KB; if it balloons, something pulled

@@ -106,8 +106,20 @@ function renderDownloadResult(f, res, opts) {
   clearTimeout(pollTimers.get(f.form));
 
   if (res.ok) {
+    const ready = res.items.filter((i) => i.url);
     f.result.innerHTML = `
       <p class="note" style="margin:14px 0 0;">Order <span class="ref">${esc(res.reference)}</span></p>
+      ${
+        ready.length > 1
+          ? `<div class="zip-all">
+              <button type="button" class="btn zip-all-btn" data-zip-all>
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11m0 0l-4-4m4 4l4-4"/><path d="M5 19h14"/></svg>
+                Download all ${ready.length} notes
+              </button>
+              <p class="note zip-all-note" data-zip-status>One .zip file with everything. Or download them one by one below.</p>
+            </div>`
+          : ""
+      }
       ${res.items
         .map(
           (i) => `
@@ -122,6 +134,7 @@ function renderDownloadResult(f, res, opts) {
         )
         .join("")}
       <p class="note">Links expire after 24 hours — come back any time with your reference and email for fresh ones.</p>`;
+    f.result.querySelector("[data-zip-all]")?.addEventListener("click", (e) => downloadAll(e.currentTarget, res.reference, ready));
     return;
   }
 
@@ -136,5 +149,71 @@ function renderDownloadResult(f, res, opts) {
       f.form,
       setTimeout(() => submitDownloadRequest(f.form, { silent: true, attempt: (opts.attempt ?? 0) + 1 }), 3000)
     );
+  }
+}
+
+/* ------------------------------------------------------------------
+   "Download all" — one .zip of every note in the order, built right
+   here in the buyer's browser from the same signed links listed above,
+   so nothing extra runs or is stored on the server and each file is
+   still only downloaded once. fflate is loaded only when the button is
+   tapped, so it never adds to the shop's own page weight. PDFs are
+   already compressed, so they're stored as-is (level 0) — that's what
+   keeps it quick even on a phone.
+------------------------------------------------------------------ */
+
+/** A safe, unique file name for each note inside the zip. */
+function zipName(title, url, used) {
+  const ext = (new URL(url).pathname.match(/\.(pdf|xlsx?|xlsm|csv)$/i)?.[1] || "pdf").toLowerCase();
+  const base = (title || "Note").replace(/[\\/:*?"<>|]+/g, "-").replace(/\s+/g, " ").trim().slice(0, 100) || "Note";
+  let name = `${base}.${ext}`;
+  for (let n = 2; used.has(name.toLowerCase()); n++) name = `${base} (${n}).${ext}`;
+  used.add(name.toLowerCase());
+  return name;
+}
+
+async function downloadAll(button, reference, items) {
+  const status = button.parentElement.querySelector("[data-zip-status]");
+  const label = button.innerHTML;
+  button.disabled = true;
+  let done = 0;
+  const progress = () => (status.textContent = `Getting your notes… ${done} of ${items.length}`);
+  progress();
+
+  try {
+    const [{ zipSync }] = await Promise.all([import("fflate")]);
+    const used = new Set();
+    const files = {};
+    // A few at a time — a 30-note order shouldn't open 30 connections at once.
+    const queue = [...items];
+    const worker = async () => {
+      while (queue.length) {
+        const item = queue.shift();
+        const res = await fetch(item.url);
+        if (!res.ok) throw new Error(`${item.title}: ${res.status}`);
+        files[zipName(item.title, item.url, used)] = [new Uint8Array(await res.arrayBuffer()), { level: 0 }];
+        done++;
+        progress();
+      }
+    };
+    await Promise.all(Array.from({ length: Math.min(4, items.length) }, worker));
+
+    status.textContent = "Packing the zip…";
+    const blob = new Blob([zipSync(files)], { type: "application/zip" });
+    const href = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = href;
+    a.download = `PGDA Notes - ${reference}.zip`;
+    document.body.append(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(href), 60_000);
+    status.textContent = `Downloaded ${items.length} notes. On a phone, open the zip from your Files or Downloads to see them.`;
+  } catch (err) {
+    console.error(err);
+    status.innerHTML = `<span class="zip-err">Couldn't build the zip just now. Use the Download buttons below, or try again.</span>`;
+  } finally {
+    button.disabled = false;
+    button.innerHTML = label;
   }
 }
