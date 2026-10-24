@@ -400,7 +400,7 @@ export function renderDrawer() {
       </span>
       <div>
         <h4>${esc(i.title)}</h4>
-        <div class="meta">${esc(moduleName(m))} · PDF</div>
+        <div class="meta">${m.course === "pgda" ? "PGDA · " : ""}${esc(moduleName(m))} · PDF</div>
         <button class="rm" data-rm="${esc(i.id)}">Remove</button>
       </div>
       <span class="amt">${rands(i.price_cents)}</span>
