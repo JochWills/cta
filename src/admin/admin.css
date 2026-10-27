@@ -908,3 +908,17 @@ body.admin-page{
   #discountsTable td:nth-child(5){justify-self:end;}
   .expiry-input{flex:1 1 100%;height:42px;}
 }
+
+/* Live pop-up allowance (liveLimit.js): time left, and the locked state */
+.live-limit{
+  display:inline-flex;align-items:center;gap:6px;margin:10px 0 0;padding:4px 10px;border-radius:999px;
+  background:var(--admin-canvas);color:var(--ink-soft);font-size:12px;font-weight:600;font-variant-numeric:tabular-nums;
+}
+.live-limit[hidden]{display:none;}
+.live-limit.is-low{background:var(--ma-tint);color:var(--ma-ink);}
+.live-locked{display:flex;flex-direction:column;align-items:center;gap:6px;padding:34px 10px 18px;text-align:center;}
+.live-locked-icon{width:52px;height:52px;margin-bottom:8px;border-radius:50%;background:var(--blush);display:grid;place-items:center;}
+.live-locked-icon svg{width:24px;height:24px;stroke:var(--accent-deep);stroke-width:1.7;fill:none;stroke-linecap:round;stroke-linejoin:round;}
+.live-locked strong{font-size:15px;color:var(--ink);}
+.live-locked > span{font-size:13px;color:var(--ink-soft);}
+#liveUnlockIn{font-variant-numeric:tabular-nums;font-weight:600;color:var(--ink);}

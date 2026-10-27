@@ -56,6 +56,7 @@ import {
   listPayoutSales,
 } from "./api.js";
 import { renderHealth } from "./health.js";
+import { remainingMs, addUsage, nextHour, mmss } from "./liveLimit.js";
 import { setPayouts, togglePayout } from "./payouts.js";
 import { renderPreviewPages, countPdfPages } from "./pdfPreview.js";
 import { renderDashboard } from "./dashboard.js";
@@ -159,8 +160,10 @@ let livePollTimer = null;
 async function loadLiveVisitors() {
   try {
     const rows = await fetchLiveVisitors();
-    setLiveRows(rows);
     $("#liveVisitorsCount").textContent = rows.length;
+    // closed, or locked by the time limit, while this was loading
+    if (!livePollTimer) return;
+    setLiveRows(rows);
   } catch (err) {
     if (err instanceof AuthError) {
       closeLive();
@@ -170,17 +173,74 @@ async function loadLiveVisitors() {
   }
 }
 
-function openLive() {
-  $("#liveModal").hidden = false;
+/* The pop-up has a viewing allowance: 10 minutes per clock hour on this
+   device (see liveLimit.js). A one-second tick counts time while it's open
+   and in view, shows what's left, and locks it once that runs out — until
+   the top of the next hour, when it opens up again by itself. */
+let liveTick = null;
+let lastTick = 0;
+
+function startLivePolling() {
+  if (livePollTimer) return;
   $("#liveBody").innerHTML = `<div class="empty-state">Loading…</div>`;
   loadLiveVisitors();
   livePollTimer = setInterval(loadLiveVisitors, LIVE_POLL_MS);
 }
 
-function closeLive() {
-  $("#liveModal").hidden = true;
+function stopLivePolling() {
   clearInterval(livePollTimer);
   livePollTimer = null;
+}
+
+function showLiveLocked() {
+  stopLivePolling();
+  const at = nextHour().toLocaleTimeString("en-ZA", { hour: "2-digit", minute: "2-digit" });
+  $("#liveLimit").hidden = true;
+  $("#liveBody").innerHTML = `
+    <div class="live-locked">
+      <span class="live-locked-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2.5M9.5 2.5h5"/></svg></span>
+      <strong>You've used your 10 minutes for this hour</strong>
+      <span>Live view opens again at ${esc(at)} — in <span id="liveUnlockIn">${esc(mmss(nextHour() - Date.now()))}</span>.</span>
+    </div>`;
+}
+
+function updateLiveLimit() {
+  const left = remainingMs();
+  const el = $("#liveLimit");
+  el.hidden = false;
+  el.textContent = `${mmss(left)} left this hour`;
+  el.classList.toggle("is-low", left <= 2 * 60 * 1000);
+}
+
+function tickLive() {
+  const now = Date.now();
+  const elapsed = now - lastTick;
+  lastTick = now;
+  if (livePollTimer && !document.hidden) addUsage(elapsed);
+
+  if (remainingMs() <= 0) {
+    if (livePollTimer || !$("#liveUnlockIn")) showLiveLocked();
+    const unlock = $("#liveUnlockIn");
+    if (unlock) unlock.textContent = mmss(nextHour() - now);
+    return;
+  }
+  // a new hour while locked (or still allowance left): carry on watching
+  if (!livePollTimer) startLivePolling();
+  updateLiveLimit();
+}
+
+function openLive() {
+  $("#liveModal").hidden = false;
+  lastTick = Date.now();
+  tickLive();
+  liveTick = setInterval(tickLive, 1000);
+}
+
+function closeLive() {
+  $("#liveModal").hidden = true;
+  stopLivePolling();
+  clearInterval(liveTick);
+  liveTick = null;
 }
 
 function stopVisitorPoll() {
