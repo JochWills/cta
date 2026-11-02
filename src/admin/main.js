@@ -61,7 +61,7 @@ import { setPayouts, togglePayout } from "./payouts.js";
 import { renderPreviewPages, countPdfPages } from "./pdfPreview.js";
 import { renderDashboard } from "./dashboard.js";
 
-const PREVIEW_MAX_PAGES = 3;
+const PREVIEW_MAX_PAGES = 4;
 
 async function boot() {
   loadSession();
@@ -478,7 +478,7 @@ async function loadProducts() {
     adminState.products = await listProducts();
     renderProducts();
     renderDashboard(); // the "sales by module" chart needs products to map an order item back to its module
-    backfillPageCounts();
+    backfillPageCounts().then(backfillPreviewPages);
   } catch (err) {
     if (err instanceof AuthError) return handleAuthError();
     toast(err.message);
@@ -500,7 +500,7 @@ async function backfillPageCounts() {
       try {
         const { url } = await getSignedPdfUrl(p.file_path);
         const page_count = await countPdfPages(url);
-        await updateProduct(p.id, { page_count });
+        await updateProduct(p.id, { page_count }, { rebuild: false });
         p.page_count = page_count;
         renderProducts();
       } catch (err) {
@@ -510,6 +510,58 @@ async function backfillPageCounts() {
     }
   } finally {
     backfilling = false;
+  }
+}
+
+/**
+ * Brings every note's preview up to PREVIEW_MAX_PAGES pages — e.g. when it
+ * went from 3 to 4, every existing note was missing page 4. Runs quietly
+ * on each admin load (after the page counts above); a note is only
+ * touched while it has fewer preview pages than both the max and its own
+ * length, so once they're done this does nothing. Renders from the PDF
+ * here in the browser, the same way a new upload does, and uploads only
+ * the missing pages.
+ */
+let previewBackfilling = false;
+async function backfillPreviewPages() {
+  if (previewBackfilling) return;
+  const todo = adminState.products.filter(
+    (p) =>
+      p.file_path &&
+      !isFreebie(p) &&
+      !isExcel(p.file_path) &&
+      (p.preview_pages || 0) > 0 &&
+      p.preview_pages < PREVIEW_MAX_PAGES &&
+      (!p.page_count || p.page_count > p.preview_pages)
+  );
+  if (!todo.length) return;
+  previewBackfilling = true;
+  let done = 0;
+  toast(`Adding preview pages to ${todo.length} note${todo.length === 1 ? "" : "s"} in the background…`);
+  try {
+    for (const p of todo) {
+      try {
+        const { url } = await getSignedPdfUrl(p.file_path);
+        const blob = await (await fetch(url)).blob();
+        const { pages } = await renderPreviewPages(blob, PREVIEW_MAX_PAGES);
+        const missing = pages.slice(p.preview_pages);
+        await Promise.all(
+          missing.map((png, i) => uploadFile(png, previewPagePath(p.module_slug, p.code, p.preview_pages + i + 1), "note-previews"))
+        );
+        if (pages.length !== p.preview_pages) {
+          await updateProduct(p.id, { preview_pages: pages.length }, { rebuild: false });
+          p.preview_pages = pages.length;
+        }
+        done++;
+      } catch (err) {
+        if (err instanceof AuthError) return;
+        console.warn(`Couldn't add preview pages for ${p.title}:`, err.message);
+      }
+    }
+    renderProducts();
+    toast(done === todo.length ? `Preview pages added to ${done} note${done === 1 ? "" : "s"}` : `Preview pages added to ${done} of ${todo.length} notes — the rest will retry next time`);
+  } finally {
+    previewBackfilling = false;
   }
 }
 

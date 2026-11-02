@@ -24,9 +24,10 @@ const LIMITS = { renderTraffic: 5 * GB, supabaseTraffic: 5 * GB, db: 500 * 1024 
 const WEBP_HERO_FROM = "2026-10-21";
 const RENDER_BYTES_PER_VISIT_OLD = 2.5 * 1024 ** 2;
 const RENDER_BYTES_PER_VISIT = 1.35 * 1024 ** 2;
-// What a preview costs Supabase: three page images, ~180 KB each, and most
-// visitors who preview open about two notes.
-const SUPABASE_BYTES_PER_PREVIEWER = 1.1 * 1024 ** 2;
+// What a preview costs Supabase: four page images, ~180 KB each, and most
+// visitors who preview open about two notes. (Was 1.1 MB with three pages;
+// scaled by 4/3 when previews went to four — recalibrate if it drifts.)
+const SUPABASE_BYTES_PER_PREVIEWER = 1.45 * 1024 ** 2;
 // A paid note's PDF download (average size, measured).
 const BYTES_PER_DOWNLOAD = 280 * 1024;
 

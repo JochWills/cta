@@ -131,7 +131,10 @@ Deno.serve(async (req) => {
             if (copyError) console.error("preview copy failed:", copyError.message);
           }
         }
-        await rebuildSite(); // after "create", the admin page always follows with an update (the PDF)
+        // `rebuild: false` skips it — the admin page's background backfills
+        // (preview pages, page counts) touch many notes at once and change
+        // nothing a note's own page shows, so they'd only queue up builds.
+        if (body.rebuild !== false) await rebuildSite(); // after "create", the admin page always follows with an update (the PDF)
         return json(data);
       }
 

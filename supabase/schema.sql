@@ -37,7 +37,7 @@ on conflict (slug) do nothing;
 -- 2. PRODUCTS  (one row = one section = one PDF)
 --    file_path points at an object in the private `notes` bucket,
 --    e.g. 'financial-reporting/fr1-a1b2.pdf'.
---    preview_pages is how many page-preview images exist (0-3) in the
+--    preview_pages is how many page-preview images exist (0-4) in the
 --    *public* `note-previews` bucket (see section 5) — generated once by
 --    the admin page when the PDF is uploaded (src/admin/pdfPreview.js),
 --    up to 3 pages or the whole PDF if it's shorter than that, and shown

@@ -45,7 +45,8 @@ export const setOrderRefunded = (id, refunded) => call("admin-orders", { body: {
 
 export const listProducts = () => call("admin-products", { body: { action: "list" } });
 export const createProduct = (fields) => call("admin-products", { body: { action: "create", ...fields } });
-export const updateProduct = (id, fields) => call("admin-products", { body: { action: "update", id, ...fields } });
+export const updateProduct = (id, fields, { rebuild = true } = {}) =>
+  call("admin-products", { body: { action: "update", id, ...fields, ...(rebuild ? {} : { rebuild: false }) } });
 export const deleteProduct = (id) => call("admin-products", { body: { action: "delete", id } });
 
 export const listDiscounts = () => call("admin-discounts", { body: { action: "list" } });
