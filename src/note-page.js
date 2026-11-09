@@ -1,6 +1,6 @@
 import { state, $, esc, rands, slugifyCode } from "./state.js";
-import { MOD, MODULES, isFreebie, courseOf, moduleName } from "./catalogue.js";
-import { previewPageUrl, pagesLabel, BUNDLE_TIERS, renderModules, renderFilters, renderProducts } from "./render.js";
+import { MOD, MODULES, isFreebie, courseOf, moduleName, courseModuleName } from "./catalogue.js";
+import { previewPageUrl, pagesLabel, BUNDLE_TIERS, renderModules, renderFilters, renderProducts, hasBridging } from "./render.js";
 import { track } from "./presence.js";
 import { freebieViewer } from "./freebies.js";
 
@@ -91,7 +91,7 @@ export function renderNotePage() {
         ${pages}
       </div>
       <aside class="note-side">
-        <span class="tag" style="background:${m.tint};color:${m.ink}">${esc(moduleName(m))}</span>
+        <span class="tag" style="background:${m.tint};color:${m.ink}">${esc(hasBridging() ? courseModuleName(m) : moduleName(m))}</span>
         <h1>${esc(p.title)}</h1>
         <p class="preview-pages">${free ? "Free download" : p.page_count ? `PDF · ${pagesLabel(p.page_count)}` : "PDF"}</p>
         ${p.description ? `<p class="preview-desc">${esc(p.description)}</p>` : ""}

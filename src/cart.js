@@ -1,8 +1,8 @@
 import { state } from "./state.js";
-import { SEED, isFreebie } from "./catalogue.js";
+import { SEED, isFreebie, COURSE, courseOf } from "./catalogue.js";
 import { hasDB, sbGet } from "./supabase.js";
 import { track } from "./presence.js";
-import { syncCart, toast, openCart, renderModules, buyableFor } from "./render.js";
+import { syncCart, toast, openCart, renderModules, buyableFor, hasBridging } from "./render.js";
 
 const PRODUCT_COLUMNS = "id,code,title,description,module_slug,price_cents,sort_order,preview_pages,page_count,created_at";
 
@@ -104,7 +104,9 @@ export function addToCart(id) {
   saveCart();
   syncCart();
   track("cart");
-  toast(`${product.title} added to cart`);
+  // Names the course once there are two, since subjects share names across them.
+  const course = hasBridging() ? ` (${COURSE[courseOf(product.module_slug)].short})` : "";
+  toast(`${product.title}${course} added to cart`);
 }
 
 /** The "Select" menu — every note in a module (or "all") that isn't already in the cart. */

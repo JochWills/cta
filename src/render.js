@@ -1,4 +1,4 @@
-import { COURSES, MODULES, MOD, isFreebie, courseOf, modulesIn, moduleName } from "./catalogue.js";
+import { COURSES, COURSE, MODULES, MOD, isFreebie, courseOf, modulesIn, moduleName, courseModuleName } from "./catalogue.js";
 import { state, rands, esc, $, slugifyCode } from "./state.js";
 import { publicStorageUrl } from "./supabase.js";
 import { loadFreebiePreview } from "./freebies.js";
@@ -32,6 +32,9 @@ export function renderCourses() {
       class="${state.course === c.slug ? "is-on" : ""}" data-course="${c.slug}">${esc(c.name)}</button>`
   ).join("");
   document.querySelectorAll("[data-bridging-only]").forEach((el) => (el.hidden = !show));
+  // The heading names the course on show, so nobody buys the other course's
+  // Taxation by mistake (the subjects share names across both courses).
+  $("#shopTitle").textContent = show ? `Browse ${COURSE[state.course].name} notes` : "Browse notes by module";
   renderShopMenu();
 }
 
@@ -193,7 +196,10 @@ const ALL_ICON =
 const CHECK_ICON = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
 
 function renderSelectMenu() {
-  const options = [{ slug: "all", name: "All notes", tint: "var(--blush)", ink: "var(--accent)", icon: ALL_ICON }, ...modulesIn(state.course)]
+  // Once both courses exist, the menu says which one it adds from.
+  const course = hasBridging() ? COURSE[state.course] : null;
+  $("#selectToggleLabel").innerHTML = course ? `<span class="select-course">${esc(course.short)} </span>bundles` : "Bundles";
+  const options = [{ slug: "all", name: course ? `All ${course.name} notes` : "All notes", tint: "var(--blush)", ink: "var(--accent)", icon: ALL_ICON }, ...modulesIn(state.course)]
     .filter((m) => !m.free)
     .map((m) => ({ ...m, list: buyableFor(m.slug) }))
     .filter((m) => m.list.length);
@@ -225,7 +231,7 @@ function renderSelectMenu() {
   });
 
   $("#selectList").innerHTML = `
-    <p class="select-head">Add a whole module</p>
+    <p class="select-head">${course ? `Add a whole ${esc(course.name)} module` : "Add a whole module"}</p>
     ${rows.join("")}
     <p class="select-foot">Bundle discount: 5+ notes 10% off, 10+ notes 15% off</p>`;
 }
@@ -246,6 +252,7 @@ export function renderProducts() {
   // Array#sort is stable, so within "new" and within "not new" the existing
   // sort_order is kept — this only moves the new/old boundary, nothing else.
   const list = [...base].sort((a, b) => isNewProduct(b) - isNewProduct(a));
+  const showCourse = hasBridging(); // each card's tag says PGDA or Bridging, once both exist
 
   if (!list.length) {
     grid.innerHTML = `<div class="empty-state">
@@ -267,7 +274,7 @@ export function renderProducts() {
           ? `<span class="new-badge">New</span>`
           : ""
       }
-      <span class="tag">${esc(m.tag)}</span>
+      <span class="tag">${showCourse ? `<span class="tag-course">${esc(COURSE[m.course].short)}</span> · ` : ""}${esc(m.tag)}</span>
       <h3><a class="card-link" href="/notes/${esc(slugifyCode(p.code))}">${esc(p.title)}</a></h3>
       <p>${esc(p.description || "")}</p>
       <button class="card-more" type="button" data-more hidden>Read more</button>
@@ -362,6 +369,17 @@ function bundleNudge() {
   return `<p class="bundle-nudge">Add ${more} more note${more === 1 ? "" : "s"} for ${next.percent}% off your cart.</p>`;
 }
 
+/** A cart with notes from both courses is usually a mistake (same subject
+ * names, and sales are final), so it says so before checkout. */
+function mixedCourseNotice() {
+  const courses = new Set(state.cart.map((i) => courseOf(i.module_slug)));
+  if (courses.size < 2) return "";
+  const count = (c) => state.cart.filter((i) => courseOf(i.module_slug) === c.slug).length;
+  return `<p class="course-mix">Your cart has notes from both courses:
+    ${COURSES.map((c) => `${count(c)} ${esc(c.name)}`).join(" and ")}.
+    Check each one is for the course you're doing — purchases are final.</p>`;
+}
+
 export function renderDrawer() {
   const body = $("#drawerBody");
   const foot = $("#drawerFoot");
@@ -400,7 +418,7 @@ export function renderDrawer() {
       </span>
       <div>
         <h4>${esc(i.title)}</h4>
-        <div class="meta">${m.course === "pgda" ? "PGDA · " : ""}${esc(moduleName(m))} · PDF</div>
+        <div class="meta"><strong class="line-course">${esc(COURSE[m.course].short)}</strong> · ${esc(m.name)} · PDF</div>
         <button class="rm" data-rm="${esc(i.id)}">Remove</button>
       </div>
       <span class="amt">${rands(i.price_cents)}</span>
@@ -408,9 +426,10 @@ export function renderDrawer() {
     })
     .join("");
 
+  const notice = mixedCourseNotice();
   if (state.checkoutStep === "cart") {
     title.textContent = "Your cart";
-    body.innerHTML = lines;
+    body.innerHTML = notice + lines;
     foot.innerHTML = `
       ${bundleNudge()}
       ${totalsHtml(`${state.cart.length} section${state.cart.length > 1 ? "s" : ""} · total`)}
@@ -422,6 +441,7 @@ export function renderDrawer() {
   // "details" step
   title.textContent = "Your details";
   body.innerHTML = `
+    ${notice}
     ${lines}
     <label class="field"><span>Full name</span>
       <input type="text" id="buyerName" placeholder="Jane Doe" autocomplete="name"></label>
@@ -533,7 +553,7 @@ export function openPreview(id) {
     $("#previewFrame").innerHTML = `<div class="empty-state">No preview available for this section yet.</div>`;
   }
 
-  $("#previewTag").textContent = moduleName(m);
+  $("#previewTag").textContent = hasBridging() ? courseModuleName(m) : moduleName(m);
   $("#previewTag").style.background = m.tint;
   $("#previewTag").style.color = m.ink;
   $("#previewTitle").textContent = p.title;

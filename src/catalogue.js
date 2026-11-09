@@ -13,10 +13,13 @@
  * Once the database is connected, products come from there and SEED is unused.
  */
 
+// `short` labels a note's course wherever both could be confused (cards,
+// cart, preview, note page).
 export const COURSES = [
-  { slug:"pgda", name:"PGDA (CTA)" },
-  { slug:"bridging", name:"Bridging to CTA" }
+  { slug:"pgda", name:"PGDA (CTA)", short:"PGDA" },
+  { slug:"bridging", name:"Bridging to CTA", short:"Bridging" }
 ];
+export const COURSE = Object.fromEntries(COURSES.map((c) => [c.slug, c]));
 
 export const MODULES = [
   { slug:"financial-reporting", course:"pgda", name:"Financial Reporting", short:"Financial Reporting", tag:"Financial Reporting",
@@ -62,6 +65,9 @@ export const modulesIn = (course) => MODULES.filter((m) => m.course === course);
  * modules say so: "Bridging · Taxation". */
 export const moduleName = (m) => (m.course === "bridging" ? `Bridging · ${m.name}` : m.name);
 export const moduleShort = (m) => (m.course === "bridging" ? `Bridging · ${m.short}` : m.short);
+/** Always names the course, PGDA included: "PGDA · Taxation". For the shop's
+ * buyer-facing labels, where the same subject exists in both courses. */
+export const courseModuleName = (m) => `${COURSE[m.course].short} · ${m.name}`;
 
 export const PRICE = 2500; // cents → R25
 export const SEED = [

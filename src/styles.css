@@ -462,6 +462,7 @@ h1,h2,h3{font-family:'Playfair Display',Georgia,serif;font-weight:400;letter-spa
 .select-toggle-text{display:flex;flex-direction:column;line-height:1.2;}
 .select-toggle-text small{font-size:9px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-faint);font-weight:500;}
 .select-toggle-text span{font-size:13.5px;}
+.select-toggle-text small .select-course{font-size:inherit;} /* "Bridging bundles" (renderSelectMenu) */
 .select-chevron{width:10px;height:7px;stroke-width:1.6;margin-left:4px;color:var(--ink-soft);transition:transform .3s cubic-bezier(.2,.7,.2,1);}
 .select-toggle[aria-expanded="true"] .select-chevron{transform:rotate(180deg);}
 
@@ -612,6 +613,11 @@ h1,h2,h3{font-family:'Playfair Display',Georgia,serif;font-weight:400;letter-spa
 .card .price-block{padding-left:2px;}
 .card .price{font-size:22px;line-height:1.15;letter-spacing:-.01em;}
 .card .page-count{font-size:9.5px;letter-spacing:.2em;text-transform:uppercase;color:#77717A;margin-top:3px;}
+/* "Bridging · Taxation": the course leads the subject tag (renderProducts),
+   since the same subjects exist in both courses. A long one ("Bridging ·
+   Financial Reporting") wraps inside the tag rather than being cut off. */
+.card .tag:has(.tag-course){white-space:normal;}
+.tag-course{font-weight:800;}
 .add-btn{
   width:42px;height:42px;border-radius:10px;display:grid;place-items:center;
   transition:transform .2s ease,filter .2s ease;
@@ -1096,6 +1102,12 @@ details.faq p{margin:0;padding:0 0 16px;max-width:66ch;color:var(--ink-soft);fon
 .line-swatch svg{width:20px;height:20px;stroke-width:1.6;fill:none;stroke-linecap:round;stroke-linejoin:round;}
 .line h4{margin:0;font-size:14.5px;font-weight:500;line-height:1.35;}
 .line .meta{font-size:12px;color:var(--ink-faint);margin-top:3px;}
+.line-course{color:var(--ink-soft);font-weight:600;}
+/* Both courses in one cart (mixedCourseNotice in render.js) */
+.course-mix{
+  margin:4px 0 6px;padding:11px 14px;border-radius:8px;background:#FFF4E5;color:#7A4A12;
+  font-size:13px;line-height:1.5;
+}
 .line .rm{font-size:12px;color:var(--ink-soft);text-decoration:underline;margin-top:7px;}
 .line .rm:hover{color:var(--accent-deep);}
 .line .amt{margin-left:auto;padding-left:12px;font-family:'Playfair Display',serif;font-size:16px;}
@@ -1268,6 +1280,7 @@ details.faq p{margin:0;padding:0 0 16px;max-width:66ch;color:var(--ink-soft);fon
   /* One row: the module dropdown (filters) and Select (adds to cart) */
   .shop-bar{position:relative;flex-wrap:nowrap;gap:10px;margin:28px 0 30px;}
   .filters{display:none;}
+  .select-course{display:none;} /* "Bridging bundles" would squeeze the module dropdown */
   .module-menu{display:block;flex:1;min-width:0;}
   .select-menu{position:static;flex-shrink:0;}
   /* Mirrors the module dropdown beside it: icon on the outside edge, no arrow */
