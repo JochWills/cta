@@ -842,7 +842,8 @@ async function viewCurrentPdf() {
 /* ------------------------------------------------------------------
    Delegated events (same pattern as src/main.js)
 ------------------------------------------------------------------ */
-$("#liveVisitors").addEventListener("click", openLive);
+// Temporarily disabled — the pill still shows the count, but clicking it no longer opens the pop-up.
+// $("#liveVisitors").addEventListener("click", openLive);
 document.addEventListener("click", (e) => {
   if (e.target.closest("[data-close-live]")) return closeLive();
   const row = e.target.closest("[data-live-row]");
