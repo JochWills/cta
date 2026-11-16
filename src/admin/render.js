@@ -39,17 +39,17 @@ export function loginError(message) {
 /**
  * Tabs that need a second password on top of the admin login, each one
  * unlocked separately (once per browser session — see unlockTab). Payouts,
- * Notes, Reviews and Health stay open to anyone logged in.
+ * Notes, Discounts, Reviews and Health stay open to anyone logged in.
  *
  * This is a screen in front of the page, not real access control: the data
  * behind these tabs is already loaded by the admin login (admin-orders
  * etc.), so someone with the admin password and the browser's dev tools
  * could still read it. Only the SHA-256 of the password is in the bundle.
  */
-const LOCKED_TABS = new Set(["dashboard", "orders", "customers", "discounts"]);
+const LOCKED_TABS = new Set(["dashboard", "orders", "customers"]);
 const TAB_PASSWORD_SHA256 = "9e9bef1b3b5d65c9a89c4fd5732b70a9cc3f134b4be4accabf7db0fff81d00ca";
 const UNLOCKED_KEY = "cta_admin_unlocked_tabs";
-const TAB_TITLES = { dashboard: "Dashboard", orders: "Orders", customers: "Customers", discounts: "Discounts" };
+const TAB_TITLES = { dashboard: "Dashboard", orders: "Orders", customers: "Customers" };
 
 function unlockedTabs() {
   try {

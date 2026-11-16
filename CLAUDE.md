@@ -165,10 +165,10 @@ unreachable — it just ships without note pages.
 
 ## Admin tab passwords
 
-On top of the admin login, the Dashboard, Orders, Customers and Discounts
+On top of the admin login, the Dashboard, Orders and Customers
 tabs each ask for a second password (unlocked one tab at a time, for the
-browser session; Log out locks them again). Payouts, Notes, Reviews and
-Health don't. Only its SHA-256 is in the bundle (`TAB_PASSWORD_SHA256` in
+browser session; Log out locks them again). Payouts, Notes, Discounts, Reviews
+and Health don't. Only its SHA-256 is in the bundle (`TAB_PASSWORD_SHA256` in
 `src/admin/render.js`) — to change it, replace that hash. It's a screen,
 not access control: the data is already loaded by the admin login.
 
