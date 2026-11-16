@@ -36,17 +36,76 @@ export function loginError(message) {
   $("#loginError").innerHTML = message ? `<div class="err">${esc(message)}</div>` : "";
 }
 
+/**
+ * Tabs that need a second password on top of the admin login, each one
+ * unlocked separately (once per browser session — see unlockTab). Payouts,
+ * Notes, Reviews and Health stay open to anyone logged in.
+ *
+ * This is a screen in front of the page, not real access control: the data
+ * behind these tabs is already loaded by the admin login (admin-orders
+ * etc.), so someone with the admin password and the browser's dev tools
+ * could still read it. Only the SHA-256 of the password is in the bundle.
+ */
+const LOCKED_TABS = new Set(["dashboard", "orders", "customers", "discounts"]);
+const TAB_PASSWORD_SHA256 = "9e9bef1b3b5d65c9a89c4fd5732b70a9cc3f134b4be4accabf7db0fff81d00ca";
+const UNLOCKED_KEY = "cta_admin_unlocked_tabs";
+const TAB_TITLES = { dashboard: "Dashboard", orders: "Orders", customers: "Customers", discounts: "Discounts" };
+
+function unlockedTabs() {
+  try {
+    return new Set(JSON.parse(sessionStorage.getItem(UNLOCKED_KEY) || "[]"));
+  } catch {
+    return new Set();
+  }
+}
+
+export function isTabLocked(tab) {
+  return LOCKED_TABS.has(tab) && !unlockedTabs().has(tab);
+}
+
+/** Checks `password` for the current tab; true (and remembered for this session) if right. */
+export async function unlockTab(tab, password) {
+  const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(password));
+  const hex = [...new Uint8Array(digest)].map((b) => b.toString(16).padStart(2, "0")).join("");
+  if (hex !== TAB_PASSWORD_SHA256) return false;
+  const tabs = unlockedTabs();
+  tabs.add(tab);
+  try {
+    sessionStorage.setItem(UNLOCKED_KEY, JSON.stringify([...tabs]));
+  } catch {
+    // storage unavailable — it just asks again after a reload
+  }
+  return true;
+}
+
+export function relockTabs() {
+  try {
+    sessionStorage.removeItem(UNLOCKED_KEY);
+  } catch {
+    // ignore
+  }
+}
+
 export function setTab(tab) {
   adminState.tab = tab;
   document.querySelectorAll("[data-tab]").forEach((b) => b.classList.toggle("is-on", b.dataset.tab === tab));
-  $("#dashOverview").hidden = tab !== "dashboard";
-  $("#ordersView").hidden = tab !== "orders";
-  $("#customersView").hidden = tab !== "customers";
-  $("#healthView").hidden = tab !== "health";
-  $("#payoutsView").hidden = tab !== "payouts";
-  $("#notesView").hidden = tab !== "notes";
-  $("#discountsView").hidden = tab !== "discounts";
-  $("#reviewsView").hidden = tab !== "reviews";
+  const locked = isTabLocked(tab);
+  const shown = locked ? null : tab;
+  $("#tabLockView").hidden = !locked;
+  if (locked) {
+    $("#tabLockTitle").textContent = `${TAB_TITLES[tab] || "This page"} is locked`;
+    $("#tabLockInput").value = "";
+    $("#tabLockError").innerHTML = "";
+    $("#tabLockInput").focus();
+  }
+  $("#dashOverview").hidden = shown !== "dashboard";
+  $("#ordersView").hidden = shown !== "orders";
+  $("#customersView").hidden = shown !== "customers";
+  $("#healthView").hidden = shown !== "health";
+  $("#payoutsView").hidden = shown !== "payouts";
+  $("#notesView").hidden = shown !== "notes";
+  $("#discountsView").hidden = shown !== "discounts";
+  $("#reviewsView").hidden = shown !== "reviews";
 }
 
 /* ------------------------------------------------------------------

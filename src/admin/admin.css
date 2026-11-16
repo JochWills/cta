@@ -561,6 +561,7 @@ body.admin-page{
    the header — reuses the same green as a "Paid" order/the Orders Paid
    stat tile, since "people currently on the site" reads as the same kind
    of good-news-green signal. */
+.live-visitors[hidden]{display:none;}
 .live-visitors{
   display:flex;align-items:center;gap:8px;
   padding:7px 14px;border-radius:999px;
@@ -922,3 +923,8 @@ body.admin-page{
 .live-locked strong{font-size:15px;color:var(--ink);}
 .live-locked > span{font-size:13px;color:var(--ink-soft);}
 #liveUnlockIn{font-variant-numeric:tabular-nums;font-weight:600;color:var(--ink);}
+
+/* Password screen in front of a locked tab (#tabLockView — see LOCKED_TABS in render.js). */
+.tab-lock-card{max-width:400px;margin:56px auto 0;padding:44px 40px 40px;text-align:center;box-shadow:var(--shadow-lift);}
+.tab-lock-card h2{font-size:26px;}
+@media (max-width:560px){.tab-lock-card{margin-top:24px;padding:36px 24px 30px;}}

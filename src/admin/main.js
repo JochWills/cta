@@ -7,6 +7,8 @@ import {
   showLoggedOut,
   loginError,
   setTab,
+  unlockTab,
+  relockTabs,
   renderOrders,
   renderCustomers,
   toggleCustomer,
@@ -142,9 +144,15 @@ async function updateVisitorCount() {
 const INSIGHTS_POLL_MS = 60_000;
 let insightsPollTimer = null;
 
+// The header's "online" pill is temporarily hidden (admin.html), so its
+// count isn't polled either. Set back to true along with removing `hidden`.
+const SHOW_LIVE_COUNT = false;
+
 function startVisitorPoll() {
-  updateVisitorCount();
-  visitorPollTimer = setInterval(updateVisitorCount, VISITOR_POLL_MS);
+  if (SHOW_LIVE_COUNT) {
+    updateVisitorCount();
+    visitorPollTimer = setInterval(updateVisitorCount, VISITOR_POLL_MS);
+  }
   insightsPollTimer = setInterval(() => {
     loadVisitorInsights();
     loadOrders(true);
@@ -569,6 +577,7 @@ function doLogout() {
   closeLive();
   stopVisitorPoll();
   clearSession();
+  relockTabs();
   showLoggedOut();
 }
 
@@ -854,6 +863,19 @@ document.addEventListener("keydown", (e) => e.key === "Escape" && !$("#liveModal
 $("#loginForm").addEventListener("submit", (e) => {
   e.preventDefault();
   doLogin();
+});
+
+$("#tabLockForm").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const tab = adminState.tab;
+  if (await unlockTab(tab, $("#tabLockInput").value)) {
+    setTab(tab);
+    // Charts measure their container, which had no size while hidden.
+    if (tab === "dashboard") renderDashboard();
+  } else {
+    $("#tabLockError").innerHTML = `<div class="err">That password isn't right.</div>`;
+    $("#tabLockInput").select();
+  }
 });
 
 $("#productForm").addEventListener("submit", saveProductForm);

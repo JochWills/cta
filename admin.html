@@ -39,7 +39,8 @@
       </span>
     </a>
     <div class="header-actions" id="logoutWrap" hidden>
-      <button type="button" class="live-visitors" id="liveVisitors" title="Who's on the site right now" aria-haspopup="dialog">
+      <!-- Temporarily hidden (and not polled — see startVisitorPoll in main.js). -->
+      <button type="button" class="live-visitors" id="liveVisitors" hidden title="Who's on the site right now" aria-haspopup="dialog">
         <span class="live-dot" aria-hidden="true"></span>
         <span id="liveVisitorsCount">–</span><span class="live-word">&nbsp;online</span>
       </button>
@@ -208,6 +209,29 @@
             <p class="dash-card-sub" id="dashBuyerSourcesSub"></p>
           </div>
           <div id="dashBuyerSources"></div>
+        </div>
+      </div>
+
+      <!-- Shown in place of a locked tab (Dashboard, Orders, Customers,
+           Discounts) until its own password is entered — see LOCKED_TABS in
+           src/admin/render.js. -->
+      <div id="tabLockView" hidden>
+        <div class="admin-card login-card tab-lock-card">
+          <div class="login-mark" aria-hidden="true">
+            <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-linejoin="round" stroke-linecap="round">
+              <rect x="17" y="29" width="30" height="22" rx="4" stroke-width="3"/>
+              <path d="M23 29v-6a9 9 0 0 1 18 0v6" stroke-width="3"/>
+            </svg>
+          </div>
+          <h2 id="tabLockTitle">This page is locked</h2>
+          <p class="lede">Enter the password for this page to open it.</p>
+          <form id="tabLockForm">
+            <label class="field"><span>Password</span>
+              <input type="password" id="tabLockInput" autocomplete="off" required>
+            </label>
+            <div id="tabLockError"></div>
+            <button class="btn" type="submit">Unlock</button>
+          </form>
         </div>
       </div>
 

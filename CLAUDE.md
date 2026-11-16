@@ -138,6 +138,7 @@ supabase/
     paystack-webhook/         ┘
     order-download/          deployed — self-serve download links, see Data model below
     free-download/           freebie PDFs for a name + email, see Data model below
+    daily-report/            8am SAST summary email to Courts, see "Daily report email" below
 render.yaml                 Render Blueprint — build settings, cache headers, URL rewrites
 public/                     favicon, hero.webp + hero-900.webp (the hero photo — keep it WebP
                              and small: it was most of the Render bandwidth as a 1.2 MB PNG)
@@ -161,6 +162,29 @@ added after the last deploy has no page until the next build:
 `admin-products` calls Render's deploy hook (`RENDER_DEPLOY_HOOK` secret)
 after any update or delete. The build never fails if the database is
 unreachable — it just ships without note pages.
+
+## Admin tab passwords
+
+On top of the admin login, the Dashboard, Orders, Customers and Discounts
+tabs each ask for a second password (unlocked one tab at a time, for the
+browser session; Log out locks them again). Payouts, Notes, Reviews and
+Health don't. Only its SHA-256 is in the bundle (`TAB_PASSWORD_SHA256` in
+`src/admin/render.js`) — to change it, replace that hash. It's a screen,
+not access control: the data is already loaded by the admin login.
+
+The header's live "online" count is temporarily hidden (`hidden` on
+`#liveVisitors` in admin.html, `SHOW_LIVE_COUNT` in `src/admin/main.js`).
+
+## Daily report email
+
+`daily-report` emails yesterday's summary (revenue, orders, visitors,
+notes sold, each vs the day before; the orders; sales by module; visitor
+sources; a 14-day revenue chart; month/30-day/all-time totals; top notes)
+through Resend. pg_cron calls it at 06:00 UTC = 08:00 SAST (schema.sql
+section 18). The shared secret and the recipient list are Vault secrets
+(`daily_report_secret`, `daily_report_to`), not Edge Function secrets, and
+aren't in the repo; see section 18 for changing recipients or stopping it.
+Call it with the secret header and `?dry=1` to get the HTML without sending.
 
 ## Health tab
 

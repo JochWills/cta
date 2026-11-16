@@ -926,3 +926,47 @@ grant execute on function public.admin_health_stats() to service_role;
 alter table public.orders add column if not exists source       text;
 alter table public.orders add column if not exists first_source text;
 alter table public.orders add column if not exists campaign     text;
+
+
+-- ------------------------------------------------------------
+-- 18. DAILY REPORT EMAIL (supabase/functions/daily-report)
+--    pg_cron calls the daily-report Edge Function at 06:00 UTC (08:00
+--    SAST) every day; it emails yesterday's summary through Resend.
+--    Two Vault secrets, set once by hand (never committed):
+--      select vault.create_secret('<random hex>', 'daily_report_secret');
+--      select vault.create_secret('someone@example.com', 'daily_report_to');
+--    To change the recipients:
+--      select vault.update_secret(
+--        (select id from vault.secrets where name = 'daily_report_to'),
+--        'a@example.com,b@example.com');
+--    To stop it: select cron.unschedule('daily-report');
+-- ------------------------------------------------------------
+create extension if not exists pg_cron;
+create extension if not exists pg_net;
+
+-- The function reads both secrets through this; service_role only.
+create or replace function public.daily_report_config()
+returns table(secret text, recipients text)
+language sql security definer set search_path = public as $$
+  select
+    (select decrypted_secret from vault.decrypted_secrets where name = 'daily_report_secret'),
+    (select decrypted_secret from vault.decrypted_secrets where name = 'daily_report_to');
+$$;
+revoke all on function public.daily_report_config() from public, anon, authenticated;
+grant execute on function public.daily_report_config() to service_role;
+
+select cron.schedule(
+  'daily-report',
+  '0 6 * * *',
+  $$
+  select net.http_post(
+    url := 'https://btjkjkqddycyjbftchgm.supabase.co/functions/v1/daily-report',
+    headers := jsonb_build_object(
+      'Content-Type', 'application/json',
+      'X-Report-Secret', (select decrypted_secret from vault.decrypted_secrets where name = 'daily_report_secret')
+    ),
+    body := '{}'::jsonb,
+    timeout_milliseconds := 30000
+  );
+  $$
+);
